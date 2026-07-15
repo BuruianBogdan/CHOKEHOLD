@@ -39,7 +39,17 @@ namespace ChokeHold.Gameplay
         [Header("Camera Recoil")]
         [SerializeField] private float recoilSnappiness = 18f;
         [SerializeField] private float recoilReturnSpeed = 10f;
+        
+        [Header("Lean")]
+        [SerializeField] private float leanAngle = 10f;
+        [SerializeField] private float leanDistance = 0.15f;
+        [SerializeField] private float leanSpeed = 8f;
+        [SerializeField] private float leanCollisionRadius = 0.15f;
+        [SerializeField] private LayerMask leanCollisionMask;
 
+        private float currentLeanAngle;
+        private float currentLeanOffset;
+        
         private CharacterController controller;
 
         private bool isGrounded;
@@ -116,6 +126,7 @@ namespace ChokeHold.Gameplay
             UpdateCrouch();
             MovePlayer();
             UpdateCameraRecoil();
+            UpdateLean();
             LookAround();
         }
 
@@ -208,6 +219,114 @@ namespace ChokeHold.Gameplay
             );
         }
 
+        private void UpdateLean()
+        {
+            if (Keyboard.current == null)
+            {
+                return;
+            }
+
+            float targetLeanAngle = 0f;
+            float requestedLeanOffset = 0f;
+
+            if (Keyboard.current.qKey.isPressed)
+            {
+                targetLeanAngle = leanAngle;
+                requestedLeanOffset = -leanDistance;
+            }
+            else if (Keyboard.current.eKey.isPressed)
+            {
+                targetLeanAngle = -leanAngle;
+                requestedLeanOffset = leanDistance;
+            }
+
+            float allowedLeanOffset = GetAllowedLeanOffset(
+                requestedLeanOffset
+            );
+
+            if (Mathf.Abs(allowedLeanOffset) <
+                Mathf.Abs(requestedLeanOffset))
+            {
+                float allowedPercentage =
+                    leanDistance > 0f
+                        ? Mathf.Abs(allowedLeanOffset) / leanDistance
+                        : 0f;
+
+                targetLeanAngle *= allowedPercentage;
+            }
+
+            currentLeanAngle = Mathf.Lerp(
+                currentLeanAngle,
+                targetLeanAngle,
+                leanSpeed * Time.deltaTime
+            );
+
+            currentLeanOffset = Mathf.Lerp(
+                currentLeanOffset,
+                allowedLeanOffset,
+                leanSpeed * Time.deltaTime
+            );
+
+            Vector3 cameraPosition = cameraPivot.localPosition;
+            cameraPosition.x = currentLeanOffset;
+            cameraPivot.localPosition = cameraPosition;
+        }
+        
+        private float GetAllowedLeanOffset(
+            float requestedOffset
+        )
+        {
+            if (Mathf.Approximately(requestedOffset, 0f))
+            {
+                return 0f;
+            }
+
+            Vector3 direction =
+                cameraPivot.parent != null
+                    ? cameraPivot.parent.right *
+                      Mathf.Sign(requestedOffset)
+                    : transform.right *
+                      Mathf.Sign(requestedOffset);
+
+            Vector3 origin =
+                cameraPivot.parent != null
+                    ? cameraPivot.parent.TransformPoint(
+                        new Vector3(
+                            0f,
+                            cameraPivot.localPosition.y,
+                            0f
+                        )
+                    )
+                    : transform.position +
+                      Vector3.up * cameraPivot.localPosition.y;
+
+            float requestedDistance =
+                Mathf.Abs(requestedOffset);
+
+            if (
+                Physics.SphereCast(
+                    origin,
+                    leanCollisionRadius,
+                    direction,
+                    out RaycastHit hit,
+                    requestedDistance,
+                    leanCollisionMask,
+                    QueryTriggerInteraction.Ignore
+                )
+            )
+            {
+                float safeDistance = Mathf.Max(
+                    0f,
+                    hit.distance - 0.02f
+                );
+
+                return safeDistance *
+                       Mathf.Sign(requestedOffset);
+            }
+
+            return requestedOffset;
+        }
+
         private void UpdateCrouch()
         {
             if (Keyboard.current == null)
@@ -262,6 +381,8 @@ namespace ChokeHold.Gameplay
 
             cameraPivot.localPosition = cameraPosition;
         }
+        
+        
 
         private bool IsCeilingAbove()
         {
@@ -320,7 +441,7 @@ namespace ChokeHold.Gameplay
                 Quaternion.Euler(
                     pitch,
                     0f,
-                    0f
+                    currentLeanAngle
                 );
         }
 
@@ -377,11 +498,15 @@ namespace ChokeHold.Gameplay
             {
                 return;
             }
-
-            Gizmos.DrawWireSphere(
-                groundCheck.position,
-                groundCheckRadius
-            );
+            
+            if (cameraPivot != null)
+            {
+                Gizmos.DrawWireSphere(
+                    cameraPivot.position,
+                    leanCollisionRadius
+                );
+            }
+            
         }
     }
 }
