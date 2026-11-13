@@ -24,6 +24,13 @@ namespace ChokeHold.UI
         private TMP_Text hintText;
         private TMP_Text healthText;
         private TMP_Text bombStatusText;
+        private TMP_Text prepStatusText;
+
+        private DefenderPrepController prep;
+
+        private bool LocalPlayerDefends =>
+            roundManager.LocalPlayer != null &&
+            roundManager.LocalPlayer.Team == Team.Defenders;
 
         private GameObject progressRoot;
         private RectTransform progressFill;
@@ -40,6 +47,7 @@ namespace ChokeHold.UI
             }
 
             bomb = roundManager.Bomb;
+            prep = roundManager.Prep;
             BuildUI();
         }
 
@@ -74,7 +82,7 @@ namespace ChokeHold.UI
                     break;
 
                 case RoundPhase.PreRound:
-                    timerText.text = time;
+                    timerText.text = LocalPlayerDefends ? $"PREGATIRE {time}" : time;
                     timerText.color = Color.yellow;
                     break;
 
@@ -89,10 +97,12 @@ namespace ChokeHold.UI
             switch (roundManager.Phase)
             {
                 case RoundPhase.PreRound:
+                    // Aparatorul are de lucru in pregatire - nu ii acoperim ecranul cu un mesaj mare.
                     messageText.color = Color.white;
-                    messageText.text =
-                        $"RUNDA {roundManager.RoundNumber}\n" +
-                        "<size=60%>Pregateste-te...</size>";
+                    messageText.text = LocalPlayerDefends
+                        ? string.Empty
+                        : $"RUNDA {roundManager.RoundNumber}\n" +
+                          "<size=60%>Aparatorii se pregatesc...</size>";
                     break;
 
                 case RoundPhase.RoundEnd:
@@ -138,22 +148,38 @@ namespace ChokeHold.UI
             {
                 hintText.text = string.Empty;
                 bombStatusText.text = string.Empty;
+                prepStatusText.text = string.Empty;
                 progressRoot.SetActive(false);
                 return;
             }
 
-            hintText.text = bomb.Hint;
+            // Bara si hint-ul sunt comune: plant/defuse sau pregatirea aparatorului (intarire, baricada).
+            bool bombAction = bomb.IsPlanting || bomb.IsDefusing;
+            bool prepAction = prep != null && prep.IsActing;
+            bool usePrep = prep != null && !bombAction &&
+                           (prepAction || !string.IsNullOrEmpty(prep.Hint));
 
-            bool showProgress = bomb.IsPlanting || bomb.IsDefusing;
+            hintText.text = usePrep ? prep.Hint : bomb.Hint;
+
+            bool showProgress = bombAction || prepAction;
             progressRoot.SetActive(showProgress);
 
             if (showProgress)
             {
-                progressFill.anchorMax = new Vector2(
-                    Mathf.Clamp01(bomb.ActionProgress),
-                    1f
-                );
+                float progress = bombAction ? bomb.ActionProgress : prep.ActionProgress;
+                progressFill.anchorMax = new Vector2(Mathf.Clamp01(progress), 1f);
             }
+
+            bool showPrepStatus =
+                prep != null &&
+                LocalPlayerDefends &&
+                (roundManager.Phase == RoundPhase.PreRound ||
+                 roundManager.Phase == RoundPhase.Live ||
+                 roundManager.Phase == RoundPhase.BombPlanted);
+
+            prepStatusText.text = showPrepStatus
+                ? $"Intariri {prep.ReinforcementsLeft}   Baricade {prep.BarricadesLeft}"
+                : string.Empty;
 
             bool roundActive =
                 roundManager.Phase == RoundPhase.Live ||
@@ -246,13 +272,18 @@ namespace ChokeHold.UI
 
             progressRoot.SetActive(false);
 
-            // Jos-stanga: viata. Deasupra ei: starea bombei.
-            healthText = CreateText(root, "Health", new Vector2(0f, 0f), new Vector2(200f, 60f),
+            // Jos-stanga, deasupra textului de munitie existent: viata, apoi starea bombei.
+            healthText = CreateText(root, "Health", new Vector2(0f, 0f), new Vector2(200f, 125f),
                 new Vector2(320f, 60f), 44f, TextAlignmentOptions.Left);
 
-            bombStatusText = CreateText(root, "BombStatus", new Vector2(0f, 0f), new Vector2(200f, 120f),
+            bombStatusText = CreateText(root, "BombStatus", new Vector2(0f, 0f), new Vector2(200f, 180f),
                 new Vector2(320f, 40f), 26f, TextAlignmentOptions.Left);
             bombStatusText.color = BombColor;
+
+            // Resursele aparatorului (intariri / baricade ramase).
+            prepStatusText = CreateText(root, "PrepStatus", new Vector2(0f, 0f), new Vector2(240f, 225f),
+                new Vector2(400f, 40f), 26f, TextAlignmentOptions.Left);
+            prepStatusText.color = new Color(1f, 0.85f, 0.4f);
         }
 
         private static TMP_Text CreateText(RectTransform parent, string name, Vector2 anchor,

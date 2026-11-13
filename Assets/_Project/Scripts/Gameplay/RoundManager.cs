@@ -34,6 +34,10 @@ namespace ChokeHold.Gameplay
     public class RoundManager : MonoBehaviour
     {
         [Header("Timpi (secunde)")]
+        [Tooltip("Faza de pregatire cand jucatorul e aparator: intareste pereti, monteaza baricade. Atacatorii asteapta.")]
+        [SerializeField] private float prepTime = 30f;
+
+        [Tooltip("Pauza scurta la inceput de runda cand jucatorul e atacator (nu are ce pregati).")]
         [SerializeField] private float preRoundTime = 5f;
         [SerializeField] private float roundTime = 100f;
         [SerializeField] private float bombTime = 40f;
@@ -45,6 +49,7 @@ namespace ChokeHold.Gameplay
 
         [Header("References")]
         [SerializeField] private BombController bomb;
+        [SerializeField] private DefenderPrepController prep;
 
         private bool matchIsOver;
 
@@ -60,6 +65,7 @@ namespace ChokeHold.Gameplay
         public RoundEndReason LastEndReason { get; private set; }
         public TeamMember LocalPlayer { get; private set; }
         public BombController Bomb => bomb;
+        public DefenderPrepController Prep => prep;
 
         public event Action<RoundPhase> PhaseChanged;
         public event Action<Team, RoundEndReason> RoundEnded;
@@ -71,6 +77,11 @@ namespace ChokeHold.Gameplay
             if (bomb == null)
             {
                 bomb = GetComponent<BombController>();
+            }
+
+            if (prep == null)
+            {
+                prep = GetComponent<DefenderPrepController>();
             }
         }
 
@@ -190,6 +201,10 @@ namespace ChokeHold.Gameplay
         {
             RoundNumber++;
 
+            // Harta revine la starea initiala: pereti sparti refacuti, intariri si baricade scoase.
+            Destructible.ResetAll();
+            BarricadePoint.ResetAll();
+
             RespawnEveryone();
             SetFreeze(true);
 
@@ -198,7 +213,17 @@ namespace ChokeHold.Gameplay
                 bomb.ResetForRound(ChooseBombCarrier());
             }
 
-            SetPhase(RoundPhase.PreRound, preRoundTime);
+            if (prep != null)
+            {
+                prep.ResetForRound();
+            }
+
+            // Pregatirea lunga are rost doar cand un jucator apara. Cu multiplayer va fi mereu prepTime.
+            bool playerDefends =
+                LocalPlayer != null &&
+                LocalPlayer.Team == Team.Defenders;
+
+            SetPhase(RoundPhase.PreRound, playerDefends ? prepTime : preRoundTime);
         }
 
         private void RestartMatch()
@@ -373,14 +398,20 @@ namespace ChokeHold.Gameplay
             return teamPoints[index % teamPoints.Count];
         }
 
+        /// <summary>
+        /// In faza de pregatire doar atacatorii stau pe loc; aparatorii se misca si pregatesc site-urile.
+        /// </summary>
         private void SetFreeze(bool frozen)
         {
             foreach (TeamMember member in TeamMember.All)
             {
-                if (member.FpsController != null)
+                if (member.FpsController == null)
                 {
-                    member.FpsController.SetInputLock(this, frozen);
+                    continue;
                 }
+
+                bool locked = frozen && member.Team == Team.Attackers;
+                member.FpsController.SetInputLock(this, locked);
             }
         }
 

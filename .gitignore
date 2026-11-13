@@ -107,3 +107,7 @@ InitTestScene*.unity*
 
 # macOS
 .DS_Store
+
+# Unity crash-recovery scene copies
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta

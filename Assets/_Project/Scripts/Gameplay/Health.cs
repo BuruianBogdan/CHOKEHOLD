@@ -23,6 +23,9 @@ namespace ChokeHold.Gameplay
             set => destroyOnDeath = value;
         }
 
+        /// <summary>Cat timp e true, obiectul nu primeste damage (ex. perete intarit).</summary>
+        public bool Invulnerable { get; set; }
+
         public event Action<Health, float> Damaged;
         public event Action<Health> Died;
 
@@ -33,7 +36,7 @@ namespace ChokeHold.Gameplay
 
         public void TakeDamage(float damage)
         {
-            if (isDead || damage <= 0f)
+            if (isDead || Invulnerable || damage <= 0f)
             {
                 return;
             }
