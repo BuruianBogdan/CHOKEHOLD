@@ -186,6 +186,7 @@ namespace ChokeHold.EditorTools
             Transform upper = CreateGroup(root.transform, UpperGroupName);
             Transform roofs = CreateGroup(root.transform, "Roofs");
             Transform doors = CreateGroup(root.transform, "Doors");
+            Transform structures = CreateGroup(root.transform, "Structures");
             Transform cover = CreateGroup(root.transform, "Cover");
             Transform gameplay = CreateGroup(root.transform, "Gameplay");
             Transform zones = CreateGroup(root.transform, "Zones (editor labels)");
@@ -197,6 +198,7 @@ namespace ChokeHold.EditorTools
             BuildUpperLevel(upper);
             BuildRoofs(roofs);
             BuildDoors(doors);
+            BuildStructures(structures);
             BuildCover(cover);
             BuildGameplay(gameplay);
             BuildZoneLabels(zones);
@@ -962,6 +964,88 @@ namespace ChokeHold.EditorTools
         }
 
         // ------------------------------------------------------------------
+        // Structuri care sparg spatiile deschise: cladiri mici, ziduri, stalpi.
+        // Rolul lor este sa taie liniile lungi de tragere si sa creeze culoare si colturi.
+        // ------------------------------------------------------------------
+        private static void BuildStructures(Transform parent)
+        {
+            float wall = GroundCeiling;
+
+            // --- South Courtyard: magazie in centru + ziduri care o impart in trei culoare
+            Block(parent, "Courtyard_Shed", -15f, -32f, -5f, -24f, 4f);
+            InnerWall(parent, "Courtyard_Wall_East", 7f, -34f, 7f, -26f, wall);
+            InnerWall(parent, "Courtyard_Wall_SouthWest", -20f, -40f, -20f, -34f, wall);
+            InnerWall(parent, "Courtyard_Wall_North", -14f, -18f, -6f, -18f, wall);
+
+            // --- Hangar: utilaj pe vest, zid sub mezanin, rand de containere care separa B de B Long
+            Block(parent, "Hangar_Machine", 28f, -18f, 34f, -10f, wall);
+            InnerWall(parent, "Hangar_Wall_North_1", 28f, -6f, 36f, -6f, wall);
+            InnerWall(parent, "Hangar_Wall_North_2", 44f, -6f, 48f, -6f, wall);
+            Container(parent, 59f, -14f, 0f, containerRedMat);
+            Container(parent, 59f, -22f, 0f, containerBlueMat);
+            Container(parent, 59f, -22f, 0f, containerRedMat, 2.6f);
+            Container(parent, 59f, -31f, 0f, containerBlueMat);
+            Crate(parent, 40f, -34f, 2f, 1.2f, 2f);
+            Crate(parent, 56f, -37f, 2f, 2f, 2f);
+
+            // --- East Yard: cladire de generator in mijloc -> curtea devine un inel
+            Block(parent, "Yard_Generator", 58f, 20f, 68f, 28f, 4f);
+
+            // --- North Overlook: ziduri alternate care rup linia de la sol (catwalk-ul ramane linie de sniper)
+            InnerWall(parent, "Overlook_Stub_West", -6f, 42f, -6f, 47f, wall);
+            InnerWall(parent, "Overlook_Stub_Mid", 30f, 47f, 30f, 52f, wall);
+            InnerWall(parent, "Overlook_Stub_East", 46f, 42f, 46f, 47f, wall);
+
+            // --- West Outpost / T1 Ramp / West Rocks
+            Block(parent, "Outpost_Tower", -70f, -14f, -64f, -8f, 4f);
+            InnerWall(parent, "T1Ramp_Wall", -44f, -30f, -44f, -23f, wall);
+            Rock(parent, "WestRocks_Rock_1", new Vector3(-49f, 0f, 2f), new Vector3(4f, 2.5f, 3f), 25f);
+            Rock(parent, "WestRocks_Rock_2", new Vector3(-52f, 0f, 10f), new Vector3(3f, 2f, 2.5f), -15f);
+
+            // --- Bombsite A: generator in mijlocul site-ului
+            Block(parent, "A_Generator", -46f, 34f, -42f, 38f, 2.5f);
+
+            // --- Mid East Corridor / South Lane
+            Block(parent, "MidEast_Pillar", 27f, 10f, 29f, 12f, wall);
+            InnerWall(parent, "SouthLane_Stub_West", -10f, -46f, -10f, -42f, wall);
+            InnerWall(parent, "SouthLane_Stub_East", 14f, -42f, 14f, -38f, wall);
+
+            // --- South Tunnel: stalpi alternati, ca tunelul sa nu fie un singur culoar drept de 78 m
+            Block(parent, "Tunnel_Pillar_1", -35f, -58f, -33f, -56.6f, wall);
+            Block(parent, "Tunnel_Pillar_2", -25f, -53.4f, -23f, -52f, wall);
+            Block(parent, "Tunnel_Pillar_3", -5f, -58f, -3f, -56.6f, wall);
+            Block(parent, "Tunnel_Pillar_4", 13f, -53.4f, 15f, -52f, wall);
+        }
+
+        /// <summary>Bloc solid (cladire mica, utilaj, stalp) pe dreptunghiul dat.</summary>
+        private static void Block(Transform parent, string name,
+            float xMin, float zMin, float xMax, float zMax, float height)
+        {
+            CreateBox(
+                parent,
+                name,
+                new Vector3((xMin + xMax) * 0.5f, height * 0.5f, (zMin + zMax) * 0.5f),
+                new Vector3(xMax - xMin, height, zMax - zMin),
+                wallMat
+            );
+        }
+
+        /// <summary>Stanca: cutie rotita, asezata pe sol in basePosition.</summary>
+        private static void Rock(Transform parent, string name,
+            Vector3 basePosition, Vector3 size, float rotationY)
+        {
+            GameObject rock = CreateBox(
+                parent,
+                name,
+                basePosition + Vector3.up * size.y * 0.5f,
+                size,
+                pipeMat
+            );
+
+            rock.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
+        }
+
+        // ------------------------------------------------------------------
         // Cover, containere, tevi, rezervoare, pereti interiori
         // ------------------------------------------------------------------
         private static void BuildCover(Transform parent)
@@ -972,7 +1056,7 @@ namespace ChokeHold.EditorTools
             Crate(parent, -31f, -16f, 1.4f, 1.4f, 1.4f);
 
             // West Outpost
-            Crate(parent, -70f, -10f, 2f, 1.2f, 2f);
+            Crate(parent, -60f, -10f, 2f, 1.2f, 2f);
             Crate(parent, -62f, 0f, 1.2f, 1.2f, 1.2f);
             Crate(parent, -72f, 1f, 3f, 1.5f, 1.5f);
             HalfWall(parent, -64f, -16f, 4f, 0f);
@@ -1004,7 +1088,6 @@ namespace ChokeHold.EditorTools
             Crate(parent, -15f, 33f, 1.4f, 1.4f, 1.4f);
 
             // South Courtyard
-            CreateBox(parent, "Courtyard_Truck", new Vector3(-16f, 1.5f, -30f), new Vector3(6f, 3f, 3f), containerBlueMat);
             Container(parent, -2f, -22f, 90f, containerRedMat);
             Crate(parent, -22f, -20f, 2f, 1.2f, 2f);
             Crate(parent, 4f, -34f, 1.5f, 1.5f, 1.5f);
@@ -1049,7 +1132,7 @@ namespace ChokeHold.EditorTools
             // East Yard
             Crate(parent, 54f, 30f, 2f, 2f, 2f);
             Crate(parent, 70f, 24f, 2f, 2f, 2f);
-            Container(parent, 64f, 17f, 0f, containerBlueMat);
+            Container(parent, 73f, 31f, 0f, containerBlueMat);
             HalfWall(parent, 52f, 14f, 3f, 90f);
             Crate(parent, 72f, 12f, 1.5f, 1.5f, 1.5f);
 
@@ -1203,7 +1286,7 @@ namespace ChokeHold.EditorTools
             CreateDummy(dummies, "Dummy_Defender_SiteA", new Vector3(-40f, 0f, 37f));
             CreateDummy(dummies, "Dummy_Defender_SiteB", new Vector3(44f, 0f, -8f));
             CreateDummy(dummies, "Dummy_Defender_MidLab", new Vector3(12f, 0f, 20f));
-            CreateDummy(dummies, "Dummy_Defender_Courtyard", new Vector3(-8f, 0f, -26f));
+            CreateDummy(dummies, "Dummy_Defender_Courtyard", new Vector3(0f, 0f, -28f));
             CreateDummy(dummies, "Dummy_Defender_LabUpper", new Vector3(-2f, UpperFloorHeight, 20f));
             CreateDummy(dummies, "Dummy_Defender_AHeaven", new Vector3(-28f, UpperFloorHeight, 52f));
         }
