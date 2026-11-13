@@ -24,7 +24,7 @@ namespace ChokeHold.EditorTools
     ///  - CHOKEHOLD > Map > Build Blacksite K-17        : doar (re)genereaza harta;
     ///  - CHOKEHOLD > Map > Capture Preview Images      : salveaza imagini cu harta in Docs/.
     /// </summary>
-    public static class BlacksiteK17MapBuilder
+    public static partial class BlacksiteK17MapBuilder
     {
         private const string RootName = "MAP_BlacksiteK17_Generated";
         private const string MaterialFolder = "Assets/_Project/Art/Materials/Greybox";
@@ -68,63 +68,6 @@ namespace ChokeHold.EditorTools
             public Vector3 Size2D => new Vector3(XMax - XMin, 0f, ZMax - ZMin);
         }
 
-        private static readonly Area[] WalkableAreas =
-        {
-            // Atacatori (Team 1) - sud-vest
-            new Area("T1 Spawn",            -68f, -54f, -44f, -28f),
-            new Area("T1 Ramp",             -60f, -30f, -34f, -16f),
-            new Area("T1 Walkway South",    -36f, -22f, -26f,  -8f),
-            new Area("T1 Walkway North",    -28f, -12f, -18f,   0f),
-
-            // Vest -> A
-            new Area("West Outpost",        -78f, -22f, -54f,   6f),
-            new Area("West Rocks",          -56f,  -4f, -42f,  14f),
-            new Area("A Control",           -46f,  10f, -34f,  24f),
-
-            // Bombsite A - nord-vest (cladire inchisa, lupta de aproape)
-            new Area("Bombsite A",          -58f,  22f, -24f,  56f),
-            new Area("A Ramp",              -26f,  28f, -12f,  36f),
-            new Area("A Heaven Door",       -26f,  48f, -22f,  56f),
-            new Area("A Catwalks",          -22f,  40f, -10f,  56f),
-
-            // Mid
-            new Area("Mid Connector",       -22f,  -2f, -12f,  42f),
-            new Area("Mid West Corridor",   -22f,  -6f,  -2f,   2f),
-            new Area("Choke Point",          -4f, -16f,  10f,   4f),
-            new Area("Lab South Door",        0f,   2f,   6f,  12f),
-            new Area("Mid Lab",             -10f,  10f,  18f,  38f),
-            new Area("Lab West Door",       -12f,  22f, -10f,  24f),
-            new Area("Lab North Door",        0f,  36f,   6f,  44f),
-            new Area("Lab Annex Door",       18f,  32f,  20f,  34f),
-            new Area("Lab Annex",            20f,  22f,  42f,  38f),
-            new Area("Annex South Passage",  30f,  16f,  32f,  22f),
-            new Area("Annex East Door",      42f,  28f,  46f,  30f),
-            new Area("Mid East Corridor",    20f,   6f,  48f,  16f),
-            new Area("Mid East Bend",         8f,  -4f,  24f,   8f),
-
-            // Nord - culoar lung de sniper, cu catwalk deasupra
-            new Area("North Overlook",      -12f,  42f,  58f,  56f),
-
-            // Aparatori (Team 2) - nord-est
-            new Area("T2 Spawn",             56f,  36f,  78f,  58f),
-            new Area("East Yard",            46f,   8f,  78f,  38f),
-            new Area("Yard To Hangar",       58f,   0f,  66f,  10f),
-            new Area("Hangar North Door",    38f,   0f,  44f,   8f),
-
-            // Sud
-            new Area("South Courtyard",     -28f, -40f,  16f, -14f),
-            new Area("South Lane",          -22f, -46f,  24f, -38f),
-            new Area("Tunnel Hatch",          8f, -52f,  12f, -46f),
-            new Area("South Tunnel",        -54f, -58f,  24f, -52f),
-
-            // Bombsite B - sud-est (hangar deschis)
-            new Area("Hangar / Bombsite B",  22f, -40f,  78f,   2f),
-            new Area("Loading Bay",          22f, -56f,  60f, -38f),
-        };
-
-        // Zonele de plantare (folosite si pentru podeaua galbena).
-        private static readonly Area SiteA = new Area("A", -48f, 34f, -30f, 52f);
-        private static readonly Area SiteB = new Area("B", 36f, -28f, 54f, -8f);
 
         private static readonly Vector3 PlayerStart = new Vector3(-56f, 0.1f, -44f);
 
@@ -162,57 +105,6 @@ namespace ChokeHold.EditorTools
         {
             WipeOldMapObjects();
             Build();
-        }
-
-        [MenuItem("CHOKEHOLD/Map/Build Blacksite K-17")]
-        public static void Build()
-        {
-            groundLayer = LayerMask.NameToLayer("Ground");
-            if (groundLayer < 0)
-            {
-                groundLayer = 0;
-            }
-
-            coverIndex = 0;
-            CreateMaterials();
-            RemoveExistingRoot();
-
-            GameObject root = new GameObject(RootName);
-            Undo.RegisterCreatedObjectUndo(root, "Build Blacksite K-17");
-
-            Transform floors = CreateGroup(root.transform, "Floors");
-            Transform walls = CreateGroup(root.transform, "Walls");
-            Transform vertical = CreateGroup(root.transform, "Stairs And Low Platforms");
-            Transform upper = CreateGroup(root.transform, UpperGroupName);
-            Transform roofs = CreateGroup(root.transform, "Roofs");
-            Transform doors = CreateGroup(root.transform, "Doors");
-            Transform structures = CreateGroup(root.transform, "Structures");
-            Transform cover = CreateGroup(root.transform, "Cover");
-            Transform gameplay = CreateGroup(root.transform, "Gameplay");
-            Transform zones = CreateGroup(root.transform, "Zones (editor labels)");
-            Transform lights = CreateGroup(root.transform, "Lights");
-
-            BuildFloors(floors);
-            BuildWalls(walls);
-            BuildStairs(vertical);
-            BuildUpperLevel(upper);
-            BuildRoofs(roofs);
-            BuildDoors(doors);
-            BuildStructures(structures);
-            BuildCover(cover);
-            BuildGameplay(gameplay);
-            BuildZoneLabels(zones);
-            BuildLights(lights);
-
-            MovePlayerToSpawn();
-
-            EditorSceneManager.MarkSceneDirty(root.scene);
-            Selection.activeGameObject = root;
-
-            Debug.Log(
-                "Blacksite K-17 generat: 160 x 120 m. " +
-                "Modifica layout-ul in BlacksiteK17MapBuilder.WalkableAreas si regenereaza."
-            );
         }
 
         [MenuItem("CHOKEHOLD/Map/Clear Generated Map")]
@@ -268,26 +160,6 @@ namespace ChokeHold.EditorTools
             return light != null && light.type == LightType.Directional;
         }
 
-        // ------------------------------------------------------------------
-        // Podea
-        // ------------------------------------------------------------------
-        private static void BuildFloors(Transform parent)
-        {
-            CreateBox(
-                parent,
-                "Floor_Base",
-                new Vector3((MinX + MaxX) * 0.5f, -0.25f, (MinZ + MaxZ) * 0.5f),
-                new Vector3(MaxX - MinX, 0.5f, MaxZ - MinZ),
-                floorMat
-            );
-
-            // Suprafete colorate ca sa recunosti zonele importante din prima.
-            CreateFloorDecal(parent, "Floor_T1Spawn", -68f, -54f, -44f, -28f, t1FloorMat);
-            CreateFloorDecal(parent, "Floor_T2Spawn", 56f, 36f, 78f, 58f, t2FloorMat);
-            CreateFloorDecal(parent, "Floor_SiteA", SiteA.XMin, SiteA.ZMin, SiteA.XMax, SiteA.ZMax, siteFloorMat);
-            CreateFloorDecal(parent, "Floor_SiteB", SiteB.XMin, SiteB.ZMin, SiteB.XMax, SiteB.ZMax, siteFloorMat);
-        }
-
         private static void CreateFloorDecal(
             Transform parent, string name,
             float xMin, float zMin, float xMax, float zMax,
@@ -302,125 +174,6 @@ namespace ChokeHold.EditorTools
                 new Vector3(xMax - xMin, thickness, zMax - zMin),
                 material
             );
-        }
-
-        // ------------------------------------------------------------------
-        // Pereti: tot ce nu e walkable devine bloc solid (greedy merge pe grila)
-        // ------------------------------------------------------------------
-        private static void BuildWalls(Transform parent)
-        {
-            int nx = Mathf.RoundToInt((MaxX - MinX) / Cell);
-            int nz = Mathf.RoundToInt((MaxZ - MinZ) / Cell);
-
-            bool[,] walkable = new bool[nx, nz];
-
-            for (int i = 0; i < nx; i++)
-            {
-                for (int j = 0; j < nz; j++)
-                {
-                    float cx = MinX + (i + 0.5f) * Cell;
-                    float cz = MinZ + (j + 0.5f) * Cell;
-
-                    foreach (Area area in WalkableAreas)
-                    {
-                        if (cx > area.XMin && cx < area.XMax &&
-                            cz > area.ZMin && cz < area.ZMax)
-                        {
-                            walkable[i, j] = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            bool[,] used = new bool[nx, nz];
-            int wallIndex = 0;
-
-            for (int j = 0; j < nz; j++)
-            {
-                for (int i = 0; i < nx; i++)
-                {
-                    if (walkable[i, j] || used[i, j])
-                    {
-                        continue;
-                    }
-
-                    int width = 1;
-                    while (i + width < nx &&
-                           !walkable[i + width, j] &&
-                           !used[i + width, j])
-                    {
-                        width++;
-                    }
-
-                    int depth = 1;
-                    bool canGrow = true;
-                    while (j + depth < nz && canGrow)
-                    {
-                        for (int k = 0; k < width; k++)
-                        {
-                            if (walkable[i + k, j + depth] || used[i + k, j + depth])
-                            {
-                                canGrow = false;
-                                break;
-                            }
-                        }
-
-                        if (canGrow)
-                        {
-                            depth++;
-                        }
-                    }
-
-                    for (int a = 0; a < width; a++)
-                    {
-                        for (int b = 0; b < depth; b++)
-                        {
-                            used[i + a, j + b] = true;
-                        }
-                    }
-
-                    bool touchesBorder =
-                        i == 0 || j == 0 ||
-                        i + width == nx || j + depth == nz;
-
-                    float height = touchesBorder ? OuterWallHeight : InnerWallHeight;
-
-                    float x0 = MinX + i * Cell;
-                    float z0 = MinZ + j * Cell;
-                    float sizeX = width * Cell;
-                    float sizeZ = depth * Cell;
-
-                    CreateBox(
-                        parent,
-                        $"Wall_{wallIndex:000}",
-                        new Vector3(x0 + sizeX * 0.5f, height * 0.5f, z0 + sizeZ * 0.5f),
-                        new Vector3(sizeX, height, sizeZ),
-                        touchesBorder ? outerWallMat : wallMat
-                    );
-
-                    wallIndex++;
-                }
-            }
-
-            // Colturi taiate la 45 de grade - dau forma octogonala a spawn-urilor si a hangarului.
-            Transform chamfers = CreateGroup(parent, "Chamfers");
-
-            Chamfer(chamfers, "T1Spawn_SW", -68f, -54f, 1, 1, 6f);
-            Chamfer(chamfers, "T1Spawn_NW", -68f, -28f, 1, -1, 6f);
-
-            Chamfer(chamfers, "T2Spawn_NE", 78f, 58f, -1, -1, 7f);
-
-            Chamfer(chamfers, "Outpost_SW", -78f, -22f, 1, 1, 6f);
-            Chamfer(chamfers, "Outpost_NW", -78f, 6f, 1, -1, 6f);
-
-            Chamfer(chamfers, "Hangar_NE", 78f, 2f, -1, -1, 9f);
-            Chamfer(chamfers, "Hangar_SE", 78f, -40f, -1, 1, 9f);
-            Chamfer(chamfers, "LoadingBay_SE", 60f, -56f, -1, 1, 6f);
-
-            Chamfer(chamfers, "EastYard_SE", 78f, 8f, -1, 1, 6f);
-            Chamfer(chamfers, "SiteA_NW", -58f, 56f, 1, -1, 5f);
-            Chamfer(chamfers, "SiteA_SW", -58f, 22f, 1, 1, 5f);
         }
 
         /// <summary>
@@ -447,145 +200,12 @@ namespace ChokeHold.EditorTools
             wall.transform.rotation = Quaternion.LookRotation(b - a);
         }
 
-        // ------------------------------------------------------------------
-        // Scari (rampe) intre parter si etaj + platforme joase
-        // ------------------------------------------------------------------
-        private static void BuildStairs(Transform parent)
-        {
-            float up = UpperFloorHeight;
-
-            // Nord / A
-            CreateRamp(parent, "Stairs_T2_To_Catwalk", 46f, 52f, 54f, 56f, Vector3.left, up);
-            CreateRamp(parent, "Stairs_A_Heaven", -34f, 38f, -30f, 46f, Vector3.forward, up);
-            CreateRamp(parent, "Stairs_A_SouthGallery", -52f, 22f, -44f, 26f, Vector3.right, up);
-
-            // Mid Lab + anexa
-            CreateRamp(parent, "Stairs_Lab_SouthWest", -10f, 12f, -6f, 20f, Vector3.forward, up);
-            CreateRamp(parent, "Stairs_Lab_NorthEast", 14f, 28f, 18f, 36f, Vector3.forward, up);
-            CreateRamp(parent, "Stairs_Annex", 32f, 22f, 40f, 26f, Vector3.right, up);
-            CreateRamp(parent, "Stairs_EastYard", 46f, 18f, 50f, 26f, Vector3.forward, up);
-
-            // Hangar
-            CreateRamp(parent, "Stairs_Hangar_West", 22f, -42f, 26f, -34f, Vector3.forward, up);
-            CreateRamp(parent, "Stairs_Hangar_North", 50f, -2f, 58f, 2f, Vector3.left, up);
-
-            // A Platform - coltul nord-vestic al site-ului, usor ridicat
-            CreatePlatform(parent, "A_Platform", -56f, 44f, -44f, 54f, 1.2f);
-            CreateRamp(parent, "A_Platform_Ramp", -50f, 38f, -46f, 44f, Vector3.forward, 1.2f);
-
-            // North Overlook - balcon mic (2 m) pe latura sudica a culoarului de nord
-            CreatePlatform(parent, "North_Overlook_Balcony", 14f, 42f, 24f, 46f, 2f);
-            CreateRamp(parent, "North_Overlook_Stairs", 24f, 42f, 30f, 46f, Vector3.left, 2f);
-        }
-
-        // ------------------------------------------------------------------
-        // ETAJUL (4 m): planseele cladirilor, pasarelele dintre ele, balcoane, trape
-        //
-        // Reteaua de sus:  rampa T2 -> North Catwalk -> A Heaven -> galeriile A
-        //                  North Catwalk -> pod -> Mid Lab etaj -> anexa etaj -> balcon East Yard
-        //                  galeria A -> pod peste A Ramp / Mid Connector -> Mid Lab etaj
-        //                  Hangar: pasarela vest + mezanin nord + balcon spre Mid East
-        // ------------------------------------------------------------------
-        private static void BuildUpperLevel(Transform parent)
-        {
-            float up = UpperFloorHeight;
-
-            // --- North Catwalk: linie lunga de sniper deasupra North Overlook
-            CreatePlatform(parent, "North_Catwalk", -24f, 52f, 46f, 56f, up);
-            Railing(parent, "North_Catwalk_Rail_W", -22f, 52f, 1f, 52f, up);
-            Railing(parent, "North_Catwalk_Rail_E", 5f, 52f, 46f, 52f, up);
-
-            for (float x = -16f; x <= 40f; x += 14f)
-            {
-                CreateBox(parent, $"North_Catwalk_Pillar_{x:0}", new Vector3(x, GroundCeiling * 0.5f, 52.3f),
-                    new Vector3(0.5f, GroundCeiling, 0.5f), pipeMat);
-            }
-
-            CreatePlatform(parent, "Bridge_Catwalk_To_Lab", 1f, 44f, 5f, 52f, up);
-            Railing(parent, "Bridge_Catwalk_To_Lab_Rail_W", 1f, 44f, 1f, 52f, up);
-            Railing(parent, "Bridge_Catwalk_To_Lab_Rail_E", 5f, 44f, 5f, 52f, up);
-
-            // --- Bombsite A: galerie in forma de L deasupra site-ului
-            CreatePlatform(parent, "A_Heaven", -36f, 46f, -24f, 56f, up);
-            CreatePlatform(parent, "A_Gallery_East", -30f, 26f, -24f, 46f, up);
-            CreatePlatform(parent, "A_Gallery_South", -44f, 22f, -30f, 26f, up);
-            Railing(parent, "A_Heaven_Rail_W", -36f, 46f, -36f, 56f, up);
-            Railing(parent, "A_Heaven_Rail_S", -36f, 46f, -34f, 46f, up);
-            Railing(parent, "A_Gallery_East_Rail", -30f, 26f, -30f, 46f, up);
-            Railing(parent, "A_Gallery_South_Rail", -44f, 26f, -30f, 26f, up);
-
-            // Pod de la galeria A, peste A Ramp si Mid Connector, pana la usa de vest a laboratorului
-            CreatePlatform(parent, "Bridge_A_To_Lab_1", -24f, 30f, -12f, 34f, up);
-            CreatePlatform(parent, "Bridge_A_To_Lab_2", -16f, 22f, -12f, 30f, up);
-            Railing(parent, "Bridge_A_To_Lab_Rail_N", -24f, 34f, -12f, 34f, up);
-            Railing(parent, "Bridge_A_To_Lab_Rail_S", -24f, 30f, -16f, 30f, up);
-            Railing(parent, "Bridge_A_To_Lab_Rail_W", -16f, 22f, -16f, 30f, up);
-            Railing(parent, "Bridge_A_To_Lab_Rail_End", -16f, 22f, -12f, 22f, up);
-
-            // --- Mid Lab: planseu cu goluri pentru scari si trape, balcoane peste usi
-            Slab(parent, "Lab_Floor2", up,
-                new[]
-                {
-                    new Area("Lab", -10f, 10f, 18f, 38f),
-                    new Area("South Balcony", 0f, 4f, 6f, 10f),      // deasupra Choke Point
-                    new Area("North Balcony", 0f, 38f, 6f, 44f),     // spre North Catwalk
-                    new Area("West Door", -12f, 22f, -10f, 24f),     // spre podul din A
-                    new Area("Annex Door", 18f, 32f, 20f, 34f),
-                },
-                new[]
-                {
-                    new Area("Stairs SW", -10f, 12f, -6f, 20f),
-                    new Area("Stairs NE", 14f, 28f, 18f, 36f),
-                    new Area("Hatch SE", 10f, 14f, 12f, 16f),
-                    new Area("Hatch NW", -4f, 30f, -2f, 32f),
-                });
-
-            Hatch(parent, "Hatch_Lab_SE", 10f, 14f, 12f, 16f, up);
-            Hatch(parent, "Hatch_Lab_NW", -4f, 30f, -2f, 32f, up);
-            Parapet(parent, "Lab_SouthBalcony_Parapet", 0f, 4f, 6f, 4f, up);
-            Railing(parent, "Lab_Stairs_SW_Rail", -6f, 12f, -6f, 20f, up);
-            Railing(parent, "Lab_Stairs_NE_Rail", 14f, 28f, 14f, 36f, up);
-
-            SoftWall(parent, "Lab2_SoftWall", 4f, 12f, 4f, 26f, up, 3f);
-            Crate(parent, 12f, 24f, 2f, 1.2f, 2f, up);
-            Crate(parent, -6f, 26f, 1.4f, 1.4f, 1.4f, up);
-            Crate(parent, 8f, 34f, 3f, 1f, 1.2f, up);
-
-            // --- Lab Annex: etaj, balcon cu scari in East Yard
-            Slab(parent, "Annex_Floor2", up,
-                new[]
-                {
-                    new Area("Annex", 20f, 22f, 42f, 38f),
-                    new Area("East Door", 42f, 28f, 46f, 30f),
-                },
-                new[]
-                {
-                    new Area("Stairs", 32f, 22f, 40f, 26f),
-                    new Area("Hatch", 24f, 34f, 26f, 36f),
-                });
-
-            Hatch(parent, "Hatch_Annex", 24f, 34f, 26f, 36f, up);
-            Railing(parent, "Annex_Stairs_Rail", 32f, 26f, 40f, 26f, up);
-            Crate(parent, 30f, 30f, 2f, 1.2f, 2f, up);
-
-            CreatePlatform(parent, "EastYard_Balcony", 46f, 26f, 50f, 32f, up);
-            Railing(parent, "EastYard_Balcony_Rail_E", 50f, 26f, 50f, 32f, up);
-            Railing(parent, "EastYard_Balcony_Rail_N", 46f, 32f, 50f, 32f, up);
-
-            // --- Hangar: pasarela pe vest, mezanin pe nord, balcon spre Mid East Corridor
-            CreatePlatform(parent, "Hangar_Catwalk_West", 22f, -34f, 26f, 2f, up);
-            CreatePlatform(parent, "Hangar_Mezzanine_North", 26f, -2f, 50f, 2f, up);
-            CreatePlatform(parent, "Hangar_North_Balcony", 38f, 2f, 44f, 8f, up);
-            Railing(parent, "Hangar_Catwalk_West_Rail", 26f, -34f, 26f, -2f, up);
-            Railing(parent, "Hangar_Mezzanine_Rail", 26f, -2f, 50f, -2f, up);
-            Parapet(parent, "Hangar_North_Balcony_Parapet", 38f, 8f, 44f, 8f, up);
-        }
-
         /// <summary>
         /// Planseu la inaltimea top: acopera dreptunghiurile "solids", mai putin golurile "holes"
         /// (scari, trape). Toate coordonatele trebuie aliniate la grila de 2 m.
         /// </summary>
-        private static void Slab(Transform parent, string name, float top, Area[] solids, Area[] holes)
+        private static void Slab(Transform parent, string name, float top, Area[] solids, Area[] holes,
+            Material material = null)
         {
             float xMin = float.MaxValue, zMin = float.MaxValue;
             float xMax = float.MinValue, zMax = float.MinValue;
@@ -669,7 +289,7 @@ namespace ChokeHold.EditorTools
                             top - SlabThickness * 0.5f,
                             zMin + j * Cell + sizeZ * 0.5f),
                         new Vector3(sizeX, SlabThickness, sizeZ),
-                        upperFloorMat
+                        material != null ? material : upperFloorMat
                     );
                 }
             }
@@ -844,16 +464,6 @@ namespace ChokeHold.EditorTools
             );
         }
 
-        // ------------------------------------------------------------------
-        // Acoperisuri si pereti interiori
-        // ------------------------------------------------------------------
-        private static void BuildRoofs(Transform parent)
-        {
-            CreateRoof(parent, "Roof_SouthTunnel", -42f, -58f, 20f, -52f, 4f);
-            CreateRoof(parent, "Roof_MidLab", -10f, 10f, 18f, 38f, 2f * UpperFloorHeight);
-            CreateRoof(parent, "Roof_LabAnnex", 20f, 22f, 42f, 38f, 2f * UpperFloorHeight);
-        }
-
         private static void CreateRoof(Transform parent, string name,
             float xMin, float zMin, float xMax, float zMax, float height)
         {
@@ -887,41 +497,6 @@ namespace ChokeHold.EditorTools
                 size,
                 wallMat
             );
-        }
-
-        // ------------------------------------------------------------------
-        // Usi (SimpleDoor - se deschid cu F)
-        // ------------------------------------------------------------------
-        private static void BuildDoors(Transform parent)
-        {
-            // Golurile de usa au 2 m latime si trec printr-un perete de 2 m grosime.
-            Door(parent, "Door_LabWest", new Vector3(-11f, 0f, 22f), Vector3.forward, 2f);
-            Door(parent, "Door_LabAnnex", new Vector3(19f, 0f, 32f), Vector3.forward, 2f);
-            Door(parent, "Door_AnnexEast", new Vector3(44f, 0f, 28f), Vector3.forward, 2f);
-
-            // Buiandrugi: inchid golul deasupra usilor.
-            // Unde exista etaj deasupra, buiandrugul se opreste sub planseu (golul de la etaj ramane liber).
-            Lintel(parent, "Lintel_LabWest", -12f, 22f, -10f, 24f, GroundCeiling);
-            Lintel(parent, "Lintel_LabAnnex", 18f, 32f, 20f, 34f, GroundCeiling);
-            Lintel(parent, "Lintel_AnnexEast", 42f, 28f, 46f, 30f, GroundCeiling);
-            Lintel(parent, "Lintel_AnnexSouth", 30f, 16f, 32f, 22f, InnerWallHeight);
-
-            // Puncte de baricada: deschideri pe care aparatorii le pot inchide in faza de pregatire.
-            Transform barricades = CreateGroup(parent, "Barricade Points");
-            float up = UpperFloorHeight;
-
-            // Parter
-            Barricade(barricades, "Barricade_LabSouthDoor", 3f, 7f, 0f, 6f, GroundCeiling, true);
-            Barricade(barricades, "Barricade_LabNorthDoor", 3f, 40f, 0f, 6f, GroundCeiling, true);
-            Barricade(barricades, "Barricade_AnnexSouth", 31f, 19f, 0f, 2f, 2.5f, true);
-            Barricade(barricades, "Barricade_HangarNorthDoor", 41f, 4f, 0f, 6f, GroundCeiling, true);
-            Barricade(barricades, "Barricade_HangarWestDoor", 23f, -1f, 0f, 6f, GroundCeiling, false);
-            Barricade(barricades, "Barricade_TunnelHatch", 10f, -49f, 0f, 4f, 3f, true);
-
-            // Etaj
-            Barricade(barricades, "Barricade_Lab2_WestDoor", -11f, 23f, up, 2f, 3f, false);
-            Barricade(barricades, "Barricade_Lab2_AnnexDoor", 19f, 33f, up, 2f, 3f, false);
-            Barricade(barricades, "Barricade_Lab2_NorthBalcony", 3f, 40f, up, 6f, 3f, true);
         }
 
         /// <summary>
@@ -963,60 +538,6 @@ namespace ChokeHold.EditorTools
             );
         }
 
-        // ------------------------------------------------------------------
-        // Structuri care sparg spatiile deschise: cladiri mici, ziduri, stalpi.
-        // Rolul lor este sa taie liniile lungi de tragere si sa creeze culoare si colturi.
-        // ------------------------------------------------------------------
-        private static void BuildStructures(Transform parent)
-        {
-            float wall = GroundCeiling;
-
-            // --- South Courtyard: magazie in centru + ziduri care o impart in trei culoare
-            Block(parent, "Courtyard_Shed", -15f, -32f, -5f, -24f, 4f);
-            InnerWall(parent, "Courtyard_Wall_East", 7f, -34f, 7f, -26f, wall);
-            InnerWall(parent, "Courtyard_Wall_SouthWest", -20f, -40f, -20f, -34f, wall);
-            InnerWall(parent, "Courtyard_Wall_North", -14f, -18f, -6f, -18f, wall);
-
-            // --- Hangar: utilaj pe vest, zid sub mezanin, rand de containere care separa B de B Long
-            Block(parent, "Hangar_Machine", 28f, -18f, 34f, -10f, wall);
-            InnerWall(parent, "Hangar_Wall_North_1", 28f, -6f, 36f, -6f, wall);
-            InnerWall(parent, "Hangar_Wall_North_2", 44f, -6f, 48f, -6f, wall);
-            Container(parent, 59f, -14f, 0f, containerRedMat);
-            Container(parent, 59f, -22f, 0f, containerBlueMat);
-            Container(parent, 59f, -22f, 0f, containerRedMat, 2.6f);
-            Container(parent, 59f, -31f, 0f, containerBlueMat);
-            Crate(parent, 40f, -34f, 2f, 1.2f, 2f);
-            Crate(parent, 56f, -37f, 2f, 2f, 2f);
-
-            // --- East Yard: cladire de generator in mijloc -> curtea devine un inel
-            Block(parent, "Yard_Generator", 58f, 20f, 68f, 28f, 4f);
-
-            // --- North Overlook: ziduri alternate care rup linia de la sol (catwalk-ul ramane linie de sniper)
-            InnerWall(parent, "Overlook_Stub_West", -6f, 42f, -6f, 47f, wall);
-            InnerWall(parent, "Overlook_Stub_Mid", 30f, 47f, 30f, 52f, wall);
-            InnerWall(parent, "Overlook_Stub_East", 46f, 42f, 46f, 47f, wall);
-
-            // --- West Outpost / T1 Ramp / West Rocks
-            Block(parent, "Outpost_Tower", -70f, -14f, -64f, -8f, 4f);
-            InnerWall(parent, "T1Ramp_Wall", -44f, -30f, -44f, -23f, wall);
-            Rock(parent, "WestRocks_Rock_1", new Vector3(-49f, 0f, 2f), new Vector3(4f, 2.5f, 3f), 25f);
-            Rock(parent, "WestRocks_Rock_2", new Vector3(-52f, 0f, 10f), new Vector3(3f, 2f, 2.5f), -15f);
-
-            // --- Bombsite A: generator in mijlocul site-ului
-            Block(parent, "A_Generator", -46f, 34f, -42f, 38f, 2.5f);
-
-            // --- Mid East Corridor / South Lane
-            Block(parent, "MidEast_Pillar", 27f, 10f, 29f, 12f, wall);
-            InnerWall(parent, "SouthLane_Stub_West", -10f, -46f, -10f, -42f, wall);
-            InnerWall(parent, "SouthLane_Stub_East", 14f, -42f, 14f, -38f, wall);
-
-            // --- South Tunnel: stalpi alternati, ca tunelul sa nu fie un singur culoar drept de 78 m
-            Block(parent, "Tunnel_Pillar_1", -35f, -58f, -33f, -56.6f, wall);
-            Block(parent, "Tunnel_Pillar_2", -25f, -53.4f, -23f, -52f, wall);
-            Block(parent, "Tunnel_Pillar_3", -5f, -58f, -3f, -56.6f, wall);
-            Block(parent, "Tunnel_Pillar_4", 13f, -53.4f, 15f, -52f, wall);
-        }
-
         /// <summary>Bloc solid (cladire mica, utilaj, stalp) pe dreptunghiul dat.</summary>
         private static void Block(Transform parent, string name,
             float xMin, float zMin, float xMax, float zMax, float height)
@@ -1043,122 +564,6 @@ namespace ChokeHold.EditorTools
             );
 
             rock.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
-        }
-
-        // ------------------------------------------------------------------
-        // Cover, containere, tevi, rezervoare, pereti interiori
-        // ------------------------------------------------------------------
-        private static void BuildCover(Transform parent)
-        {
-            // T1 Ramp (iesirea din spawn)
-            Crate(parent, -48f, -20f, 2f, 1.2f, 2f);
-            HalfWall(parent, -40f, -26f, 3f, 90f);
-            Crate(parent, -31f, -16f, 1.4f, 1.4f, 1.4f);
-
-            // West Outpost
-            Crate(parent, -60f, -10f, 2f, 1.2f, 2f);
-            Crate(parent, -62f, 0f, 1.2f, 1.2f, 1.2f);
-            Crate(parent, -72f, 1f, 3f, 1.5f, 1.5f);
-            HalfWall(parent, -64f, -16f, 4f, 0f);
-            CreateBox(parent, "Outpost_Shed", new Vector3(-74f, 1.5f, -4f), new Vector3(4f, 3f, 5f), containerBlueMat);
-
-            // West Rocks / A Control
-            Crate(parent, -50f, 6f, 2f, 1.5f, 2f);
-            Crate(parent, -38f, 16f, 1.5f, 1.5f, 1.5f);
-            HalfWall(parent, -43f, 20f, 3f, 0f);
-
-            // Bombsite A - tevi pe latura vestica, rezervoare in centru
-            InnerWall(parent, "A_Pipes_Wall_South", -50f, 26f, -50f, 34f, 3.5f);
-            SoftWall(parent, "A_Pipes_SoftWall", -50f, 38f, -50f, 42f, 0f, 3.5f);
-            Pipe(parent, "A_Pipe_West_Low", new Vector3(-57.3f, 0.6f, 24f), new Vector3(-57.3f, 0.6f, 44f), 0.9f);
-            Pipe(parent, "A_Pipe_West_High", new Vector3(-57.3f, 1.8f, 24f), new Vector3(-57.3f, 1.8f, 44f), 0.7f);
-            Pipe(parent, "A_Pipe_Overhead_1", new Vector3(-58f, 4.2f, 30f), new Vector3(-36f, 4.2f, 30f), 0.6f);
-            Pipe(parent, "A_Pipe_Overhead_2", new Vector3(-58f, 4.6f, 40f), new Vector3(-44f, 4.6f, 40f), 0.6f);
-            Tank(parent, "A_Tank_Main", -36f, 31f, 4f, 4f);
-            Tank(parent, "A_Tank_Small", -27f, 42f, 3.5f, 3.4f);
-            Crate(parent, -42f, 30f, 2f, 2f, 2f);
-            Crate(parent, -54f, 30f, 1.4f, 1.4f, 1.4f);
-            Crate(parent, -40f, 52f, 1.5f, 1.5f, 1.5f);
-            Crate(parent, -50f, 49f, 1.2f, 1.2f, 1.2f, 1.2f); // pe platforma A
-            HalfWall(parent, -40f, 42f, 3f, 0f);
-
-            // A Catwalks / Mid Connector
-            Crate(parent, -16f, 46f, 2f, 1.2f, 2f);
-            Crate(parent, -17f, 16f, 1.2f, 1.2f, 1.2f);
-            Crate(parent, -15f, 33f, 1.4f, 1.4f, 1.4f);
-
-            // South Courtyard
-            Container(parent, -2f, -22f, 90f, containerRedMat);
-            Crate(parent, -22f, -20f, 2f, 1.2f, 2f);
-            Crate(parent, 4f, -34f, 1.5f, 1.5f, 1.5f);
-            Crate(parent, 10f, -24f, 2f, 2f, 2f);
-            HalfWall(parent, -8f, -36f, 4f, 0f);
-
-            // South Lane / Tunnel
-            Crate(parent, 0f, -44f, 1.5f, 1.5f, 1.5f);
-            Crate(parent, -14f, -57f, 1.2f, 1.2f, 1.2f);
-            Crate(parent, 2f, -53f, 1.2f, 1.2f, 1.2f);
-
-            // Choke / Mid East
-            Crate(parent, 8f, -10f, 1.2f, 1.2f, 1.2f);
-            Crate(parent, 16f, 4f, 1.4f, 1.4f, 1.4f);
-            Crate(parent, 36f, 8f, 2f, 1.2f, 2f);
-            HalfWall(parent, 42f, 12f, 3f, 90f);
-
-            // Mid Lab - camere despartite de pereti interiori, mese de laborator
-            // Peretii "moi" (culoare de lemn) se sparg cu gloante.
-            InnerWall(parent, "Lab_Wall_Z28_West", -10f, 28f, -2f, 28f, GroundCeiling);
-            InnerWall(parent, "Lab_Wall_Z28_East", 4f, 28f, 10f, 28f, GroundCeiling);
-            SoftWall(parent, "Lab_SoftWall_Z28", 10f, 28f, 14f, 28f, 0f, GroundCeiling);
-            InnerWall(parent, "Lab_Wall_X8_South", 8f, 10f, 8f, 18f, GroundCeiling);
-            SoftWall(parent, "Lab_SoftWall_X8", 8f, 22f, 8f, 28f, 0f, GroundCeiling);
-            Crate(parent, -3f, 15f, 4f, 1f, 1.2f);
-            Crate(parent, 13f, 14f, 4f, 1f, 1.2f);
-            Crate(parent, 9f, 34f, 4f, 1f, 1.2f);
-            Crate(parent, -6f, 33f, 1.2f, 1f, 4f);
-            Crate(parent, 3f, 20f, 2f, 1.2f, 2f);
-
-            // Lab Annex
-            Crate(parent, 32f, 35f, 6f, 1f, 1.2f);
-            Crate(parent, 24f, 26f, 1.2f, 1f, 3f);
-            SoftWall(parent, "Annex_SoftWall", 30f, 28f, 30f, 34f, 0f, GroundCeiling);
-
-            // North Overlook (cover pe linia de sniper)
-            Crate(parent, -4f, 48f, 2f, 1.2f, 2f);
-            HalfWall(parent, 36f, 48f, 4f, 0f);
-            Crate(parent, 44f, 45f, 1.5f, 1.5f, 1.5f);
-            Crate(parent, 8f, 50f, 1.4f, 1.4f, 1.4f);
-
-            // East Yard
-            Crate(parent, 54f, 30f, 2f, 2f, 2f);
-            Crate(parent, 70f, 24f, 2f, 2f, 2f);
-            Container(parent, 73f, 31f, 0f, containerBlueMat);
-            HalfWall(parent, 52f, 14f, 3f, 90f);
-            Crate(parent, 72f, 12f, 1.5f, 1.5f, 1.5f);
-
-            // Hangar / Bombsite B
-            Container(parent, 40f, -18f, 90f, containerRedMat);
-            Crate(parent, 50f, -24f, 2f, 2f, 2f);
-            Crate(parent, 48f, -12f, 2f, 2f, 2f);
-            Crate(parent, 48f, -12f, 1.4f, 1.4f, 1.4f, 2f);
-            Container(parent, 31f, -30f, 0f, containerBlueMat);
-            Container(parent, 52f, -4f, 90f, containerRedMat);
-            Crate(parent, 34f, -4f, 1.5f, 1.5f, 1.5f);
-
-            // Container Stack - latura estica a hangarului
-            Container(parent, 67f, -10f, 0f, containerRedMat);
-            Container(parent, 67f, -10f, 0f, containerBlueMat, 2.6f);
-            Container(parent, 73f, -18f, 0f, containerBlueMat);
-            Container(parent, 67f, -26f, 0f, containerBlueMat);
-            Container(parent, 73f, -30f, 0f, containerRedMat);
-            Container(parent, 73f, -30f, 0f, containerRedMat, 2.6f);
-
-            // Loading Bay
-            Container(parent, 32f, -48f, 90f, containerBlueMat);
-            Container(parent, 46f, -52f, 90f, containerRedMat);
-            Container(parent, 46f, -52f, 90f, containerBlueMat, 2.6f);
-            Crate(parent, 40f, -44f, 2f, 1.2f, 2f);
-            Crate(parent, 54f, -46f, 1.5f, 1.5f, 1.5f);
         }
 
         private static void Crate(Transform parent, float x, float z,
@@ -1234,63 +639,6 @@ namespace ChokeHold.EditorTools
             FinishStaticObject(pipe, pipeMat);
         }
 
-        // ------------------------------------------------------------------
-        // Gameplay: spawn-uri, bombsite-uri, bucla de runda, manechine
-        // ------------------------------------------------------------------
-        private static void BuildGameplay(Transform parent)
-        {
-            Transform t1 = CreateGroup(parent, "Spawns_T1_Attackers");
-            Vector3[] t1Points =
-            {
-                new Vector3(-60f, 0.1f, -44f),
-                PlayerStart,
-                new Vector3(-52f, 0.1f, -44f),
-                new Vector3(-58f, 0.1f, -38f),
-                new Vector3(-54f, 0.1f, -38f),
-            };
-
-            for (int i = 0; i < t1Points.Length; i++)
-            {
-                CreateSpawnPoint(t1, $"Spawn_T1_{i + 1}", t1Points[i], 0f, Team.Attackers);
-            }
-
-            Transform t2 = CreateGroup(parent, "Spawns_T2_Defenders");
-            Vector3[] t2Points =
-            {
-                new Vector3(64f, 0.1f, 50f),
-                new Vector3(68f, 0.1f, 50f),
-                new Vector3(72f, 0.1f, 50f),
-                new Vector3(66f, 0.1f, 44f),
-                new Vector3(70f, 0.1f, 44f),
-            };
-
-            for (int i = 0; i < t2Points.Length; i++)
-            {
-                CreateSpawnPoint(t2, $"Spawn_T2_{i + 1}", t2Points[i], 225f, Team.Defenders);
-            }
-
-            CreateBombSite(parent, "BombSite_A", SiteA);
-            CreateBombSite(parent, "BombSite_B", SiteB);
-
-            // Bucla de runda + bomba + HUD (HUD-ul isi construieste singur Canvas-ul).
-            GameObject gameMode = new GameObject("GameMode");
-            gameMode.transform.SetParent(parent, false);
-            gameMode.AddComponent<RoundManager>();
-            gameMode.AddComponent<BombController>();
-            gameMode.AddComponent<DefenderPrepController>();
-            gameMode.AddComponent<ChokeHold.UI.RoundHUD>();
-
-            // Manechine de test in echipa aparatorilor, pana exista boti:
-            // daca le elimini pe toate, atacatorii castiga runda.
-            Transform dummies = CreateGroup(parent, "TestDummies_Defenders");
-            CreateDummy(dummies, "Dummy_Defender_SiteA", new Vector3(-40f, 0f, 37f));
-            CreateDummy(dummies, "Dummy_Defender_SiteB", new Vector3(44f, 0f, -8f));
-            CreateDummy(dummies, "Dummy_Defender_MidLab", new Vector3(12f, 0f, 20f));
-            CreateDummy(dummies, "Dummy_Defender_Courtyard", new Vector3(0f, 0f, -28f));
-            CreateDummy(dummies, "Dummy_Defender_LabUpper", new Vector3(-2f, UpperFloorHeight, 20f));
-            CreateDummy(dummies, "Dummy_Defender_AHeaven", new Vector3(-28f, UpperFloorHeight, 52f));
-        }
-
         private static void CreateDummy(Transform parent, string name, Vector3 feetPosition)
         {
             GameObject dummy = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -1338,73 +686,6 @@ namespace ChokeHold.EditorTools
             SerializedObject serialized = new SerializedObject(site);
             serialized.FindProperty("siteId").stringValue = area.Name;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        // ------------------------------------------------------------------
-        // Etichete de zone pentru Scene view
-        // ------------------------------------------------------------------
-        private static void BuildZoneLabels(Transform parent)
-        {
-            foreach (Area area in WalkableAreas)
-            {
-                GameObject go = new GameObject($"Zone_{area.Name}");
-                go.transform.SetParent(parent, false);
-                go.transform.position = area.Center;
-
-                MapZone zone = go.AddComponent<MapZone>();
-                SerializedObject serialized = new SerializedObject(zone);
-                serialized.FindProperty("displayName").stringValue = area.Name;
-                serialized.FindProperty("size").vector3Value = new Vector3(area.Size2D.x, 3f, area.Size2D.z);
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
-        }
-
-        // ------------------------------------------------------------------
-        // Lumini
-        // ------------------------------------------------------------------
-        private static void BuildLights(Transform parent)
-        {
-            bool hasDirectional = false;
-            foreach (Light light in Object.FindObjectsByType<Light>())
-            {
-                if (light.type == LightType.Directional)
-                {
-                    hasDirectional = true;
-                    break;
-                }
-            }
-
-            if (!hasDirectional)
-            {
-                GameObject sun = new GameObject("Map_Sun");
-                sun.transform.SetParent(parent, false);
-                sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-                Light sunLight = sun.AddComponent<Light>();
-                sunLight.type = LightType.Directional;
-                sunLight.intensity = 1.2f;
-                sunLight.shadows = LightShadows.Soft;
-            }
-
-            // Tunelul si laboratorul sunt acoperite - au nevoie de lumina proprie.
-            for (float x = -40f; x <= 16f; x += 14f)
-            {
-                CreatePointLight(parent, $"Light_Tunnel_{x:0}", new Vector3(x, 3.4f, -55f),
-                    new Color(1f, 0.75f, 0.45f), 12f, 2.5f);
-            }
-
-            Color labColor = new Color(0.75f, 0.9f, 1f);
-            float low = GroundCeiling - 0.4f;
-            float high = 2f * UpperFloorHeight - 0.6f;
-
-            CreatePointLight(parent, "Light_Lab_SW", new Vector3(-2f, low, 18f), labColor, 14f, 2.5f);
-            CreatePointLight(parent, "Light_Lab_SE", new Vector3(13f, low, 18f), labColor, 12f, 2.5f);
-            CreatePointLight(parent, "Light_Lab_North", new Vector3(4f, low, 33f), labColor, 14f, 2.5f);
-            CreatePointLight(parent, "Light_Annex", new Vector3(31f, low, 30f), labColor, 14f, 2.5f);
-
-            // Etaj
-            CreatePointLight(parent, "Light_Lab2_South", new Vector3(4f, high, 17f), labColor, 16f, 2.5f);
-            CreatePointLight(parent, "Light_Lab2_North", new Vector3(4f, high, 31f), labColor, 16f, 2.5f);
-            CreatePointLight(parent, "Light_Annex2", new Vector3(31f, high, 30f), labColor, 16f, 2.5f);
         }
 
         private static void CreatePointLight(Transform parent, string name, Vector3 position,
@@ -1720,6 +1001,32 @@ namespace ChokeHold.EditorTools
                     new Vector3(0f, 150f, 0f), Quaternion.Euler(90f, 0f, 0f),
                     true, 61f, 1600, 1200
                 );
+
+                // Subteranul: ascundem si peretii si podeaua, ca sa se vada santul tunelului.
+                string[] aboveGround = { WallGroupName, FloorGroupName, StairGroupName };
+                List<GameObject> hiddenGroups = new List<GameObject>();
+
+                foreach (string groupName in aboveGround)
+                {
+                    Transform group = root.transform.Find(groupName);
+
+                    if (group != null && group.gameObject.activeSelf)
+                    {
+                        group.gameObject.SetActive(false);
+                        hiddenGroups.Add(group.gameObject);
+                    }
+                }
+
+                Capture(
+                    Path.Combine(docs, "BlacksiteK17_TopDown_Underground.png"),
+                    new Vector3(0f, 150f, 0f), Quaternion.Euler(90f, 0f, 0f),
+                    true, 61f, 1600, 1200
+                );
+
+                foreach (GameObject group in hiddenGroups)
+                {
+                    group.SetActive(true);
+                }
 
                 if (upper != null)
                 {

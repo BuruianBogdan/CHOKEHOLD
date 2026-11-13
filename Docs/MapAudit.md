@@ -167,3 +167,53 @@ Un commit pe fază, pe branch-ul `map/polish-pass`. Builder-ul se împarte de la
 2. **Scara rămâne 160 × 120 m** (recomandat)?
 3. **Forme:** păstrez grila ortogonală cu colțuri teșite (recomandat, validatorul și grila de 2 m rămân
    simple) sau trec hangarul și spawn-urile pe octogoane adevărate?
+
+---
+
+# Rezultate Faza 1 — completare și închidere
+
+Măsurat din nou în scenă după reconstruire, cu ușile considerate deschise.
+
+| Verificare | Înainte | După |
+|---|---|---|
+| Zone walkable | 35 | 51 (cu camerele noi și ușile lor) |
+| Zone neconectate | 0 | 0 — toate cele 51, plus tunelul și toate platformele de la etaj |
+| Acoperire tavan Bombsite A | 28 % | 73 % |
+| Acoperire tavan A Control | 14 % | 90 % |
+| Acoperire tavan Hangar | 11 % | 79 % |
+| Acoperire tavan Loading Bay | 0 % | 87 % |
+| Acoperire tavan South Tunnel | 74 % | 94 % |
+| Celule cu spațiu liber sub 3 m sub scări / balcoane | 200 | 8 |
+
+Procentele de tavan nu ajung la 100 % din două motive: luminatoarele lăsate intenționat deasupra
+zonelor de plant (A și B) și faptul că sonda nu numără celulele ocupate de obiecte. Cele 8 celule
+rămase cu spațiu sub 3 m sunt primele trepte ale scărilor (0,2 m), nu buzunare.
+
+Ce s-a schimbat:
+
+- **Builder împărțit pe zone**: `Build`, `Layout`, `SiteA`, `Mid`, `SiteB`, `Spawns`, `South`, plus
+  fișierul de bază cu primitivele.
+- **South Tunnel subteran real** la −3,5 m: rampe din spawn-ul T1 și din Loading Bay, scară din
+  South Lane la mijloc, șicană din patru pereți alternați, harta plină deasupra. Podeaua e acum pe
+  plăci, cu șanțul tunelului decupat.
+- **Scări cu trepte reale** (0,2 m) în locul celor 9 rampe, pline dedesubt; platforma A și balconul
+  North Overlook sunt blocuri pline.
+- **Acoperișuri**: clădirea A și hangarul cu Loading Bay (fiecare cu luminator), A Control, balcoanele
+  și golurile de ușă ale laboratorului și anexei, toate camerele noi.
+- **Lumini pe zone** în toate interioarele acoperite: calde în A, reci în laborator, albe în hangar.
+- **Patru camere jucabile în locul masei moarte**:
+  - *A Pipes* (sala pompelor): rută proprie West Outpost → latura de vest a site-ului A;
+  - *Depozit*: leagă A Control de Mid Connector și are perete moale direct în site-ul A;
+  - *Camera de securitate*: a treia ieșire din spawn-ul T1, spre curte sau T1 Ramp;
+  - *Birou*: leagă Loading Bay de latura de est a hangarului, în spatele Container Stack-ului.
+- **Margini exterioare**: stânci în West Rocks, East Yard și North Overlook.
+- Imagine nouă: `Docs/BlacksiteK17_TopDown_Underground.png`.
+
+Abateri față de plan:
+
+- Depozitul e între A Control și Mid Connector, nu între South Lane și tunel: fâșia de acolo are doar
+  6 m și, odată cu tunelul subteran, e ocupată de scara lui.
+- Ușile noi folosesc încă golul de 2 m; trec la 1,4 × 2,4 m cu toc în Faza 2, împreună cu restul.
+
+Rămas pentru fazele următoare: toate liniile de vedere din tabelul (c) (neschimbate de Faza 1),
+cover-ul, intrările pe site-uri, finisajele și validatorul din repo.
