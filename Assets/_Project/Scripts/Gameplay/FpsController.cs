@@ -61,20 +61,47 @@ namespace ChokeHold.Gameplay
 
         private float pitch;
 
+        private Vector2 moveInput;
+        private const float moveInputSmoothing = 10f;
+
         private Vector2 currentRecoil;
         private Vector2 targetRecoil;
 
+        // Sisteme diferite (freeze time, plant/defuse, moarte) pot bloca miscarea
+        // independent; miscarea revine doar cand niciun sistem nu o mai blocheaza.
+        private readonly System.Collections.Generic.HashSet<object> inputLocks =
+            new System.Collections.Generic.HashSet<object>();
+
         public bool IsCrouching => isCrouching;
         public bool IsGrounded => isGrounded;
+        public bool InputLocked => inputLocks.Count > 0;
 
         public bool IsSprinting
         {
             get
             {
                 return
+                    !InputLocked &&
                     Keyboard.current != null &&
                     Keyboard.current.leftShiftKey.isPressed &&
                     !isCrouching;
+            }
+        }
+
+        public void SetInputLock(object owner, bool locked)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            if (locked)
+            {
+                inputLocks.Add(owner);
+            }
+            else
+            {
+                inputLocks.Remove(owner);
             }
         }
 
@@ -130,21 +157,43 @@ namespace ChokeHold.Gameplay
             LookAround();
         }
 
+        private Vector2 ReadMoveInput()
+        {
+            Keyboard keyboard = Keyboard.current;
+
+            if (InputLocked || keyboard == null)
+            {
+                return Vector2.zero;
+            }
+
+            float horizontal = 0f;
+            float vertical = 0f;
+
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) horizontal += 1f;
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) horizontal -= 1f;
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) vertical += 1f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) vertical -= 1f;
+
+            return new Vector2(horizontal, vertical);
+        }
+
         private void MovePlayer()
         {
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
+            // Input System (noul sistem), nu vechiul Input Manager care e depreciat.
+            // Netezirea imita accelerarea pe care o dadea Input.GetAxis.
+            moveInput = Vector2.MoveTowards(
+                moveInput,
+                ReadMoveInput(),
+                moveInputSmoothing * Time.deltaTime
+            );
 
             Vector3 direction =
-                transform.right * horizontal +
-                transform.forward * vertical;
+                transform.right * moveInput.x +
+                transform.forward * moveInput.y;
 
             direction = Vector3.ClampMagnitude(direction, 1f);
 
-            bool isSprinting =
-                Keyboard.current != null &&
-                Keyboard.current.leftShiftKey.isPressed &&
-                !isCrouching;
+            bool isSprinting = IsSprinting;
 
             float currentSpeed;
 
@@ -182,6 +231,7 @@ namespace ChokeHold.Gameplay
             }
 
             if (
+                !InputLocked &&
                 Keyboard.current != null &&
                 Keyboard.current.spaceKey.wasPressedThisFrame
             )

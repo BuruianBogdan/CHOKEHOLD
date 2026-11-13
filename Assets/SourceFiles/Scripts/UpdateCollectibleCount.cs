@@ -33,7 +33,7 @@ public class UpdateCollectibleCount : MonoBehaviour
 #if UNITY_6000_3_OR_NEWER
             totalCollectibles += FindObjectsByType(collectibleType).Length;
 #else
-            totalCollectibles += FindObjectsByType(collectibleType, FindObjectsSortMode.None).Length;
+            totalCollectibles += FindObjectsByType(collectibleType).Length;
 #endif
         }
 
@@ -44,7 +44,7 @@ public class UpdateCollectibleCount : MonoBehaviour
 #if UNITY_6000_3_OR_NEWER
             totalCollectibles += FindObjectsByType(collectible2DType).Length;
 #else
-            totalCollectibles += FindObjectsByType(collectible2DType, FindObjectsSortMode.None).Length;
+            totalCollectibles += FindObjectsByType(collectible2DType).Length;
 #endif
         }
 

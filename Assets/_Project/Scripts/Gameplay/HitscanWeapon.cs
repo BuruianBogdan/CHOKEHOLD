@@ -135,6 +135,12 @@ namespace ChokeHold.Gameplay
                 return;
             }
 
+            // Freeze time, plant/defuse sau moarte: nu se trage si nu se reincarca.
+            if (fpsController != null && fpsController.InputLocked)
+            {
+                return;
+            }
+
             if (Keyboard.current.rKey.wasPressedThisFrame)
             {
                 StartCoroutine(Reload());
@@ -222,7 +228,7 @@ namespace ChokeHold.Gameplay
                 Health targetHealth =
                     hit.collider.GetComponentInParent<Health>();
 
-                if (targetHealth != null)
+                if (targetHealth != null && !targetHealth.IsDead)
                 {
                     targetHealth.TakeDamage(damage);
 
@@ -322,6 +328,22 @@ namespace ChokeHold.Gameplay
             Debug.Log("Reload complete.");
         }
         
+        /// <summary>
+        /// Incarcator plin instant (folosit la respawn / inceput de runda).
+        /// </summary>
+        public void RefillAmmo()
+        {
+            StopAllCoroutines();
+            isReloading = false;
+            currentAmmo = magazineSize;
+            UpdateAmmoUI();
+
+            if (reloadText != null)
+            {
+                reloadText.gameObject.SetActive(false);
+            }
+        }
+
         private float GetCurrentSpread()
         {
             float spread = isAiming
