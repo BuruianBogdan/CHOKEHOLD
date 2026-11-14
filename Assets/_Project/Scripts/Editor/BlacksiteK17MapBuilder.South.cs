@@ -8,6 +8,7 @@ namespace ChokeHold.EditorTools
         private static void BuildSouth()
         {
             float wall = GroundCeiling;
+            float full = InnerWallHeight;
 
             // ---------------- South Courtyard ----------------
             // Magazie in centru + ziduri care impart curtea in trei culoare.
@@ -15,19 +16,26 @@ namespace ChokeHold.EditorTools
             InnerWall(gStructures, "Courtyard_Wall_East", 7f, -34f, 7f, -26f, wall);
             InnerWall(gStructures, "Courtyard_Wall_SouthWest", -20f, -40f, -20f, -34f, wall);
             InnerWall(gStructures, "Courtyard_Wall_North", -14f, -18f, -6f, -18f, wall);
+            HighCover(-3f, -18f, -3f, -14.5f);         // taie banda de nord a curtii
 
             Container(gCover, -2f, -22f, 90f, containerRedMat);
-            Crate(gCover, -22f, -20f, 2f, 1.2f, 2f);
-            Crate(gCover, 4f, -34f, 1.5f, 1.5f, 1.5f);
-            Crate(gCover, 10f, -24f, 2f, 2f, 2f);
-            HalfWall(gCover, -8f, -36f, 4f, 0f);
+            BigCrate(3f, -34f);
+            BigCrate(13f, -25f);
+            InnerWall(gStructures, "Courtyard_Screen_Choke", 5f, -19f, 11f, -19f, wall);   // paravan in fata usii din Choke
+            HighCover(-18f, -34f, -14f, -34f);         // paravane in fata usilor dinspre South Lane
+            HighCover(9f, -33f, 13f, -33f);
 
             CreateDummy(gDummies, "Dummy_Defender_Courtyard", new Vector3(0f, 0f, -28f));
 
             // ---------------- South Lane ----------------
-            InnerWall(gStructures, "SouthLane_Stub_West", -10f, -46f, -10f, -42f, wall);
-            InnerWall(gStructures, "SouthLane_Stub_East", 14f, -42f, 14f, -38f, wall);
-            Crate(gCover, 0f, -44f, 1.5f, 1.5f, 1.5f);
+            // Curtea si aleea sunt despartite de un zid cu doua usi duble, decalate fata de usa din Choke.
+            Partition("Part_Courtyard_Lane", -22f, -38f, 16f, -38f, full, DoubleGap(6f), DoubleGap(33f));
+            Partition("Part_Courtyard_Lane_Corner", -22f, -40f, -22f, -38f, full);
+
+            // Trei ziduri alternate (sud, nord, sud): nicio linie dreapta nu trece de toate trei.
+            InnerWall(gStructures, "SouthLane_Stub_West", -10f, -46f, -10f, -41.5f, wall);
+            InnerWall(gStructures, "SouthLane_Stub_Mid", 2f, -42.5f, 2f, -38f, wall);
+            InnerWall(gStructures, "SouthLane_Stub_East", 14f, -46f, 14f, -41.5f, wall);
 
             // ---------------- South Tunnel (subteran, -3,5 m) ----------------
             float depth = -TunnelFloorY;
@@ -45,10 +53,19 @@ namespace ChokeHold.EditorTools
             Railing(gStructures, "TunnelStairs_Rail_E", -4f, -46f, -4f, -44f, 0f);
 
             // Pereti alternati (sicana): tunelul nu mai e un singur culoar drept
-            SolidBlock(gUnderground, "Tunnel_Baffle_1", -29f, -58f, -28f, -54.5f, TunnelFloorY, depth, wallMat);
-            SolidBlock(gUnderground, "Tunnel_Baffle_2", -19f, -55.5f, -18f, -52f, TunnelFloorY, depth, wallMat);
-            SolidBlock(gUnderground, "Tunnel_Baffle_3", -1f, -58f, 0f, -54.5f, TunnelFloorY, depth, wallMat);
-            SolidBlock(gUnderground, "Tunnel_Baffle_4", 5f, -55.5f, 6f, -52f, TunnelFloorY, depth, wallMat);
+            // Lipiti alternativ de peretele de sud si de cel de nord, la ~7 m unul de altul.
+            float[] baffleX = { -34f, -28f, -21f, -15f, -10f, -2f, 4f };
+
+            for (int i = 0; i < baffleX.Length; i++)
+            {
+                bool south = i % 2 == 0;
+
+                SolidBlock(gUnderground, $"Tunnel_Baffle_{i + 1}",
+                    baffleX[i], south ? -58f : -55.5f, baffleX[i] + 1f, south ? -54.5f : -52f,
+                    TunnelFloorY, depth, wallMat);
+            }
+
+            LowCover(-25f, -57f, -23f, -57f, TunnelFloorY);
 
             Barricade(gBarricades, "Barricade_TunnelStairs", -6f, -52f, TunnelFloorY, 4f, depth, true);
 

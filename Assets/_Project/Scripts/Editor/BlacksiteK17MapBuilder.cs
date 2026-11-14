@@ -566,9 +566,29 @@ namespace ChokeHold.EditorTools
             rock.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
         }
 
+        /// <summary>
+        /// Mobilier / cover cu dimensiuni libere (mese de laborator, birouri). Inaltimea este adusa
+        /// la standard: sub 1,5 m devine cover de crouch (1,1 m), intre 1,5 si 1,9 m devine cover
+        /// in picioare (2 m). Latura mare are minimum 2 m, ca obiectul sa ascunda un jucator.
+        /// </summary>
         private static void Crate(Transform parent, float x, float z,
             float sizeX, float sizeY, float sizeZ, float baseY = 0f)
         {
+            if (sizeY < 1.5f)
+            {
+                sizeY = CrouchCoverHeight;
+            }
+            else if (sizeY < 1.9f)
+            {
+                sizeY = StandingCoverHeight;
+            }
+
+            if (Mathf.Max(sizeX, sizeZ) < MinCoverWidth)
+            {
+                sizeX = MinCoverWidth;
+                sizeZ = MinCoverWidth;
+            }
+
             CreateBox(
                 parent,
                 $"Crate_{coverIndex++:000}",
@@ -576,19 +596,6 @@ namespace ChokeHold.EditorTools
                 new Vector3(sizeX, sizeY, sizeZ),
                 coverMat
             );
-        }
-
-        private static void HalfWall(Transform parent, float x, float z, float length, float rotationY)
-        {
-            GameObject wall = CreateBox(
-                parent,
-                $"HalfWall_{coverIndex++:000}",
-                new Vector3(x, 0.6f, z),
-                new Vector3(length, 1.2f, 0.5f),
-                coverMat
-            );
-
-            wall.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
         }
 
         private static void Container(Transform parent, float x, float z, float rotationY,

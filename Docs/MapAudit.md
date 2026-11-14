@@ -217,3 +217,112 @@ Abateri față de plan:
 
 Rămas pentru fazele următoare: toate liniile de vedere din tabelul (c) (neschimbate de Faza 1),
 cover-ul, intrările pe site-uri, finisajele și validatorul din repo.
+
+---
+
+# Rezultate Faza 2 — design competitiv
+
+Măsurat în scenă după reconstruire, din fiecare celulă de 2 m în care poate sta un jucător, în 72 de
+direcții, cu ochii la 1,6 m. Ușile sunt considerate deschise, baricadele nemontate, pereții moi întregi.
+
+Cum se aplică limitele:
+- cerința e „~25 m” în interior și „~40 m” în exterior, deci se acceptă o toleranță de 10 %
+  (27,5 m și 44 m);
+- o linie e „de interior” doar dacă pornește dintr-o zonă acoperită și se termină tot sub acoperiș;
+  dacă iese afară, i se aplică limita de exterior;
+- hangarul și Loading Bay sunt hale mari și au limita de exterior (site-ul B e gândit pentru luptă
+  la distanță medie).
+
+| Verificare | Faza 0 | Faza 2 |
+|---|---|---|
+| Zone de la parter în limită | 0 din 33 | **33 din 49** |
+| Cea mai lungă linie la parter | 108,7 m | 59,2 m |
+| Unghiuri lungi dintr-o singură poziție (maxim) | 10 | 7 |
+| Linie din T1 Spawn | 70 m, până în Choke Point | 38 m, se oprește în T1 Ramp |
+| Linie din T2 Spawn | 74 m, până în mid | 43 m, se oprește în North Overlook |
+| A Heaven → T2 Spawn pe North Catwalk | 114 m (spawn-peek) | tăiată de peretele spawn-ului |
+| Zone neconectate | 0 | 0 |
+| Barricade points / obiecte destructibile | 9 / 20 | 10 / 31 |
+
+## Ce s-a schimbat
+
+**Zonele sunt acum camere.** 39 de pereți despărțitori stau pe marginile reale ale zonelor și lasă
+doar goluri standard: 11 uși simple (1,4 × 2,4 m), 20 de uși duble (3 × 2,4 m), 2 uși de garaj
+(5 × 3,2 m), 5 pereți moi și o fereastră (pervaz la 1,0 m, deschidere de 1,2 m). Cele 12 uși din
+pereții groși au toc de 1,4 m și canat care se deschide cu F.
+
+**Paravane la uși.** În spatele ușilor prin care treceau linii lungi e un cover în picioare la ~3 m:
+din prag vezi stânga și dreapta paravanului, nu toată zona de dincolo.
+
+**Spawn-uri.** Fiecare are trei ieșiri acoperite: T1 — ușă dublă spre T1 Ramp, camera de securitate,
+rampa tunelului; T2 — ușă dublă spre North Overlook (cu scara spre catwalk), ușă simplă și ușă dublă
+spre East Yard.
+
+**Site A** (5 intrări): A Control (ușă dublă + perete moale), A Ramp (ușă + perete moale), A Pipes
+(ușă din sala pompelor), depozit (perete moale), A Heaven (trapă din galerie, ușă și fereastră
+baricadabilă la sol, pasarela la etaj). Zona de plant e o cameră în cameră: zid pe sud, perete cu ușă
+pe nord, perete de țevi pe vest.
+
+**Site B** (5 intrări): două uși de garaj și un perete moale de 6 m dinspre Loading Bay, ușă dublă pe
+vest (Mid East), ușă dublă pe nord sub balcon plus trapă din mezanin, ușa biroului în spatele stivei,
+ușă dublă din East Yard pentru apărători. Container Stack are două niveluri și se urcă pe trepte.
+
+**Mid Lab:** ușă dublă pe sud flancată de doi pereți moi spre Choke Point, ușă dublă pe nord (decalată),
+ușă pe vest, ușă spre anexă; la etaj trei deschideri baricadabile.
+
+**Rotații apărători:** spre A — North Overlook la sol sau North Catwalk pe sus; spre B — East Yard sau
+Mid East Corridor; între site-uri — pe sus prin laborator și anexă, sau prin East Yard și North
+Overlook, ambele fără a trece prin zona atacatorilor.
+
+**Cover la dimensiuni standard.** Toate obiectele de cover sunt acum: crouch (1,1 m × ≥ 2 m),
+standing (2,0 m × ≥ 2 m), ladă 2 × 2 × 2, stivă 2 × 2 × 3,5, container de 20 ft sau de 40 ft.
+Cele 13 cutii mici și cele 10 de 1,5 m au dispărut; helper-ul vechi `Crate` aduce automat orice
+dimensiune la standard.
+
+**Reparat pe parcurs:** ușa de la etaj dintre laborator și anexă dădea în golul scării; a fost mutată
+în colțul de nord, lângă palier.
+
+## Linii lungi intenționate
+
+- **North Catwalk: 100 m**, de la scara T2 până în peretele de vest al site-ului A. E linia de sniper
+  cerută în referință (North Catwalk → A / Mid). Nu ajunge în T2 Spawn.
+- **Supraveghere de la etaj peste propriul site:** galeriile din A văd peste zona de plant (până la
+  40 m), iar pasarela și mezaninul din hangar văd peste hală (până la 63 m). Sunt pozițiile verticale
+  ale apărătorilor și sunt expuse din mai multe intrări.
+
+## Ce a rămas peste limită
+
+La parter, 16 zone:
+
+| Linie | Limită | De unde → până unde |
+|---|---|---|
+| 59,2 m | 44 | Hangar → prin ușa de garaj → Loading Bay → rampa tunelului |
+| 54,3 m | 44 | Loading Bay → prin ușa de garaj → peretele de est al hangarului |
+| 50,8 m | 44 | gura de est a tunelului → Loading Bay → hangar |
+| 50,1 m | 44 | East Yard → Mid East Corridor → hangar |
+| 47,9 m | 44 | Mid Connector → pasarele → T1 Ramp |
+| 47,3 m | 44 | South Lane → Loading Bay → hangar; Yard To Hangar → hangar |
+| 46,7 m | 44 | North Overlook → A Catwalks → Mid Connector → A Ramp (trei uși pe diagonală) |
+| 44,5 m | 44 | South Courtyard, pe diagonală |
+| 46,7 m | 27,5 | Bombsite A → prin ușa de sub A Heaven → A Catwalks → North Overlook |
+| 38,5 m | 27,5 | A Ramp → peste site-ul A, pe diagonală |
+| 37,9 m | 27,5 | Mid Lab → prin ușa de nord → North Overlook |
+| 35,1 m | 27,5 | ușa de nord a laboratorului → prin laborator, pe diagonală |
+| 33,1 m | 27,5 | ușa de sub A Heaven → peste site-ul A |
+| 32,7 m | 27,5 | A Control → peste site-ul A, pe diagonală |
+| 27,6 m | 27,5 | ușa de vest a laboratorului → prin laborator |
+
+Aproape toate sunt raze oblice care prind două sau trei uși la rând, ori diagonale ale halei
+hangarului și ale site-ului A (34 × 34 m). La etaj rămân 13 zone din 17 peste limită: axele
+laboratorului de la etaj (30–36 m) și supravegherile de mai sus.
+
+Poziții cu multe unghiuri lungi simultan: hangar și Mid Lab (7), Loading Bay și Bombsite A (6),
+ușile laboratorului, East Yard și ușa de sub A Heaven (5). Restul sunt la 4 sau mai puțin.
+
+## Abateri față de cerință
+
+- **Ferestre:** una singură (sub A Heaven). Fereastra din A Ramp a fost scoasă: prin ea trecea o linie
+  de 50 m peste tot site-ul. Mid Lab are patru uși, dar nicio fereastră.
+- **Limite:** aplicate cu toleranța de 10 % și cu hangarul tratat ca spațiu deschis.
+- **Echilibrul spre A** (atacatorii ajung primii) nu a fost schimbat prin rute; rămâne de reglat după
+  teste de joc.

@@ -4,16 +4,22 @@ using UnityEngine;
 namespace ChokeHold.EditorTools
 {
     // Bombsite A (cladire industriala inchisa), A Control, A Pipes (sala pompelor) si depozitul.
+    //
+    // Intrari pentru atacatori pe site:
+    //   1. A Control  - usa dubla + perete moale (sud)
+    //   2. A Ramp     - usa simpla + perete moale + fereastra (est)
+    //   3. A Pipes    - usa din sala pompelor (vest)
+    //   4. Depozit    - perete moale direct in site (sud-est)
+    //   5. A Heaven   - trapa din galerie + usa de la sol (nord-est), pasarela North Catwalk la etaj
     public static partial class BlacksiteK17MapBuilder
     {
         private static void BuildSiteA()
         {
             float up = UpperFloorHeight;
             float low = GroundCeiling - 0.4f;
+            float full = InnerWallHeight;
 
-            // ---------------- Site-ul propriu-zis ----------------
-
-            // Scari spre galerie
+            // ---------------- Scari si platforme ----------------
             Stairs(gStairs, "Stairs_A_Heaven", -34f, 38f, -30f, 46f, Vector3.forward, 0f, up);
             Stairs(gStairs, "Stairs_A_SouthGallery", -52f, 22f, -44f, 26f, Vector3.right, 0f, up);
 
@@ -21,9 +27,16 @@ namespace ChokeHold.EditorTools
             SolidBlock(gStairs, "A_Platform", -56f, 44f, -44f, 54f, 0f, 1.2f, platformMat);
             Stairs(gStairs, "A_Platform_Steps", -50f, 38f, -46f, 44f, Vector3.forward, 0f, 1.2f);
 
-            // Galerie in forma de L deasupra site-ului: A Heaven + latura de est + latura de sud
-            CreatePlatform(gUpper, "A_Heaven", -36f, 46f, -24f, 56f, up);
+            // ---------------- Galerie (etaj) ----------------
+            // A Heaven are o trapa: intrare verticala direct deasupra site-ului.
+            Slab(gUpper, "A_Heaven", up,
+                new[] { new Area("Heaven", -36f, 46f, -24f, 56f) },
+                new[] { new Area("Hatch", -30f, 50f, -28f, 52f) },
+                platformMat);
+            StandardHatch(gUpper, "Hatch_A_Heaven", -30f, 50f, -28f, 52f, up);
+
             CreatePlatform(gUpper, "A_Gallery_East", -30f, 26f, -24f, 46f, up);
+            SolidBlock(gUpper, "A_Gallery_Screen", -27.4f, 29f, -27f, 36f, up, 2.2f, wallMat);   // paravan in fata podului
             CreatePlatform(gUpper, "A_Gallery_South", -44f, 22f, -30f, 26f, up);
             Railing(gUpper, "A_Heaven_Rail_W", -36f, 46f, -36f, 56f, up);
             Railing(gUpper, "A_Heaven_Rail_S", -36f, 46f, -34f, 46f, up);
@@ -38,8 +51,8 @@ namespace ChokeHold.EditorTools
             Railing(gUpper, "Bridge_A_To_Lab_Rail_W", -16f, 22f, -16f, 30f, up);
             Railing(gUpper, "Bridge_A_To_Lab_Rail_End", -16f, 22f, -12f, 22f, up);
 
-            // Acoperis complet, cu luminator deasupra zonei de plant
-            Slab(gRoofs, "Roof_SiteA", InnerWallHeight + SlabThickness,
+            // ---------------- Acoperis ----------------
+            Slab(gRoofs, "Roof_SiteA", full + SlabThickness,
                 new[]
                 {
                     new Area("Site", -58f, 22f, -24f, 56f),
@@ -51,8 +64,34 @@ namespace ChokeHold.EditorTools
                 },
                 roofMat);
 
-            // Interior: perete de tevi pe vest, rezervoare, generator in mijloc
-            InnerWall(gStructures, "A_Pipes_Wall_South", -50f, 32f, -50f, 36f, 3.5f);
+            // ---------------- Intrari (pereti cu goluri standard) ----------------
+
+            // Sud: A Control -> site. Usa dubla + perete moale.
+            Partition("Part_AControl_Site", -46f, 21.75f, -34f, 21.75f, full,
+                DoubleGap(4f),
+                SoftGap(9.5f, 3f));
+
+            // Est: A Ramp -> site. Perete moale si usa; sus trece podul spre laborator.
+            Partition("Part_ARamp_Site", -24.25f, 28f, -24.25f, 36f, full,
+                SoftGap(1.25f, 2.5f),
+                DoorGap(4f),
+                UpperGap(4f, 2f, up));
+            HighCover(-27.5f, 29f, -27.5f, 34f);       // paravan in spatele usii din A Ramp
+
+            // Nord-est: A Catwalks -> site, pe sub A Heaven. Usa si fereastra la sol; sus intra North Catwalk.
+            Partition("Part_AHeavenDoor", -24.25f, 48f, -24.25f, 56f, full,
+                DoorGap(2f).Screened(-1),
+                WindowGap(5.5f),
+                UpperGap(6f, 4f, up));
+
+            // ---------------- Interior ----------------
+            // Peretele de tevi separa culoarul A Pipes (vest) de zona de plant.
+            InnerWall(gStructures, "A_Pipes_Wall_South", -50f, 26f, -50f, 36f, 3.5f);
+
+            // Zona de plant e o camera in camera: zid pe sud si perete cu usa pe nord,
+            // ca din nicio intrare sa nu se vada tot site-ul.
+            InnerWall(gStructures, "A_Wall_South", -50f, 33f, -34f, 33f, GroundCeiling);
+            Partition("Part_A_NorthMid", -37f, 44f, -37f, 56f, GroundCeiling, DoorGap(10.5f));
             SoftWall(gStructures, "A_Pipes_SoftWall", -50f, 38f, -50f, 42f, 0f, 3.5f);
             Pipe(gStructures, "A_Pipe_West_Low", new Vector3(-57.3f, 0.6f, 32f), new Vector3(-57.3f, 0.6f, 44f), 0.9f);
             Pipe(gStructures, "A_Pipe_West_High", new Vector3(-57.3f, 1.8f, 32f), new Vector3(-57.3f, 1.8f, 44f), 0.7f);
@@ -62,11 +101,13 @@ namespace ChokeHold.EditorTools
             Tank(gStructures, "A_Tank_Small", -27f, 42f, 3.5f, 3.4f);
             Block(gStructures, "A_Generator", -46f, 34f, -42f, 38f, 2.5f);
 
-            Crate(gCover, -42f, 30f, 2f, 2f, 2f);
-            Crate(gCover, -54f, 37f, 1.4f, 1.4f, 1.4f);
-            Crate(gCover, -40f, 52f, 1.5f, 1.5f, 1.5f);
-            Crate(gCover, -50f, 49f, 1.2f, 1.2f, 1.2f, 1.2f); // pe platforma A
-            HalfWall(gCover, -40f, 42f, 3f, 0f);
+            // Cover: pozitii de plant (generator, lada), de aparare (platforma, sub Heaven) si de intrare.
+            HighCover(-46f, 27f, -46f, 33f);           // taie banda de sud dinspre usa A Pipes
+            HighCover(-44f, 27f, -37f, 27f);           // paravan in spatele usii duble din A Control
+            LowCover(-54f, 36f, -54f, 38f);            // culoarul A Pipes
+            BigCrate(-41f, 53f);                       // coltul de nord, sub luminator
+            LowCover(-51f, 49f, -49f, 49f, 1.2f);      // pe platforma A
+            HighCover(-40f, 39f, -40f, 44f);           // inchide vederea prin fereastra din A Ramp
 
             // Lumini calde, industriale
             Lamp("Light_A_NW", -50f, 7.4f, 48f, WarmLight, 20f);
@@ -79,22 +120,27 @@ namespace ChokeHold.EditorTools
 
             // ---------------- A Control (holul de intrare din sud) ----------------
             Roof("Roof_AControl", -46f, 10f, -34f, 22f, up);
-            Crate(gCover, -38f, 16f, 1.5f, 1.5f, 1.5f);
-            HalfWall(gCover, -43f, 20f, 3f, 0f);
+
+            // Intrarea din West Rocks: o singura usa dubla, pe latura de vest.
+            Partition("Part_AControl_South", -46f, 10f, -42f, 10f, full);
+            Partition("Part_AControl_West", -46f, 10f, -46f, 14f, full, DoubleGap(2f).Screened(1));
+
+            BigCrate(-37f, 15f);
+            LowCover(-44.5f, 18f, -41.5f, 18f);
             Lamp("Light_AControl", -40f, low, 16f, WarmLight, 12f, 2.5f);
 
             // ---------------- A Pipes (sala pompelor) ----------------
             // Ruta proprie: West Outpost -> sala pompelor -> usa din peretele de vest al site-ului.
             Roof("Roof_APipes", -76f, 10f, -62f, 34f, 4.5f);
-            DoorWithLintel("Door_APipes_South", -70f, 6f, -68f, 10f, false, InnerWallHeight);
-            DoorWithLintel("Door_APipes_Site", -62f, 28f, -58f, 30f, true, InnerWallHeight);
+            DoorCell("Door_APipes_South", -70f, 6f, -68f, 10f, false, full);
+            DoorCell("Door_APipes_Site", -62f, 28f, -58f, 30f, true, full);
 
             Pipe(gStructures, "Pumps_Pipe_Low", new Vector3(-75.3f, 0.6f, 12f), new Vector3(-75.3f, 0.6f, 32f), 0.9f);
             Pipe(gStructures, "Pumps_Pipe_High", new Vector3(-75.3f, 2f, 12f), new Vector3(-75.3f, 2f, 32f), 0.7f);
             Pipe(gStructures, "Pumps_Pipe_Cross", new Vector3(-76f, 3.6f, 22f), new Vector3(-62f, 3.6f, 22f), 0.6f);
             Tank(gStructures, "Pumps_Tank_South", -66f, 15f, 3f, 3.2f);
-            Tank(gStructures, "Pumps_Tank_North", -71f, 27f, 3f, 3.2f);
-            Block(gStructures, "Pumps_Machine", -68f, 19f, -64f, 23f, 2.2f);
+            Tank(gStructures, "Pumps_Tank_North", -73.5f, 27f, 3f, 3.2f);
+            Block(gStructures, "Pumps_Machine", -71f, 19f, -67f, 23f, 2.2f);
 
             Lamp("Light_APipes_South", -69f, 3.8f, 15f, WarmLight, 14f, 2.5f);
             Lamp("Light_APipes_North", -69f, 3.8f, 29f, WarmLight, 14f, 2.5f);
@@ -102,22 +148,22 @@ namespace ChokeHold.EditorTools
             // ---------------- Depozit ----------------
             // Leaga A Control de Mid Connector si are un perete moale direct in site.
             Roof("Roof_Depot", -32f, 4f, -24f, 20f, up);
-            DoorWithLintel("Door_Depot_East", -24f, 10f, -22f, 12f, true, InnerWallHeight);
-            DoorWithLintel("Door_Depot_West", -34f, 14f, -32f, 16f, true, InnerWallHeight);
+            DoorCell("Door_Depot_East", -24f, 10f, -22f, 12f, true, full);
+            DoorCell("Door_Depot_West", -34f, 14f, -32f, 16f, true, full);
 
-            SoftWall(gStructures, "Depot_Breach_SoftWall", -30f, 21f, -28f, 21f, 0f, 2.5f);
-            Lintel(gDoors, "Depot_Breach_Lintel", -30f, 20f, -28f, 22f, InnerWallHeight);
+            SoftWall(gStructures, "Depot_Breach_SoftWall", -30f, 21f, -28f, 21f, 0f, DoorHeight);
+            SolidBlock(gDoors, "Depot_Breach_Lintel", -30f, 20f, -28f, 22f, DoorHeight, full - DoorHeight, wallMat);
 
             Block(gStructures, "Depot_Shelf_West", -32f, 5f, -31f, 9f, 2.2f);
             Block(gStructures, "Depot_Shelf_East", -25f, 14f, -24f, 19f, 2.2f);
-            Crate(gCover, -28f, 7f, 2f, 1.1f, 2f);
+            LowCover(-29f, 7f, -27f, 7f);
 
             Lamp("Light_Depot", -28f, low, 12f, WarmLight, 12f, 2.5f);
 
             // ---------------- Gameplay ----------------
             CreateBombSite(gGameplay, "BombSite_A", SiteA);
-            CreateDummy(gDummies, "Dummy_Defender_SiteA", new Vector3(-40f, 0f, 37f));
-            CreateDummy(gDummies, "Dummy_Defender_AHeaven", new Vector3(-28f, up, 52f));
+            CreateDummy(gDummies, "Dummy_Defender_SiteA", new Vector3(-40f, 0f, 40f));
+            CreateDummy(gDummies, "Dummy_Defender_AHeaven", new Vector3(-33f, up, 50f));
         }
     }
 }

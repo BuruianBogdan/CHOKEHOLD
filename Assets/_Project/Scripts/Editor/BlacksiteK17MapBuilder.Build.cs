@@ -279,29 +279,5 @@ namespace ChokeHold.EditorTools
         {
             CreateRoof(gRoofs, name, xMin, zMin, xMax, zMax, height);
         }
-
-        /// <summary>
-        /// Usa intr-un gol din perete (dreptunghiul golului), cu buiandrug pana la lintelTop.
-        /// passageAlongX = true daca prin usa se trece pe axa X (peretele e pe axa Z).
-        /// Usa sta la mijlocul grosimii peretelui.
-        /// </summary>
-        private static void DoorWithLintel(string name,
-            float cellXMin, float cellZMin, float cellXMax, float cellZMax,
-            bool passageAlongX, float lintelTop)
-        {
-            float midX = (cellXMin + cellXMax) * 0.5f;
-            float midZ = (cellZMin + cellZMax) * 0.5f;
-
-            if (passageAlongX)
-            {
-                Door(gDoors, name, new Vector3(midX, 0f, cellZMin), Vector3.forward, cellZMax - cellZMin);
-            }
-            else
-            {
-                Door(gDoors, name, new Vector3(cellXMin, 0f, midZ), Vector3.right, cellXMax - cellXMin);
-            }
-
-            Lintel(gDoors, name + "_Lintel", cellXMin, cellZMin, cellXMax, cellZMax, lintelTop);
-        }
     }
 }
