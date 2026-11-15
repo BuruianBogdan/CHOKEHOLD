@@ -76,13 +76,12 @@ namespace ChokeHold.EditorTools
             SolidBlock(gStructures, "Outpost_Shed", -76f, -6.5f, -72f, -1.5f, 0f, 3f, containerBlueMat);
             HighCover(-60f, -14f, -56f, -14f);         // paravan in fata usii dinspre T1 Ramp
             BigCrate(-65f, -1f);
-            HighCover(-74.5f, 2.5f, -71.5f, 2.5f);
+            HighCover(-72.5f, 1.5f, -69.5f, 1.5f);
             LowCover(-66f, -17f, -62f, -17f);
 
             // West Rocks: stanci ca margine naturala si cover pe drumul spre A Control
             Rock(gStructures, "WestRocks_Rock_1", new Vector3(-49f, 0f, 2f), new Vector3(4f, 2.5f, 3f), 25f);
             Rock(gStructures, "WestRocks_Rock_2", new Vector3(-52f, 0f, 10f), new Vector3(3f, 2f, 2.5f), -15f);
-            Rock(gStructures, "WestRocks_Rock_3", new Vector3(-44.3f, 0f, -2.1f), new Vector3(3f, 2.2f, 3f), 10f);
             BigCrate(-50f, 6f);
         }
 
@@ -167,7 +166,7 @@ namespace ChokeHold.EditorTools
                 UpperGap(12f, 4f, up, full - up));
 
             // Ziduri alternate care rup linia de la sol in fiecare curte
-            InnerWall(gStructures, "Overlook_Stub_West", -6f, 42f, -6f, 47f, wall);
+            InnerWall(gStructures, "Overlook_Stub_West", -8f, 42f, -8f, 47f, wall);
             InnerWall(gStructures, "Overlook_Stub_Mid", 30f, 47f, 30f, 52f, wall);
             InnerWall(gStructures, "Overlook_Stub_East", 46f, 42f, 46f, 48.5f, wall);
 
@@ -175,9 +174,9 @@ namespace ChokeHold.EditorTools
             SolidBlock(gStairs, "North_Overlook_Balcony", 14f, 42f, 20f, 46f, 0f, 2f, platformMat);
             Stairs(gStairs, "North_Overlook_Steps", 8f, 42f, 14f, 46f, Vector3.right, 0f, 2f);
 
-            Rock(gStructures, "Overlook_Rock", new Vector3(52f, 0f, 44f), new Vector3(3f, 2f, 2.5f), 20f);
+            Rock(gStructures, "Overlook_Rock", new Vector3(52f, 0f, 45.4f), new Vector3(3f, 2f, 2.5f), 20f);
 
-            LowCover(-5f, 49f, -3f, 49f);
+            LowCover(-1f, 51f, 1f, 51f);
             HighCover(18f, 47.5f, 18f, 51.5f);         // paravan in fata usii din zidul dintre curti
             LowCover(34f, 48f, 38f, 48f);
             BigCrate(44f, 45f);

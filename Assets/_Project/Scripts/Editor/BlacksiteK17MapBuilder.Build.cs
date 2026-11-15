@@ -93,9 +93,16 @@ namespace ChokeHold.EditorTools
             BuildSiteB();
             BuildSpawnsAndOuterZones();
             BuildSouth();
+            BuildServiceTunnels();
+
+            // Imbinari: recuzita lipita de pereti, fara fante
+            SnapPropsToNeighbours();
 
             // Finisare (citeste ce au plasat zonele)
             BuildDetails(root.transform);
+
+            // UV la scara reala pe toate cutiile (pregatire pentru texturi)
+            BakeBoxUVs(root);
 
             // Sisteme
             BuildGameMode();

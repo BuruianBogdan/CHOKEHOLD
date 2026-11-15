@@ -444,3 +444,75 @@ limită (15 la parter, 13 la etaj), descrise mai sus la Faza 2.
 - **Ferestre:** una singură; cea din A Ramp a fost scoasă pentru că deschidea o linie de 50 m.
 - **Echilibru:** atacatorii ajung pe A puțin înaintea apărătorilor; de reglat după teste de joc.
 - **Finisare:** fără cabluri noi pe tavan, iluminare în timp real (fără bake).
+
+---
+
+# Revizie: îmbinări, pregătire pentru texturi, tuneluri de serviciu
+
+## Îmbinări (totul legat, fără margini neterminate)
+
+- **Peretele de nord al zonei de plant din A** stătea la 0,75 m de marginea lui A Heaven și se oprea
+  în aer la 3,6 m. Acum e lipit sub marginea galeriei și urcă până la nivelul ei: zid și galerie
+  formează un singur corp.
+- **Pereții despărțitori își lipesc singuri capetele** de zidul cel mai apropiat, dacă acesta e la
+  mai puțin de 1 m (`Partition` → `GapToStructure`).
+- **Recuzita nu mai lasă fante:** un pas automat (`SnapPropsToNeighbours`) lipește de perete sau de
+  obiectul vecin orice cover, container, utilaj, rezervor sau stâncă aflat la mai puțin de 0,8 m
+  (20 de mutări la ultima construcție). Ori stă lipit, ori lasă loc de trecere.
+- **Coloanele și pilaștrii urcă exact** până în vârful zidului din spatele lor sau până în tavan.
+  Înainte se opreau la 8,5 m și pe zidurile exterioare de 11 m. Pe colțurile ocupate de tocul unei uși
+  sau de un perete despărțitor nu se mai pune coloană.
+- **Vârfurile libere** ale pereților despărțitori și ale blocurilor primesc capac.
+- **Pragurile pasajelor de la etaj** se opresc sub placa galeriei, nu în același plan cu ea.
+- **Balustradele** au stâlpi comuni la colțuri, iar barele se opresc în stâlpi; balustradele automate
+  nu mai dublează o balustradă existentă.
+
+Validatorul are o secțiune nouă, **7. Îmbinări**: perete oprit la mai puțin de 1 m sub un tavan, fante
+între 0,03 și 0,8 m între elemente. Rezultat: 0.
+
+## Pregătire pentru texturi
+
+- **UV la scară reală:** toate cele ~3 600 de cutii ale hărții au acum o plasă cu UV în metri
+  (1 unitate UV = 1 m pe fiecare față; u pe orizontală, v pe verticală pe pereți, X/Z pe podele) și
+  UV2 pentru lightmap. Înainte, cubul standard întindea textura 0–1 pe toată fața, deci un perete de
+  30 m ar fi avut textura întinsă de 30 de ori. Plasele (941, câte una pe dimensiune, rotunjite la cm)
+  stau într-un singur fișier, `Assets/_Project/Art/Meshes/GreyboxBoxMeshes.asset`, și sunt refolosite
+  la fiecare reconstruire. Forma, scara și colliderele obiectelor rămân aceleași.
+- **Un material pe tip de suprafață** (42, în `Assets/_Project/Art/Materials/Greybox`): pereți, plinte,
+  benzi pe teme, podele pe teme, rame, grinzi etc. Când pui texturi, înlocuiești materialul o singură
+  dată și se aplică peste tot.
+- **Fără fețe suprapuse (z-fighting):** pereții tunelurilor, pereții-șicană, benzile de la colțurile
+  interioare, capacele, plintele de la îmbinări și benzile de pericol de pe site-uri nu mai stau în
+  același plan cu altceva.
+
+Validatorul are o secțiune nouă, **8. Pregătire pentru texturi**: cutii fără UV la scară reală,
+plase care nu corespund dimensiunii obiectului, fețe de sus suprapuse în același plan. Rezultat: 0.
+
+Rămân de știut pentru texturare: rezervoarele și țevile folosesc cilindrul standard Unity (UV 0–1);
+UV-urile sunt locale fiecărui obiect, deci la îmbinarea a două obiecte textura nu continuă exact.
+Pentru continuitate perfectă se poate folosi la art pass un material triplanar (world-space).
+
+## Două treceri subterane noi
+
+Nivelul subteran (−3,5 m) e acum un sistem general: `UndergroundAreas` (tot spațiul subteran) și
+`OpenPitAreas` (unde lipsește placa de la sol: rampe și puțuri de scară). În rest, placa de la sol
+rămâne tavanul tunelului (3 m înălțime liberă).
+
+| Tunel | Capătul atacatorilor | Traseu | Capătul apărătorilor |
+|---|---|---|---|
+| **North Service Tunnel** | cameră de scară acoperită între South Courtyard și T1 Walkway North (o ușă din fiecare) | pe sub Choke Point și Mid Lab, 54 m, patru pereți-șicană | puț de scară cu balustrade în North Overlook (vest), lângă A Catwalks |
+| **East Service Tunnel** | cameră de scară acoperită lângă South Courtyard | pe sub hangar spre est (50 m), apoi spre nord (16 m), cinci pereți-șicană | puț de scară cu balustrade în East Yard, în spatele lui B |
+
+Ce schimbă în joc:
+
+- **Atacatorii** pot ieși din mid direct în spatele rotației apărătorilor spre A (North Overlook) sau
+  în spatele lui B (East Yard).
+- **Apărătorii** pot coborî din North Overlook sau din East Yard și ies în curtea atacatorilor, în
+  spatele celor care împing prin Choke Point.
+- **Apărătorii pot baricada** ieșirea de la capătul lor (baricadă la baza fiecărui puț, care se
+  sparge cu gloanțe).
+- **Choke Point** devine un punct pe care ambele echipe trebuie să-l țină sub control, pentru că pe
+  sub el trec două flancuri.
+
+Validatorul confirmă: 59 din 59 de zone accesibile (inclusiv cele trei tuneluri), nicio gaură,
+nicio fantă, nimic suprapus.

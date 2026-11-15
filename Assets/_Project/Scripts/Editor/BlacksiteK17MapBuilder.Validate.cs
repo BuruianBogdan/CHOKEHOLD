@@ -97,6 +97,8 @@ namespace ChokeHold.EditorTools
                 CheckSightlines(root, zones, report);
                 CheckCover(root, report);
                 CheckOpenings(root, zones, report);
+                CheckJoints(root, report);
+                CheckTextureReadiness(root, report);
             }
             finally
             {
@@ -189,7 +191,8 @@ namespace ChokeHold.EditorTools
 
                     // Pereti, plansee, scari si acoperisuri care se intalnesc sunt imbinari de constructie;
                     // conteaza doar cand cel putin unul dintre obiecte e recuzita (cover, utilaj, manechin...).
-                    if (b == a || IsFloorLike(b) || AreRelated(a, b) || IsPlayer(b) || !(IsProp(a) || IsProp(b)))
+                    if (b == a || IsFloorLike(b) || AreRelated(a, b) || IsPlayer(b) || b.name == "WalkSurface" ||
+                        !(IsProp(a) || IsProp(b)))
                     {
                         continue;
                     }
@@ -805,6 +808,259 @@ namespace ChokeHold.EditorTools
             {
                 report.Ok("spațiu liber de minimum 3 m în toate interioarele (în afara ușilor și a scărilor)");
             }
+        }
+
+        // ------------------------------------------------------------------
+        // 7. Imbinari: elemente care trebuie sa fie legate intre ele
+        // ------------------------------------------------------------------
+        private static void CheckJoints(GameObject root, ValidationReport report)
+        {
+            report.Section("7. Îmbinări (pereți, coloane, tavane)");
+
+            const float slitMin = 0.03f;
+            const float slitMax = 0.8f;
+
+            List<BoxCollider> elements = new List<BoxCollider>();
+
+            foreach (string groupName in new[] { "Structures", "Cover" })
+            {
+                Transform group = root.transform.Find(groupName);
+
+                if (group != null)
+                {
+                    elements.AddRange(group.GetComponentsInChildren<BoxCollider>()
+                        .Where(b => b.enabled && !b.isTrigger && !b.name.Contains("Rail")));
+                }
+            }
+
+            // a) Perete / bloc care se opreste la mai putin de 1 m sub un tavan: pare neterminat.
+            int nearMiss = 0;
+
+            foreach (BoxCollider box in elements)
+            {
+                Transform t = box.transform;
+
+                if (t.lossyScale.y < 1.9f)
+                {
+                    continue;
+                }
+
+                Vector3 top = t.position + Vector3.up * (t.lossyScale.y * 0.5f);
+
+                // Deasupra varfului continua alt element (bucata de perete, placa): e legat.
+                if (Physics.CheckBox(top + Vector3.up * 0.03f, new Vector3(0.05f, 0.02f, 0.05f), t.rotation,
+                        ~0, QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
+
+                // Conteaza doar tavanele si planseele, nu tevile sau cover-ul de deasupra.
+                if (VRay(top + Vector3.up * 0.01f, Vector3.up, 1f, out RaycastHit hit) && hit.distance > 0.02f &&
+                    !IsProp(hit.collider))
+                {
+                    nearMiss++;
+                    report.Error($"`{t.name}` se oprește la {hit.distance:0.00} m sub `{hit.collider.name}` la {P(top)}");
+                }
+            }
+
+            // b) Fante inguste intre un element si altul: nici nu treci, nici nu sunt lipite.
+            HashSet<string> seen = new HashSet<string>();
+            int slits = 0;
+
+            foreach (BoxCollider box in elements)
+            {
+                Transform t = box.transform;
+                Vector3 half = t.lossyScale * 0.5f;
+                float baseY = t.position.y - half.y;
+
+                Vector3[] axes = { t.right, -t.right, t.forward, -t.forward };
+                float[] extents = { half.x, half.x, half.z, half.z };
+                Vector3[] alongs = { t.forward, t.forward, t.right, t.right };
+                float[] lengths = { half.z, half.z, half.x, half.x };
+
+                for (int f = 0; f < 4; f++)
+                {
+                    for (float s = -lengths[f] + 0.25f; s <= lengths[f] - 0.25f; s += 0.5f)
+                    {
+                        foreach (float h in new[] { 0.5f, 1.5f })
+                        {
+                            if (h > half.y * 2f - 0.1f)
+                            {
+                                continue;
+                            }
+
+                            Vector3 origin = t.position + axes[f] * (extents[f] + 0.005f) + alongs[f] * s;
+                            origin.y = baseY + h;
+
+                            // Raza pornita din interiorul altui obiect: fata e lipita de el.
+                            if (VBlocked(origin, 0.004f))
+                            {
+                                continue;
+                            }
+
+                            if (!VRay(origin, axes[f], slitMax, out RaycastHit hit) || hit.distance < slitMin ||
+                                hit.collider is MeshCollider ||
+                                hit.collider.name.Contains("Rail") || IsPlayer(hit.collider) ||
+                                hit.collider.name.Contains("_Pipe_") || hit.collider.name == "WalkSurface" ||
+                                hit.collider.GetComponentInParent<SimpleDoor>() != null ||
+                                AreRelated(box, hit.collider))
+                            {
+                                continue;
+                            }
+
+                            string a = t.name, b = hit.collider.name;
+                            string key = string.CompareOrdinal(a, b) < 0 ? a + "|" + b : b + "|" + a;
+
+                            if (seen.Add(key))
+                            {
+                                slits++;
+                                report.Error($"fantă de {hit.distance:0.00} m între `{a}` și `{b}` la {P(origin)}, " +
+                                             $"înălțime {origin.y:0.0} m, spre ({axes[f].x:0.#}, {axes[f].z:0.#})");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (nearMiss == 0 && slits == 0)
+            {
+                report.Ok($"{elements.Count} pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între {slitMin} și {slitMax} m");
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 8. Pregatire pentru texturi
+        // ------------------------------------------------------------------
+        private static void CheckTextureReadiness(GameObject root, ValidationReport report)
+        {
+            report.Section("8. Pregătire pentru texturi");
+
+            int boxes = 0, primitive = 0, wrongScale = 0;
+            HashSet<Material> materials = new HashSet<Material>();
+
+            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh mesh = filter.sharedMesh;
+                MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
+
+                if (mesh == null || renderer == null)
+                {
+                    continue;
+                }
+
+                if (renderer.sharedMaterial != null)
+                {
+                    materials.Add(renderer.sharedMaterial);
+                }
+
+                if (mesh.name == "Cube")
+                {
+                    primitive++;
+                    continue;
+                }
+
+                if (!mesh.name.StartsWith("Box_"))
+                {
+                    continue; // cilindri (rezervoare, tevi) si alte forme
+                }
+
+                boxes++;
+
+                // Plasa trebuie sa corespunda dimensiunii obiectului (UV in metri).
+                Vector3 s = filter.transform.lossyScale;
+                string expected = $"Box_{Mathf.RoundToInt(Mathf.Abs(s.x) * 100f)}_{Mathf.RoundToInt(Mathf.Abs(s.y) * 100f)}_{Mathf.RoundToInt(Mathf.Abs(s.z) * 100f)}";
+
+                if (mesh.name != expected)
+                {
+                    wrongScale++;
+
+                    if (wrongScale <= 10)
+                    {
+                        report.Error($"`{filter.name}` are plasa `{mesh.name}`, dar dimensiunea lui cere `{expected}` (UV întinse)");
+                    }
+                }
+            }
+
+            if (primitive > 0)
+            {
+                report.Error($"{primitive} cutii folosesc încă cubul standard (UV 0–1 întinse pe toată fața)");
+            }
+
+            if (primitive == 0 && wrongScale == 0)
+            {
+                report.Ok($"{boxes} cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap");
+            }
+
+            report.Ok($"{materials.Count} materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): " +
+                      "înlocuind un material se texturează toate suprafețele de acel tip");
+
+            // Fete suprapuse (z-fighting): doua cutii vizibile ale caror fete de sus stau in acelasi plan
+            // si se suprapun pe orizontala.
+            List<Bounds> tops = new List<Bounds>();
+            List<string> names = new List<string>();
+            List<Bounds> allRenderers = root.GetComponentsInChildren<MeshRenderer>().Select(r => r.bounds).ToList();
+
+            foreach (MeshRenderer renderer in root.GetComponentsInChildren<MeshRenderer>())
+            {
+                MeshFilter filter = renderer.GetComponent<MeshFilter>();
+
+                if (filter == null || filter.sharedMesh == null || !filter.sharedMesh.name.StartsWith("Box_") ||
+                    Quaternion.Angle(renderer.transform.rotation, Quaternion.identity) > 0.1f)
+                {
+                    continue;
+                }
+
+                tops.Add(renderer.bounds);
+                names.Add(renderer.name);
+            }
+
+            int zFights = 0;
+
+            for (int i = 0; i < tops.Count && zFights < 40; i++)
+            {
+                for (int j = i + 1; j < tops.Count && zFights < 40; j++)
+                {
+                    Bounds a = tops[i], b = tops[j];
+
+                    bool sameTop = Mathf.Abs(a.max.y - b.max.y) < 0.002f;
+                    float overlapX = Mathf.Min(a.max.x, b.max.x) - Mathf.Max(a.min.x, b.min.x);
+                    float overlapZ = Mathf.Min(a.max.z, b.max.z) - Mathf.Max(a.min.z, b.min.z);
+
+                    if (sameTop && overlapX > 0.05f && overlapZ > 0.05f &&
+                        !IsCoveredFromAbove(a, b, allRenderers))
+                    {
+                        zFights++;
+                        report.Warning($"fețele de sus ale `{names[i]}` și `{names[j]}` se suprapun în același plan (y {a.max.y:0.00}) la {P(a.center)} și {P(b.center)} — pot pâlpâi");
+                    }
+                }
+            }
+
+            if (zFights == 0)
+            {
+                report.Ok("nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)");
+            }
+        }
+
+        /// <summary>
+        /// Zona comuna a doua fete de sus e acoperita de un alt obiect asezat direct pe ea
+        /// (ex. placa de podea peste peretele tunelului, coronamentul peste zid): nu se vede, nu paie.
+        /// </summary>
+        private static bool IsCoveredFromAbove(Bounds a, Bounds b, List<Bounds> all)
+        {
+            Vector3 p = new Vector3(
+                (Mathf.Max(a.min.x, b.min.x) + Mathf.Min(a.max.x, b.max.x)) * 0.5f,
+                a.max.y + 0.01f,
+                (Mathf.Max(a.min.z, b.min.z) + Mathf.Min(a.max.z, b.max.z)) * 0.5f);
+
+            foreach (Bounds other in all)
+            {
+                if (other.Contains(p) && other.min.y > a.max.y - 0.02f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static float GroundLevelBelow(Vector3 point)

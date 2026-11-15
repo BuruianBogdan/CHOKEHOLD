@@ -26,6 +26,13 @@ namespace ChokeHold.EditorTools
             new Area("Security East Door",  -30f, -40f, -28f, -38f),
             new Area("Security West Door",  -44f, -42f, -42f, -40f),
 
+            // Camerele de scara ale tunelurilor de serviciu (capatul atacatorilor)
+            new Area("North Stair Room",    -16f, -12f,  -6f,  -8f),
+            new Area("North Stair Door S",  -16f, -14f, -14f, -12f),
+            new Area("North Stair Door W",  -18f, -12f, -16f, -10f),
+            new Area("East Stair Room",      12f, -12f,  20f,  -6f),
+            new Area("East Stair Door",      14f, -14f,  16f, -12f),
+
             // Vest -> A
             new Area("West Outpost",        -78f, -22f, -54f,   6f),
             new Area("West Rocks",          -56f,  -4f, -42f,  14f),
@@ -96,10 +103,15 @@ namespace ChokeHold.EditorTools
         private static readonly Area SiteB = new Area("B", 36f, -28f, 54f, -8f);
 
         // ------------------------------------------------------------------
-        // SOUTH TUNNEL - subteran real, la -3,5 m.
-        //   TunnelPit     : tot santul (rampe + partea acoperita)
-        //   TunnelCovered : partea de sub pamant; deasupra ei harta e plina
-        //   StairTrench   : scara care coboara din South Lane in mijlocul tunelului
+        // NIVELUL SUBTERAN (-3,5 m): trei tuneluri.
+        //
+        //   South Tunnel         : T1 Spawn  <-> Loading Bay (B), cu scara din South Lane
+        //   North Service Tunnel : South Courtyard / T1 Walkway (atacatori) <-> North Overlook (aparatori)
+        //   East Service Tunnel  : South Courtyard (atacatori) <-> East Yard (aparatori, in spatele lui B)
+        //
+        // Underground = tot spatiul subteran (podea la -3,5 m, pereti de jur imprejur).
+        // OpenPits    = unde lipseste placa de la sol (rampe, puturi de scara, South Tunnel vechi);
+        //               in rest, placa de la sol ramane ca tavan al tunelului.
         // ------------------------------------------------------------------
         private const float TunnelFloorY = -3.5f;
 
@@ -107,9 +119,43 @@ namespace ChokeHold.EditorTools
         private static readonly Area TunnelCovered = new Area("South Tunnel", -40f, -58f, 10f, -52f);
         private static readonly Area StairTrench = new Area("Tunnel Stair Trench", -8f, -52f, -4f, -44f);
 
+        // Tunelul de nord: scara in camera de langa curte, culoar spre nord pe sub Choke si Mid Lab,
+        // put de scara in North Overlook.
+        private static readonly Area NorthStairPit = new Area("North Tunnel Stairs (south)", -14f, -12f, -6f, -8f);
+        private static readonly Area NorthTunnel = new Area("North Service Tunnel", -6f, -12f, -2f, 42f);
+        private static readonly Area NorthExitPit = new Area("North Tunnel Stairs (north)", -6f, 42f, -2f, 50f);
+
+        // Tunelul de est: scara in camera de langa curte, culoar spre est pe sub hangar, apoi spre nord,
+        // put de scara in East Yard.
+        private static readonly Area EastStairPit = new Area("East Tunnel Stairs (west)", 12f, -10f, 20f, -6f);
+        private static readonly Area EastTunnel = new Area("East Service Tunnel", 20f, -10f, 70f, -6f);
+        private static readonly Area EastTunnelNorth = new Area("East Service Tunnel (north leg)", 66f, -6f, 70f, 10f);
+        private static readonly Area EastExitPit = new Area("East Tunnel Stairs (east)", 66f, 10f, 70f, 18f);
+
+        private static readonly Area[] UndergroundAreas =
+        {
+            TunnelPit, StairTrench,
+            NorthStairPit, NorthTunnel, NorthExitPit,
+            EastStairPit, EastTunnel, EastTunnelNorth, EastExitPit,
+        };
+
+        private static readonly Area[] OpenPitAreas =
+        {
+            TunnelPit, StairTrench,
+            NorthStairPit, NorthExitPit,
+            EastStairPit, EastExitPit,
+        };
+
+        /// <summary>Celula are spatiu subteran (tunel sau put de scara).</summary>
         private static bool IsPit(float x, float z)
         {
-            return Inside(TunnelPit, x, z) || Inside(StairTrench, x, z);
+            return Contains(UndergroundAreas, x, z);
+        }
+
+        /// <summary>Celula nu are placa la sol: de sus se vede in tunel (rampa sau put de scara).</summary>
+        private static bool IsOpenPit(float x, float z)
+        {
+            return Contains(OpenPitAreas, x, z);
         }
 
         private static bool Inside(Area area, float x, float z)
@@ -151,7 +197,7 @@ namespace ChokeHold.EditorTools
             {
                 for (int j = 0; j < nz; j++)
                 {
-                    solid[i, j] = !IsPit(CellCenterX(i), CellCenterZ(j));
+                    solid[i, j] = !IsOpenPit(CellCenterX(i), CellCenterZ(j));
                 }
             }
 
@@ -242,18 +288,41 @@ namespace ChokeHold.EditorTools
             const float slab = 0.5f;
             const float wallThickness = 0.5f;
 
-            foreach (Area pit in new[] { TunnelPit, StairTrench })
-            {
-                SolidBlock(gUnderground, $"PitFloor_{pit.Name}",
-                    pit.XMin, pit.ZMin, pit.XMax, pit.ZMax,
-                    TunnelFloorY - slab, slab, floorMat);
-            }
-
             int nx = GridX;
             int nz = GridZ;
 
-            float wallHeight = -TunnelFloorY + slab;
-            float wallCenterY = (TunnelFloorY - slab) * 0.5f;
+            // Podeaua subterana: o singura retea de placi, fara suprapuneri intre tuneluri.
+            bool[,] pitCells = new bool[nx, nz];
+
+            for (int i = 0; i < nx; i++)
+            {
+                for (int j = 0; j < nz; j++)
+                {
+                    pitCells[i, j] = IsPit(CellCenterX(i), CellCenterZ(j));
+                }
+            }
+
+            int floorIndex = 0;
+
+            MergeCells(pitCells, (i, j, width, depth) =>
+            {
+                float sizeX = width * Cell;
+                float sizeZ = depth * Cell;
+
+                CreateBox(
+                    gUnderground,
+                    $"PitFloor_{floorIndex++:00}",
+                    new Vector3(MinX + i * Cell + sizeX * 0.5f, TunnelFloorY - slab * 0.5f, MinZ + j * Cell + sizeZ * 0.5f),
+                    new Vector3(sizeX, slab, sizeZ),
+                    floorMat
+                );
+            });
+
+            // Peretii se opresc sub placa de la sol (-0,5 m): fata lor de sus nu sta in acelasi plan cu podeaua.
+            float wallTop = -slab;
+            float wallBottom = TunnelFloorY - slab;
+            float wallHeight = wallTop - wallBottom;
+            float wallCenterY = (wallTop + wallBottom) * 0.5f;
             int index = 0;
 
             int[] di = { 1, -1, 0, 0 };
@@ -367,6 +436,9 @@ namespace ChokeHold.EditorTools
             }
 
             CreateZoneLabel(TunnelCovered, TunnelFloorY);
+            CreateZoneLabel(NorthTunnel, TunnelFloorY);
+            CreateZoneLabel(EastTunnel, TunnelFloorY);
+            CreateZoneLabel(EastTunnelNorth, TunnelFloorY);
         }
 
         private static void CreateZoneLabel(Area area, float y)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ChokeHold.Gameplay;
 using UnityEngine;
 
 namespace ChokeHold.EditorTools
@@ -54,8 +55,12 @@ namespace ChokeHold.EditorTools
         private static Material hangarPilasterMat, hangarBandMat, tunnelBandMat;
         private static Material extFloorMat, indFloorMat, labFloorMat, hangarFloorMat, tunnelFloorMat;
 
+        // Stalpii de balustrada deja pusi: la colturi doua balustrade impart acelasi stalp.
+        private static readonly HashSet<Vector3Int> placedPosts = new HashSet<Vector3Int>();
+
         private static void ResetDetailRecords()
         {
+            placedPosts.Clear();
             placedLights.Clear();
             placedPlatforms.Clear();
             placedRoofs.Clear();
@@ -109,6 +114,11 @@ namespace ChokeHold.EditorTools
                 return Theme.Tunnel;
             }
 
+            if (areaName.Contains("Stair Room") || areaName.Contains("Stair Door"))
+            {
+                return Theme.Industrial;
+            }
+
             if (areaName == "Bombsite A" || areaName.StartsWith("A Control") || areaName.StartsWith("A Pipes") ||
                 areaName.StartsWith("Depot") || areaName == "A Heaven Door")
             {
@@ -131,7 +141,7 @@ namespace ChokeHold.EditorTools
 
         private static Theme ThemeAt(float x, float z)
         {
-            if (IsPit(x, z))
+            if (IsOpenPit(x, z))
             {
                 return Theme.Tunnel;
             }
@@ -187,6 +197,7 @@ namespace ChokeHold.EditorTools
             BuildWallFaces();
             BuildCornerColumns();
             BuildWallCoping();
+            BuildFreeTopCaps();
             BuildCeilingBeams();
             BuildAutoRailings();
             BuildFloorMarkings();
@@ -326,7 +337,7 @@ namespace ChokeHold.EditorTools
                                     theme = Theme.Tunnel;
                                     baseY = TunnelFloorY;
                                 }
-                                else if (!IsWalkable(cx, cz) && IsWalkable(nx, nz) && !IsPit(nx, nz))
+                                else if (!IsWalkable(cx, cz) && IsWalkable(nx, nz) && !IsOpenPit(nx, nz))
                                 {
                                     exposed = true;
                                     theme = ThemeAt(nx, nz);
@@ -389,6 +400,13 @@ namespace ChokeHold.EditorTools
         /// <summary>Banda orizontala pe fata, de la y0 la y1, iesita cu depth din perete.</summary>
         private static void FaceBand(Transform parent, string name, Face face, float y0, float y1, float depth, Material material)
         {
+            // La colturile interioare benzile a doi pereti perpendiculari se ating: cele de pe peretii
+            // orientati pe Z sunt cu 4 mm mai inalte, ca fetele lor de sus sa nu fie in acelasi plan.
+            if (face.Along == Vector3.forward)
+            {
+                y1 += 0.004f;
+            }
+
             Vector3 mid = face.Start + face.Along * (face.Length * 0.5f) + face.Normal * (depth * 0.5f);
             mid.y = face.BaseY + (y0 + y1) * 0.5f;
 
@@ -435,8 +453,9 @@ namespace ChokeHold.EditorTools
                     break;
 
                 case Theme.Lab:
+                    // Inaltimile benzilor nu cad pe multipli de 0,2 m (varfurile treptelor), ca sa nu fie in acelasi plan.
                     FaceBand(group, "Wainscot", face, 0.25f, 1.1f, 0.04f, labWainscotMat);
-                    FaceBand(group, "Stripe", face, 1.1f, 1.2f, 0.05f, labStripeMat);
+                    FaceBand(group, "Stripe", face, 1.1f, 1.18f, 0.05f, labStripeMat);
                     pilasterSpacing = 6f; pilasterWidth = 0.35f; pilasterDepth = 0.1f; pilasterMat = labPilasterMat;
                     break;
 
@@ -451,7 +470,7 @@ namespace ChokeHold.EditorTools
                     break;
 
                 default:
-                    FaceBand(group, "Wainscot", face, 0.25f, 1.0f, 0.05f, extWainscotMat);
+                    FaceBand(group, "Wainscot", face, 0.25f, 0.95f, 0.05f, extWainscotMat);
                     pilasterSpacing = 6f; pilasterWidth = 0.5f; pilasterDepth = 0.15f; pilasterMat = extWainscotMat;
                     break;
             }
@@ -463,11 +482,13 @@ namespace ChokeHold.EditorTools
 
             int count = Mathf.FloorToInt(face.Length / pilasterSpacing);
             float step = face.Length / (count + 1);
-            float maxHeight = face.Theme == Theme.Tunnel ? -TunnelFloorY : InnerWallHeight;
+            bool tunnelFace = face.BaseY < -1f;
 
             for (int k = 1; k <= count; k++)
             {
                 Vector3 ground = face.Start + face.Along * (k * step);
+                // Pilastrul urca pana in varful peretelui din spatele lui (sau pana in tavan, daca e mai jos).
+                float maxHeight = tunnelFace ? -TunnelFloorY : WallTopAt(ground - face.Normal * 1f) - face.BaseY;
                 float height = ClearHeightAt(ground + face.Normal * 0.4f, maxHeight);
 
                 if (height < 1.5f)
@@ -521,13 +542,35 @@ namespace ChokeHold.EditorTools
                                 continue;
                             }
 
-                            float baseY = IsPit(sideX, sideZ) ? TunnelFloorY : 0f;
+                            float baseY = IsOpenPit(sideX, sideZ) ? TunnelFloorY : 0f;
                             Vector3 corner = new Vector3(
                                 MinX + (i + (dx > 0 ? 1 : 0)) * Cell,
                                 baseY,
                                 MinZ + (j + (dz > 0 ? 1 : 0)) * Cell);
 
-                            float max = baseY < 0f ? -TunnelFloorY : InnerWallHeight;
+                            // Coltul e deja imbracat (tocul unei usi, un perete despartitor): fara coloana.
+                            // Verificam toate cele trei sferturi ale coloanei aflate in afara zidului.
+                            bool occupied = false;
+
+                            foreach (Vector3 quarter in new[] { new Vector3(dx, 0f, 0f), new Vector3(0f, 0f, dz), new Vector3(dx, 0f, dz) })
+                            {
+                                foreach (float checkY in new[] { 1.5f, 5f })
+                                {
+                                    if (Physics.CheckBox(corner + quarter * 0.2f + Vector3.up * checkY,
+                                            new Vector3(0.12f, 0.1f, 0.12f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+                                    {
+                                        occupied = true;
+                                    }
+                                }
+                            }
+
+                            if (occupied)
+                            {
+                                continue;
+                            }
+
+                            // Coloana urca pana in varful blocului de perete (sau pana in tavan).
+                            float max = baseY < 0f ? -TunnelFloorY : WallTopAt(new Vector3(CellCenterX(i), 0f, CellCenterZ(j)));
                             float height = ClearHeightAt(corner + new Vector3(dx, 0f, dz) * 0.6f, max);
 
                             if (height < 1.5f)
@@ -550,6 +593,85 @@ namespace ChokeHold.EditorTools
                     }
                 }
             }
+        }
+
+        /// <summary>Inaltimea varfului peretelui (blocului solid) de la (x, z), masurata de sus.</summary>
+        private static float WallTopAt(Vector3 point)
+        {
+            Vector3 from = new Vector3(point.x, 30f, point.z);
+
+            if (Physics.Raycast(from, Vector3.down, out RaycastHit hit, 40f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return hit.point.y;
+            }
+
+            return InnerWallHeight;
+        }
+
+        // ------------------------------------------------------------------
+        // Capac pe varful liber al peretilor despartitori si al blocurilor
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Un perete despartitor care nu urca pana in tavan primeste un capac putin mai lat:
+        /// muchia de sus arata terminata, nu taiata.
+        /// </summary>
+        private static void BuildFreeTopCaps()
+        {
+            Transform group = CreateGroup(gDetail, "Free Top Caps");
+            int index = 0;
+
+            foreach (BoxCollider box in gStructures.GetComponentsInChildren<BoxCollider>())
+            {
+                if (box.isTrigger || box.GetComponent<Destructible>() != null || box.name.Contains("Rail"))
+                {
+                    continue;
+                }
+
+                Transform t = box.transform;
+                Vector3 size = t.lossyScale;
+
+                // Doar elemente de tip perete / bloc (nu cover, nu tevi).
+                if (size.y < 1.9f || PropKeywordsForCaps(t.name))
+                {
+                    continue;
+                }
+
+                Vector3 top = t.position + Vector3.up * (size.y * 0.5f);
+
+                // Tavan imediat deasupra: peretele e deja legat, nu are nevoie de capac.
+                if (Physics.Raycast(top + Vector3.up * 0.02f, Vector3.up, 0.3f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
+
+                // Capacul iese 5 cm doar pe grosimea peretelui; pe lungime se opreste la capetele bucatii,
+                // ca bucatile alaturate ale aceluiasi perete sa nu aiba capace suprapuse.
+                bool thinX = size.x < 1f && size.x < size.z;
+                bool thinZ = size.z < 1f && size.z < size.x;
+                bool small = size.x < 1f && size.z < 1f && !thinX && !thinZ;
+                bool large = !thinX && !thinZ && !small;
+
+                Vector3 capSize = new Vector3(
+                    size.x + (thinX || large ? 0.1f : 0f),
+                    0.1f,
+                    size.z + (thinZ || large ? 0.1f : 0f));
+
+                // La colturile dintre doi pereti perpendiculari capacele se ating: cele de pe peretii
+                // orientati pe Z (subtiri pe X) stau cu 4 mm mai sus.
+                float lift = thinX ? 0.004f : small ? 0.008f : 0f;
+
+                GameObject cap = Decor(group, $"Cap_{index++:000}", top + Vector3.up * (0.05f + lift), capSize, copingMat);
+
+                cap.transform.rotation = t.rotation;
+                cap.transform.localScale = capSize;
+            }
+        }
+
+        private static bool PropKeywordsForCaps(string name)
+        {
+            return name.Contains("Tank") || name.Contains("_Pipe_") || name.Contains("Rock") ||
+                   name.Contains("Crate") || name.Contains("Cover") || name.Contains("Container");
         }
 
         // ------------------------------------------------------------------
@@ -654,9 +776,12 @@ namespace ChokeHold.EditorTools
             }
 
             bool alongX = Mathf.Abs(dir.x) > Mathf.Abs(dir.z);
+
+            // Barele se opresc in stalpii de capat (jumatate din grosime), ca la un colt
+            // doua balustrade sa nu se suprapuna.
             Vector3 railSize(float thickness) => alongX
-                ? new Vector3(length, thickness, thickness)
-                : new Vector3(thickness, thickness, length);
+                ? new Vector3(Mathf.Max(0.01f, length - thickness), thickness, thickness)
+                : new Vector3(thickness, thickness, Mathf.Max(0.01f, length - thickness));
 
             Vector3 mid = (a + b) * 0.5f;
             Decor(group, "TopRail", mid + Vector3.up * 1.0f, railSize(0.07f), frameMat);
@@ -668,6 +793,13 @@ namespace ChokeHold.EditorTools
             for (int k = 0; k <= posts; k++)
             {
                 Vector3 p = a + dir * (length * k / posts);
+                Vector3Int key = Vector3Int.RoundToInt(p * 20f);
+
+                if (!placedPosts.Add(key))
+                {
+                    continue; // stalp comun cu balustrada vecina
+                }
+
                 Decor(group, $"Post_{k}", p + Vector3.up * 0.5f, new Vector3(0.07f, 1f, 0.07f), frameMat);
             }
         }
@@ -715,8 +847,8 @@ namespace ChokeHold.EditorTools
 
                         if (s < samples)
                         {
-                            Vector3 p = start + dir * ((s + 0.5f) * step) + outward * 0.3f;
-                            needs = EdgeNeedsRailing(p, platform.Y);
+                            Vector3 onEdge = start + dir * ((s + 0.5f) * step);
+                            needs = EdgeNeedsRailing(onEdge, onEdge + outward * 0.3f, platform.Y);
                         }
 
                         if (needs && runFrom < 0f)
@@ -741,8 +873,17 @@ namespace ChokeHold.EditorTools
             }
         }
 
-        private static bool EdgeNeedsRailing(Vector3 outside, float platformY)
+        private static bool EdgeNeedsRailing(Vector3 onEdge, Vector3 outside, float platformY)
         {
+            // Balustrada sau perete deja pe muchie: nu mai punem una.
+            if (Physics.CheckBox(
+                    new Vector3(onEdge.x, platformY + 0.7f, onEdge.z),
+                    new Vector3(0.12f, 0.3f, 0.12f),
+                    Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+
             // Podea la aceeasi inaltime dincolo de muchie (alta placa, palier, capatul unei scari)?
             Vector3 above = new Vector3(outside.x, platformY + 1.2f, outside.z);
 
@@ -790,8 +931,9 @@ namespace ChokeHold.EditorTools
             Transform group = CreateGroup(parent, name);
             HazardStrip(group, "S", new Vector3(area.XMin, y, area.ZMin), new Vector3(area.XMax, y, area.ZMin), 0.35f);
             HazardStrip(group, "N", new Vector3(area.XMin, y, area.ZMax), new Vector3(area.XMax, y, area.ZMax), 0.35f);
-            HazardStrip(group, "W", new Vector3(area.XMin, y, area.ZMin), new Vector3(area.XMin, y, area.ZMax), 0.35f);
-            HazardStrip(group, "E", new Vector3(area.XMax, y, area.ZMin), new Vector3(area.XMax, y, area.ZMax), 0.35f);
+            // Laturile de vest si est se opresc la marginea benzilor de nord si sud (fara suprapunere la colturi).
+            HazardStrip(group, "W", new Vector3(area.XMin, y, area.ZMin + 0.175f), new Vector3(area.XMin, y, area.ZMax - 0.175f), 0.35f);
+            HazardStrip(group, "E", new Vector3(area.XMax, y, area.ZMin + 0.175f), new Vector3(area.XMax, y, area.ZMax - 0.175f), 0.35f);
         }
 
         /// <summary>Banda galben-negru, in segmente de 0,6 m, de la a la b (paralel cu o axa).</summary>
@@ -1025,7 +1167,7 @@ namespace ChokeHold.EditorTools
             Decor(group, "Jamb_R", bottom + along * (width * 0.5f + trim * 0.5f) + Vector3.up * (height * 0.5f), jambSize, frameMat);
             Decor(group, "Head", bottom + Vector3.up * (height + trim * 0.5f),
                 along * (width + trim * 2f) + across * frameDepth + Vector3.up * trim, frameMat);
-            Decor(group, "Sill", bottom - Vector3.up * 0.04f,
+            Decor(group, "Sill", bottom + Vector3.up * 0.04f,
                 along * (width + 0.3f) + across * (depth + 0.25f) + Vector3.up * 0.08f, copingMat);
         }
     }

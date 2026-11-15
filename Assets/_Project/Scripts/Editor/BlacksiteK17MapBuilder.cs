@@ -1039,14 +1039,17 @@ namespace ChokeHold.EditorTools
                 );
 
                 // Subteranul: ascundem si peretii si podeaua, ca sa se vada santul tunelului.
-                string[] aboveGround = { WallGroupName, FloorGroupName, StairGroupName };
+                // Subteranul: ascundem tot ce e deasupra solului, ramane doar nivelul de -3,5 m.
                 List<GameObject> hiddenGroups = new List<GameObject>();
 
-                foreach (string groupName in aboveGround)
+                foreach (Transform group in root.transform)
                 {
-                    Transform group = root.transform.Find(groupName);
+                    if (group.name == "Underground (Tunnel)" || group.name == "Lights")
+                    {
+                        continue;
+                    }
 
-                    if (group != null && group.gameObject.activeSelf)
+                    if (group.gameObject.activeSelf)
                     {
                         group.gameObject.SetActive(false);
                         hiddenGroups.Add(group.gameObject);

@@ -75,7 +75,7 @@ namespace ChokeHold.EditorTools
             Partition("Part_ARamp_Site", -24.25f, 28f, -24.25f, 36f, full,
                 SoftGap(1.25f, 2.5f),
                 DoorGap(4f),
-                UpperGap(4f, 2f, up));
+                UpperGap(4f, DoorWidth, up));
             HighCover(-27.5f, 29f, -27.5f, 34f);       // paravan in spatele usii din A Ramp
 
             // Nord-est: A Catwalks -> site, pe sub A Heaven. Usa si fereastra la sol; sus intra North Catwalk.
@@ -91,7 +91,9 @@ namespace ChokeHold.EditorTools
             // Zona de plant e o camera in camera: zid pe sud si perete cu usa pe nord,
             // ca din nicio intrare sa nu se vada tot site-ul.
             InnerWall(gStructures, "A_Wall_South", -50f, 33f, -34f, 33f, GroundCeiling);
-            Partition("Part_A_NorthMid", -37f, 44f, -37f, 56f, GroundCeiling, DoorGap(10.5f));
+            // Peretele care inchide zona de plant spre nord sta lipit sub marginea lui A Heaven
+            // (fata de est = muchia galeriei) si urca pana la nivelul ei: zid si galerie formeaza un singur corp.
+            Partition("Part_A_NorthMid", -36.25f, 44f, -36.25f, 56f, UpperFloorHeight, DoorGap(10.5f));
             SoftWall(gStructures, "A_Pipes_SoftWall", -50f, 38f, -50f, 42f, 0f, 3.5f);
             Pipe(gStructures, "A_Pipe_West_Low", new Vector3(-57.3f, 0.6f, 32f), new Vector3(-57.3f, 0.6f, 44f), 0.9f);
             Pipe(gStructures, "A_Pipe_West_High", new Vector3(-57.3f, 1.8f, 32f), new Vector3(-57.3f, 1.8f, 44f), 0.7f);

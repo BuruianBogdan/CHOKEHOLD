@@ -2,7 +2,7 @@
 
 Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baricadele nemontate.
 
-**0 erori, 28 avertismente.**
+**0 erori, 29 avertismente.**
 
 ## 1. Obiecte care intră unele în altele
 
@@ -10,13 +10,13 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 2. Găuri în podea
 
-- ok — 11573 celule de 1 m verificate în 51 zone, nicio gaură
+- ok — 12160 celule de 1 m verificate în 59 zone, nicio gaură
 
 ## 3. Conectivitate
 
-- ok — 12513 poziții accesibile din spawn-ul T1
+- ok — 12887 poziții accesibile din spawn-ul T1
 - ok — nicio poziție accesibilă în afara conturului hărții
-- ok — 51 din 51 zone accesibile
+- ok — 59 din 59 zone accesibile
 - ok — 37 din 37 plăci și platforme de etaj accesibile
 
 ## 4. Linii de vedere
@@ -53,7 +53,7 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 - WARNING etaj, A Ramp: 35.4 m > 27.5 m, (-25, 35) → (-55.6, 52.7)
 - WARNING etaj, Lab Annex: 32.1 m > 27.5 m, (21, 37) → (-10, 28.7)
 - WARNING etaj, Lab West Door: 30.0 m > 27.5 m, (-11, 23) → (18, 30.8)
-- ok — parter: 34 din 49 zone în limită; etaj: 4 din 17
+- ok — parter: 42 din 57 zone în limită; etaj: 4 din 17
 
 ## 5. Cover
 
@@ -61,5 +61,15 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 6. Uși, ferestre, trape și spațiu liber
 
-- ok — 46 uși, 1 ferestre și 5 trape, toate la standard
-- ok — spațiu liber de minimum 3 m în toate interioarele (în afara ușilor și a scărilor)
+- ok — 49 uși, 1 ferestre și 5 trape, toate la standard
+- WARNING 453 m² de interior cu mai puțin de 3 m deasupra capului (de exemplu la (-5.5, -11.5))
+
+## 7. Îmbinări (pereți, coloane, tavane)
+
+- ok — 285 pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între 0.03 și 0.8 m
+
+## 8. Pregătire pentru texturi
+
+- ok — 3621 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 42 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
+- ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)

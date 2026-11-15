@@ -106,7 +106,7 @@ namespace ChokeHold.EditorTools
 
             Container(gCover, 71.5f, -20f, 0f, containerRedMat, 2.6f);
             Container(gCover, 74.1f, -20f, 0f, containerBlueMat, 2.6f);
-            Stairs(gStairs, "Stairs_ContainerStack", 66f, -16.8f, 70f, -11.8f, Vector3.back, 0f, 2.6f);
+            Stairs(gStairs, "Stairs_ContainerStack", 66f, -17f, 70f, -12f, Vector3.back, 0f, 2.6f);
             Container(gCover, 70f, -32f, 90f, containerBlueMat);
 
             // Lumini puternice, albe

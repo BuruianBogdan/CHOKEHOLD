@@ -105,8 +105,28 @@ namespace ChokeHold.EditorTools
         private static void Partition(string name, float x0, float z0, float x1, float z1, float topY, params Gap[] gaps)
         {
             bool alongX = Mathf.Abs(x1 - x0) > Mathf.Abs(z1 - z0);
-            float length = alongX ? Mathf.Abs(x1 - x0) : Mathf.Abs(z1 - z0);
             float sign = alongX ? Mathf.Sign(x1 - x0) : Mathf.Sign(z1 - z0);
+
+            // Capetele se lipesc de zidul / peretele cel mai apropiat (daca e la mai putin de 1 m),
+            // ca sa nu ramana fante intre peretele despartitor si restul constructiei.
+            Vector3 axis = alongX ? new Vector3(sign, 0f, 0f) : new Vector3(0f, 0f, sign);
+            float extendStart = GapToStructure(new Vector3(x0, 0f, z0), -axis, topY);
+            float extendEnd = GapToStructure(new Vector3(x1, 0f, z1), axis, topY);
+
+            x0 -= axis.x * extendStart;
+            z0 -= axis.z * extendStart;
+            x1 += axis.x * extendEnd;
+            z1 += axis.z * extendEnd;
+
+            if (extendStart > 0f)
+            {
+                for (int g = 0; g < gaps.Length; g++)
+                {
+                    gaps[g].At += extendStart;
+                }
+            }
+
+            float length = alongX ? Mathf.Abs(x1 - x0) : Mathf.Abs(z1 - z0);
 
             Transform group = CreateGroup(gStructures, name);
 
@@ -149,8 +169,14 @@ namespace ChokeHold.EditorTools
                 {
                     if (mid > gap.Start && mid < gap.End)
                     {
+                        // Trecere la etaj: placa (galerie, pasarela) umple grosimea planseului,
+                        // asa ca peretele de dedesubt se opreste sub ea, nu in acelasi plan cu podeaua.
+                        float holeBottom = gap.Kind == GapKind.Open && gap.BaseY >= 1f
+                            ? gap.BaseY - SlabThickness
+                            : gap.BaseY;
+
                         holes.Add(new Vector2(
-                            Mathf.Clamp(gap.BaseY, 0f, topY),
+                            Mathf.Clamp(holeBottom, 0f, topY),
                             Mathf.Clamp(gap.BaseY + gap.Height, 0f, topY)));
                     }
                 }
@@ -235,13 +261,17 @@ namespace ChokeHold.EditorTools
             CreateBox(parent, name, groundPoint + Vector3.up * (fromY + toY) * 0.5f, size, wallMat);
 
             // Plinta pe ambele fete (o singura cutie putin mai groasa decat peretele).
+            // E cu 1-2 cm mai joasa decat plinta zidurilor (0,25 m), diferita pe cele doua axe:
+            // la imbinari si colturi fetele de sus nu stau in acelasi plan.
             if (fromY < 0.01f && toY > 0.3f)
             {
-                Vector3 plinth = alongX
-                    ? new Vector3(lengthAlong, 0.25f, PartitionThickness + 0.12f)
-                    : new Vector3(PartitionThickness + 0.12f, 0.25f, lengthAlong);
+                float plinthHeight = alongX ? 0.24f : 0.23f;
 
-                Decor(parent, name + "_Plinth", groundPoint + Vector3.up * 0.125f, plinth, plinthMat);
+                Vector3 plinth = alongX
+                    ? new Vector3(lengthAlong, plinthHeight, PartitionThickness + 0.12f)
+                    : new Vector3(PartitionThickness + 0.12f, plinthHeight, lengthAlong);
+
+                Decor(parent, name + "_Plinth", groundPoint + Vector3.up * (plinthHeight * 0.5f), plinth, plinthMat);
             }
         }
 
