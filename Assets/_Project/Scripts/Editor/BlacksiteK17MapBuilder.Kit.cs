@@ -30,6 +30,20 @@ namespace ChokeHold.EditorTools
                 { "Glass", (new Color(0.08f, 0.1f, 0.12f), 0.9f, 0f) },
                 { "BarrelPaint", (new Color(0.15f, 0.3f, 0.55f), 0.35f, 0.2f) },
                 { "Hazard", (new Color(0.92f, 0.75f, 0.1f), 0.3f, 0f) },
+                { "Black", (new Color(0.05f, 0.05f, 0.05f), 0.2f, 0f) },
+                { "Rubber", (new Color(0.06f, 0.06f, 0.06f), 0.15f, 0f) },
+                { "Paint", (new Color(0.5f, 0.52f, 0.5f), 0.3f, 0.1f) },
+                { "ReactorPaint", (new Color(0.82f, 0.8f, 0.72f), 0.4f, 0.1f) },
+                { "TankPaint", (new Color(0.45f, 0.55f, 0.5f), 0.35f, 0.2f) },
+                { "MotorPaint", (new Color(0.2f, 0.35f, 0.55f), 0.4f, 0.2f) },
+                { "TurbinePaint", (new Color(0.55f, 0.6f, 0.62f), 0.45f, 0.4f) },
+                { "PipePaint", (new Color(0.55f, 0.2f, 0.12f), 0.3f, 0.2f) },
+                // Sloturile *Glow lumineaza (emisie).
+                { "ReactorGlow", (new Color(0.25f, 0.65f, 1f), 0.6f, 0f) },
+                { "PoolGlow", (new Color(0.1f, 0.55f, 0.95f), 0.8f, 0f) },
+                { "BeaconGlow", (new Color(1f, 0.5f, 0.05f), 0.6f, 0f) },
+                { "EmergencyGlow", (new Color(1f, 0.1f, 0.05f), 0.6f, 0f) },
+                { "ScreenGlow", (new Color(0.25f, 0.95f, 0.55f), 0.8f, 0f) },
             };
 
         private static readonly Dictionary<string, Material> kitMaterials = new Dictionary<string, Material>();
@@ -64,11 +78,11 @@ namespace ChokeHold.EditorTools
                 }
                 else if (n.StartsWith("LowCover_"))
                 {
-                    KitTiled(t, "K17_Barrier_Low");
+                    KitTiled(t, "K17_Barrier_Low", 1.1f, 0.6f);
                 }
                 else if (n.StartsWith("HighCover_"))
                 {
-                    KitTiled(t, "K17_Barrier_High");
+                    KitTiled(t, "K17_Barrier_High", 2f, 0.8f);
                 }
                 else if (n.StartsWith("Container40_"))
                 {
@@ -85,6 +99,43 @@ namespace ChokeHold.EditorTools
                 else if (n == "Panel" && t.parent != null && t.parent.GetComponent<SimpleDoor>() != null)
                 {
                     KitDoor(t);
+                }
+                // Instalatia nucleara: utilajele existente isi schimba doar aspectul
+                else if (n == "A_Tank_Main")
+                {
+                    KitFixed(t, "K17_Reactor_Vessel", new Vector3(4f, 4f, 4f));
+                }
+                else if (n == "A_Tank_Small")
+                {
+                    KitFixed(t, "K17_Pressurizer", new Vector3(3.5f, 3.4f, 3.5f));
+                }
+                else if (n.StartsWith("Pumps_Tank_"))
+                {
+                    KitFixed(t, "K17_Coolant_Tank", new Vector3(3f, 3.2f, 3f));
+                }
+                else if (n == "A_Generator" || n == "Pumps_Machine" || n == "Yard_Generator")
+                {
+                    KitFixed(t, "K17_Coolant_Pump", new Vector3(4f, 2.5f, 4f));
+                }
+                else if (n == "Hangar_Machine")
+                {
+                    KitFixed(t, "K17_Turbine", new Vector3(6f, 3.6f, 8f));
+                }
+                else if (n == "Lab_ServerRack")
+                {
+                    KitFixed(t, "K17_Control_Panels", new Vector3(6f, 2.2f, 3f));
+                }
+                else if (n == "Security_Lockers")
+                {
+                    KitFacing(t, "K17_Hazmat_Lockers", new Vector3(1f, 2.2f, 4f));
+                }
+                else if (n.Contains("_Shelf"))
+                {
+                    KitTiled(t, "K17_Shelf", 2.2f, 1f, modelAlongX: false);
+                }
+                else if (n.Contains("_Rock"))
+                {
+                    KitFixed(t, "K17_Rubble", Vector3.one);
                 }
             }
 
@@ -103,8 +154,38 @@ namespace ChokeHold.EditorTools
             }
         }
 
-        /// <summary>Piesa de 2 m pusa in sir pe latura lunga a cutiei (bariere).</summary>
-        private static void KitTiled(Transform box, string piece)
+        /// <summary>
+        /// Piesa cu fata (usi de dulap) spre camera: se intoarce cu 180 de grade daca peretele e
+        /// in partea spre care ar privi.
+        /// </summary>
+        private static void KitFacing(Transform box, string piece, Vector3 nominal)
+        {
+            Transform holder = KitHolder(box, out Vector3 size);
+
+            if (holder == null)
+            {
+                return;
+            }
+
+            // Piesa priveste spre +X local; verificam ce e imediat in fata cutiei.
+            Collider own = box.GetComponent<Collider>();
+            Vector3 front = box.right;
+            Vector3 origin = own != null ? own.bounds.center : box.position;
+            bool wallInFront = Physics.Raycast(origin + front * (size.x * 0.5f + 0.02f), front, 0.4f, ~0, QueryTriggerInteraction.Ignore);
+
+            if (!KitPiece(holder, piece, Vector3.zero, wallInFront ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity,
+                    new Vector3(size.x / nominal.x, size.y / nominal.y, size.z / nominal.z), box))
+            {
+                KitRevert(box, holder);
+            }
+        }
+
+        /// <summary>
+        /// Piesa de 2 m pusa in sir pe latura lunga a cutiei (bariere, rafturi).
+        /// modelAlongX: piesa e modelata cu lungimea pe X (altfel pe Z).
+        /// </summary>
+        private static void KitTiled(Transform box, string piece, float nominalHeight, float nominalThickness,
+            bool modelAlongX = true)
         {
             Transform holder = KitHolder(box, out Vector3 size);
 
@@ -118,8 +199,8 @@ namespace ChokeHold.EditorTools
             int count = Mathf.Max(1, Mathf.RoundToInt(length / 2f));
             float segment = length / count;
 
-            // Piesa e modelata pe X; pe o cutie lunga pe Z se roteste cu 90 de grade.
-            Quaternion rotation = alongX ? Quaternion.identity : Quaternion.Euler(0f, 90f, 0f);
+            // Daca orientarea cutiei difera de a piesei, piesa se roteste cu 90 de grade.
+            Quaternion rotation = alongX == modelAlongX ? Quaternion.identity : Quaternion.Euler(0f, 90f, 0f);
             float thickness = alongX ? size.z : size.x;
 
             for (int k = 0; k < count; k++)
@@ -127,10 +208,9 @@ namespace ChokeHold.EditorTools
                 float offset = -length * 0.5f + segment * (k + 0.5f);
                 Vector3 position = alongX ? new Vector3(offset, 0f, 0f) : new Vector3(0f, 0f, offset);
 
-                // Bariera inalta are 0,8 m grosime nominala, cea joasa 0,6.
-                float nominalThickness = piece == "K17_Barrier_High" ? 0.8f : 0.6f;
-                float nominalHeight = piece == "K17_Barrier_High" ? 2f : 1.1f;
-                Vector3 scale = new Vector3(segment / 2f, size.y / nominalHeight, thickness / nominalThickness);
+                Vector3 scale = modelAlongX
+                    ? new Vector3(segment / 2f, size.y / nominalHeight, thickness / nominalThickness)
+                    : new Vector3(thickness / nominalThickness, size.y / nominalHeight, segment / 2f);
 
                 if (!KitPiece(holder, piece, position, rotation, scale, box))
                 {
@@ -163,16 +243,26 @@ namespace ChokeHold.EditorTools
         /// <summary>Copilul "Kit" al cutiei: spatiu in metri, fara rotatie fata de cutie, cu originea la baza.</summary>
         private static Transform KitHolder(Transform box, out Vector3 size)
         {
-            size = Abs(box.lossyScale);
+            MeshFilter filter = box.GetComponent<MeshFilter>();
+            size = Vector3.zero;
 
-            if (box.GetComponent<MeshFilter>() == null || size.x < 0.01f || size.y < 0.01f || size.z < 0.01f)
+            if (filter == null || filter.sharedMesh == null)
+            {
+                return null;
+            }
+
+            // Din limitele plasei: cubul are inaltimea 1, cilindrul Unity 2 (rezervoarele).
+            Bounds bounds = filter.sharedMesh.bounds;
+            size = Vector3.Scale(bounds.size, Abs(box.lossyScale));
+
+            if (size.x < 0.01f || size.y < 0.01f || size.z < 0.01f)
             {
                 return null;
             }
 
             GameObject holder = new GameObject("Kit");
             holder.transform.SetParent(box, false);
-            holder.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+            holder.transform.localPosition = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
             holder.transform.localRotation = Quaternion.identity;
 
             Vector3 local = box.localScale;
@@ -184,20 +274,43 @@ namespace ChokeHold.EditorTools
         private static bool KitPiece(Transform holder, string piece, Vector3 position, Quaternion rotation,
             Vector3 scale, Transform box, bool isStatic = true)
         {
-            if (!LoadKitPiece(piece, out Mesh mesh, out string[] slots))
+            MeshRenderer boxRenderer = box.GetComponent<MeshRenderer>();
+            Material boxMaterial = boxRenderer != null ? boxRenderer.sharedMaterial : null;
+
+            GameObject go = CreateKitObject(holder, piece, position, rotation, scale, boxMaterial, isStatic);
+
+            if (go == null)
             {
                 return false;
             }
 
-            MeshRenderer boxRenderer = box.GetComponent<MeshRenderer>();
-            Material boxMaterial = boxRenderer != null ? boxRenderer.sharedMaterial : null;
+            go.layer = box.gameObject.layer;
+
+            // Cutia ramane doar collider.
+            if (boxRenderer != null)
+            {
+                Object.DestroyImmediate(boxRenderer);
+                Object.DestroyImmediate(box.GetComponent<MeshFilter>());
+            }
+
+            kitPlaced++;
+            return true;
+        }
+
+        /// <summary>Obiect cu o piesa din kit (fara collider). containerMaterial inlocuieste slotul "Container".</summary>
+        private static GameObject CreateKitObject(Transform parent, string piece, Vector3 localPosition,
+            Quaternion localRotation, Vector3 localScale, Material containerMaterial = null, bool isStatic = true)
+        {
+            if (!LoadKitPiece(piece, out Mesh mesh, out string[] slots))
+            {
+                return null;
+            }
 
             GameObject go = new GameObject(piece);
-            go.transform.SetParent(holder, false);
-            go.transform.localPosition = position;
-            go.transform.localRotation = rotation;
-            go.transform.localScale = scale;
-            go.layer = box.gameObject.layer;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = localRotation;
+            go.transform.localScale = localScale;
 
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             MeshRenderer renderer = go.AddComponent<MeshRenderer>();
@@ -206,7 +319,7 @@ namespace ChokeHold.EditorTools
             for (int k = 0; k < slots.Length; k++)
             {
                 // Containerul isi pastreaza culoarea (rosu / albastru) data de generator.
-                materials[k] = slots[k] == "Container" && boxMaterial != null ? boxMaterial : KitMaterial(slots[k]);
+                materials[k] = slots[k] == "Container" && containerMaterial != null ? containerMaterial : KitMaterial(slots[k]);
             }
 
             renderer.sharedMaterials = materials;
@@ -221,15 +334,7 @@ namespace ChokeHold.EditorTools
                     StaticEditorFlags.ReflectionProbeStatic);
             }
 
-            // Cutia ramane doar collider.
-            if (boxRenderer != null)
-            {
-                Object.DestroyImmediate(boxRenderer);
-                Object.DestroyImmediate(box.GetComponent<MeshFilter>());
-            }
-
-            kitPlaced++;
-            return true;
+            return go;
         }
 
         private static void KitRevert(Transform box, Transform holder)
@@ -313,6 +418,13 @@ namespace ChokeHold.EditorTools
                 if (material.HasProperty("_Metallic"))
                 {
                     material.SetFloat("_Metallic", look.metallic);
+                }
+
+                if (slot.EndsWith("Glow") && material.HasProperty("_EmissionColor"))
+                {
+                    material.EnableKeyword("_EMISSION");
+                    material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+                    material.SetColor("_EmissionColor", look.color * 3f);
                 }
 
                 AssetDatabase.CreateAsset(material, path);

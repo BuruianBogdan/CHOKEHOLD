@@ -1017,6 +1017,21 @@ namespace ChokeHold.EditorTools
 
             Transform upper = root.transform.Find(UpperGroupName);
 
+            // Complexul e acoperit si fara soare: pentru imagini punem temporar un soare si scoatem ceata.
+            GameObject previewSun = new GameObject("PreviewSun (temp)") { hideFlags = HideFlags.HideAndDontSave };
+            previewSun.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
+            Light sunLight = previewSun.AddComponent<Light>();
+            sunLight.type = LightType.Directional;
+            sunLight.intensity = 1.1f;
+            sunLight.shadows = LightShadows.Soft;
+
+            bool fog = RenderSettings.fog;
+            UnityEngine.Rendering.AmbientMode ambientMode = RenderSettings.ambientMode;
+            Color ambient = RenderSettings.ambientLight;
+            RenderSettings.fog = false;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.45f, 0.46f, 0.5f);
+
             try
             {
                 // Vedere de sus cu etajul: nordul in sus, estul in dreapta.
@@ -1086,6 +1101,11 @@ namespace ChokeHold.EditorTools
                 {
                     roofs.gameObject.SetActive(roofsWereActive);
                 }
+
+                Object.DestroyImmediate(previewSun);
+                RenderSettings.fog = fog;
+                RenderSettings.ambientMode = ambientMode;
+                RenderSettings.ambientLight = ambient;
             }
 
             Debug.Log($"Imagini salvate in {docs}");

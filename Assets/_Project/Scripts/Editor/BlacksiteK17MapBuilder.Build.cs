@@ -98,11 +98,17 @@ namespace ChokeHold.EditorTools
             // Imbinari: recuzita lipita de pereti, fara fante
             SnapPropsToNeighbours();
 
+            // Complex inchis: tavan peste tot ce vedea cerul
+            EncloseMap();
+
             // Finisare (citeste ce au plasat zonele)
             BuildDetails(root.transform);
 
             // Piesele din kit-ul modular (Blender) in locul cutiilor de cover, containerelor, usilor
             ApplyKit(root);
+
+            // Instalatia nucleara: sala reactorului, semne, girofare, lampi de urgenta, conducte, decontaminare
+            BuildNuclearDressing(root);
 
             // UV la scara reala pe toate cutiile (pregatire pentru texturi)
             BakeBoxUVs(root);
@@ -110,7 +116,7 @@ namespace ChokeHold.EditorTools
             // Sisteme
             BuildGameMode();
             BuildZoneLabels();
-            BuildSun();
+            BuildAtmosphere();
 
             MovePlayerToSpawn();
 
@@ -134,26 +140,6 @@ namespace ChokeHold.EditorTools
             gameMode.AddComponent<BombController>();
             gameMode.AddComponent<DefenderPrepController>();
             gameMode.AddComponent<ChokeHold.UI.RoundHUD>();
-        }
-
-        private static void BuildSun()
-        {
-            foreach (Light light in Object.FindObjectsByType<Light>())
-            {
-                if (light.type == LightType.Directional)
-                {
-                    return;
-                }
-            }
-
-            GameObject sun = new GameObject("Map_Sun");
-            sun.transform.SetParent(gLights, false);
-            sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
-            Light sunLight = sun.AddComponent<Light>();
-            sunLight.type = LightType.Directional;
-            sunLight.intensity = 1.2f;
-            sunLight.shadows = LightShadows.Soft;
         }
 
         // ------------------------------------------------------------------

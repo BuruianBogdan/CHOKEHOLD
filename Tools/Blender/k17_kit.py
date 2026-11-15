@@ -46,6 +46,19 @@ SLOT_COLORS = {
     "Glass": (0.08, 0.1, 0.12),
     "BarrelPaint": (0.15, 0.3, 0.55),
     "Hazard": (0.92, 0.75, 0.1),
+    "Black": (0.05, 0.05, 0.05),
+    "Rubber": (0.06, 0.06, 0.06),
+    "Paint": (0.5, 0.52, 0.5),
+    "ReactorPaint": (0.82, 0.8, 0.72),
+    "TankPaint": (0.45, 0.55, 0.5),
+    "MotorPaint": (0.2, 0.35, 0.55),
+    "TurbinePaint": (0.55, 0.6, 0.62),
+    "PipePaint": (0.55, 0.2, 0.12),
+    "ReactorGlow": (0.25, 0.65, 1.0),
+    "PoolGlow": (0.1, 0.55, 0.95),
+    "BeaconGlow": (1.0, 0.5, 0.05),
+    "EmergencyGlow": (1.0, 0.1, 0.05),
+    "ScreenGlow": (0.25, 0.95, 0.55),
 }
 
 
@@ -134,6 +147,65 @@ class Piece:
         ext = {"x": (length, 0, 0), "y": (0, length, 0), "z": (0, 0, length)}[axis]
         self.prism(base, ext, slot, smooth_sides=True)
 
+    def lathe(self, center, profile, slot, segments=32, axis="y"):
+        """Corp de revolutie: profile = [(raza, inaltime)] de jos in sus, rotit in jurul axei
+        (y vertical sau z orizontal) prin `center`. Capetele cu raza > 0 se inchid."""
+        index = self.slot(slot)
+        cx, cy, cz = center
+        rings = []
+
+        for r, h in profile:
+            ring = []
+            for k in range(segments):
+                a = 2 * math.pi * k / segments
+                u, v = math.cos(a) * r, math.sin(a) * r
+                if axis == "y":
+                    ring.append(self.bm.verts.new(U(cx + u, cy + h, cz + v)))
+                else:
+                    ring.append(self.bm.verts.new(U(cx + u, cy + v, cz + h)))
+            rings.append(ring)
+
+        faces = []
+        for a, b in zip(rings, rings[1:]):
+            for k in range(segments):
+                f = self.bm.faces.new((a[k], a[(k + 1) % segments], b[(k + 1) % segments], b[k]))
+                f.smooth = True
+                faces.append(f)
+
+        for ring, (r, _) in ((rings[0], profile[0]), (rings[-1], profile[-1])):
+            if r > 0.001:
+                faces.append(self.bm.faces.new(ring))
+
+        for face in faces:
+            face.material_index = index
+
+    def sector(self, cx, cy, cz, r0, r1, a0, a1, thickness, slot, plane="xz", steps=10):
+        """Sector de inel (palete de trifoi). plane 'xz' = culcat pe podea, 'xy' = pe un perete (fata spre +Z)."""
+        pts = []
+        for k in range(steps + 1):
+            a = math.radians(a0 + (a1 - a0) * k / steps)
+            pts.append((math.cos(a) * r1, math.sin(a) * r1))
+        for k in range(steps, -1, -1):
+            a = math.radians(a0 + (a1 - a0) * k / steps)
+            pts.append((math.cos(a) * r0, math.sin(a) * r0))
+
+        if plane == "xz":
+            base = [(cx + u, cy, cz + v) for u, v in pts]
+            self.prism(base, (0, thickness, 0), slot)
+        else:
+            base = [(cx + u, cy + v, cz) for u, v in pts]
+            self.prism(base, (0, 0, thickness), slot)
+
+    def trefoil(self, cx, cy, cz, scale, thickness, slot, plane="xz"):
+        """Simbolul de radiatii: trei palete de 60 de grade si un disc in centru."""
+        for k in range(3):
+            a0 = 90 + k * 120 - 30
+            self.sector(cx, cy, cz, 0.3 * scale, 1.0 * scale, a0, a0 + 60, thickness, slot, plane)
+        if plane == "xz":
+            self.cylinder((cx, cy, cz), "y", 0.2 * scale, thickness, slot, segments=20)
+        else:
+            self.cylinder((cx, cy, cz), "z", 0.2 * scale, thickness, slot, segments=20)
+
     def build(self):
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces)
 
@@ -172,6 +244,8 @@ def get_material(name):
         material.diffuse_color = (r, g, b, 1)
         material.roughness = 0.2 if name == "Glass" else 0.7
         material.metallic = 0.8 if name == "Steel" else 0.0
+        if name.endswith("Glow"):
+            material.diffuse_color = (min(r * 1.4, 1), min(g * 1.4, 1), min(b * 1.4, 1), 1)
     return material
 
 
@@ -463,6 +537,337 @@ def piece_pallet():
     return p.build()
 
 
+# ----------------------------------------------------------------------------------------------
+# Instalatia nucleara (v2)
+# ----------------------------------------------------------------------------------------------
+
+def piece_reactor_vessel():
+    """Vasul reactorului: incape exact in rezervorul A_Tank_Main (cilindru 4 m diametru, 4 m inalt)."""
+    p = Piece("K17_Reactor_Vessel", bevel=0.01)
+    # fusta de sprijin, corp, flansa, capac bombat
+    p.lathe((0, 0, 0), [(1.95, 0.0), (1.95, 0.3), (1.75, 0.3), (1.75, 0.45)], "Steel", 40)
+    p.lathe((0, 0, 0), [(1.8, 0.4), (1.8, 3.15)], "ReactorPaint", 40)
+    p.lathe((0, 0, 0), [(1.98, 3.15), (1.98, 3.42)], "Steel", 40)
+    p.lathe((0, 0, 0), [(1.78, 3.42), (1.7, 3.6), (1.45, 3.78), (1.0, 3.92), (0.0, 3.98)], "ReactorPaint", 40)
+    # prezoane pe flansa
+    for k in range(28):
+        a = 2 * math.pi * k / 28
+        p.cylinder((math.cos(a) * 1.88, 3.42, math.sin(a) * 1.88), "y", 0.045, 0.14, "Steel", segments=8)
+    # benzi de ranforsare si o fanta cu lumina Cerenkov
+    for y in (1.0, 2.2):
+        p.lathe((0, 0, 0), [(1.84, y), (1.84, y + 0.12)], "Steel", 40)
+    p.lathe((0, 0, 0), [(1.815, 1.45), (1.815, 1.75)], "ReactorGlow", 40)
+    # stuturi de racire (radiale)
+    for k in range(4):
+        a = math.radians(45 + 90 * k)
+        dx, dz = math.cos(a), math.sin(a)
+        for r0, r1, rad in ((1.75, 1.97, 0.32), (1.9, 1.98, 0.38)):
+            pts = []
+            for s in range(16):
+                b = 2 * math.pi * s / 16
+                u, v = math.cos(b) * rad, math.sin(b) * rad
+                # cerc perpendicular pe directia radiala
+                pts.append((dx * r0 - dz * u, 2.6 + v, dz * r0 + dx * u))
+            p.prism(pts, (dx * (r1 - r0), 0, dz * (r1 - r0)), "Steel")
+    # stuturi pentru barele de control pe capac
+    for x, z in ((0, 0), (0.55, 0), (-0.55, 0), (0, 0.55), (0, -0.55), (0.4, 0.4), (-0.4, 0.4), (0.4, -0.4), (-0.4, -0.4)):
+        p.cylinder((x, 3.7, z), "y", 0.08, 0.29, "Steel", segments=10)
+    return p.build()
+
+
+def piece_control_rod_drive():
+    """Mecanismul barelor de control: atarna din tavan deasupra reactorului (decor, 2,1 m)."""
+    p = Piece("K17_Control_Rod_Drive", bevel=0.006)
+    p.lathe((0, 0, 0), [(1.5, 0.0), (1.5, 0.18)], "Steel", 32)
+    p.lathe((0, 0, 0), [(1.2, 0.18), (1.2, 0.3)], "Hazard", 32)
+    for x, z in ((0, 0), (0.55, 0), (-0.55, 0), (0, 0.55), (0, -0.55), (0.4, 0.4), (-0.4, 0.4), (0.4, -0.4), (-0.4, -0.4)):
+        p.cylinder((x, 0.3, z), "y", 0.07, 1.5, "Steel", segments=10)
+        p.box(x - 0.09, 1.1, z - 0.09, x + 0.09, 1.3, z + 0.09, "ReactorPaint")
+    p.lathe((0, 0, 0), [(1.1, 1.8), (1.1, 1.95)], "Steel", 32)
+    p.box(-1.3, 1.95, -0.15, 1.3, 2.1, 0.15, "Steel")
+    p.box(-0.15, 1.95, -1.3, 0.15, 2.1, 1.3, "Steel")
+    # cabluri spre tavan
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        p.cylinder((math.cos(a) * 0.9, 0.3, math.sin(a) * 0.9), "y", 0.025, 1.8, "Rubber", segments=6)
+    return p.build()
+
+
+def piece_pressurizer():
+    """Presurizor: incape in A_Tank_Small (3,5 m diametru, 3,4 m)."""
+    p = Piece("K17_Pressurizer", bevel=0.008)
+    for k in range(4):
+        a = math.radians(45 + 90 * k)
+        x, z = math.cos(a) * 1.25, math.sin(a) * 1.25
+        p.box(x - 0.12, 0.0, z - 0.12, x + 0.12, 0.7, z + 0.12, "Steel")
+    p.lathe((0, 0, 0), [(0.0, 0.45), (0.9, 0.5), (1.2, 0.65), (1.3, 0.85), (1.3, 2.75),
+                        (1.2, 2.98), (0.9, 3.15), (0.0, 3.22)], "ReactorPaint", 36)
+    p.lathe((0, 0, 0), [(1.34, 1.6), (1.34, 1.72)], "Hazard", 36)
+    p.cylinder((0, 3.15, 0), "y", 0.22, 0.25, "Steel", segments=12)
+    # scara pe o parte
+    for x in (-0.25, 0.25):
+        p.box(x - 0.03, 0.7, 1.42, x + 0.03, 3.0, 1.48, "Steel")
+    for k in range(8):
+        y = 0.9 + k * 0.28
+        p.box(-0.25, y, 1.43, 0.25, y + 0.03, 1.47, "Steel")
+    for x in (-0.25, 0.25):
+        p.box(x - 0.02, 0.9, 1.3, x + 0.02, 0.94, 1.45, "Steel")
+        p.box(x - 0.02, 2.7, 1.3, x + 0.02, 2.74, 1.45, "Steel")
+    return p.build()
+
+
+def piece_coolant_tank():
+    """Rezervor de racire: incape in Pumps_Tank_* (3 m diametru, 3,2 m)."""
+    p = Piece("K17_Coolant_Tank", bevel=0.008)
+    p.lathe((0, 0, 0), [(1.5, 0.0), (1.5, 0.15), (1.42, 0.15), (1.42, 2.9), (1.2, 3.1), (0.0, 3.18)], "TankPaint", 36)
+    for y in (0.6, 1.5, 2.4):
+        p.lathe((0, 0, 0), [(1.46, y), (1.46, y + 0.08)], "Steel", 36)
+    # semn de radiatii pe fata (+Z)
+    p.box(-0.3, 1.7, 1.38, 0.3, 2.3, 1.44, "Hazard")
+    p.trefoil(0, 2.0, 1.44, 0.22, 0.012, "Black", plane="xy")
+    # vana si teava scurta
+    p.cylinder((0.8, 0.5, 1.15), "z", 0.12, 0.3, "Steel", segments=12)
+    p.cylinder((0.8, 0.5, 1.45), "z", 0.18, 0.04, "Hazard", segments=16)
+    return p.build()
+
+
+def piece_coolant_pump():
+    """Pompa de racire pe sasiu, 4 x 2,5 x 4 (A_Generator, Pumps_Machine, Yard_Generator)."""
+    p = Piece("K17_Coolant_Pump", bevel=0.01)
+    p.box(-2.0, 0.0, -2.0, 2.0, 0.25, 2.0, "Steel")
+    for x in (-1.9, 1.9):
+        p.box(x - 0.1, 0.25, -1.9, x + 0.1, 0.32, 1.9, "Hazard")
+    # corpul pompei (vertical) si motorul (orizontal)
+    p.lathe((-0.7, 0.25, 0), [(1.0, 0.0), (1.0, 0.9), (0.85, 1.05), (0.85, 1.5), (0.5, 1.6), (0.5, 1.75)], "TankPaint", 28)
+    p.lathe((0.0, 1.0, 0.0), [(0.0, -1.7), (0.6, -1.7), (0.65, -1.6), (0.65, -0.3), (0.45, -0.2), (0.0, -0.2)], "MotorPaint", 24, axis="z")
+    p.box(0.5, 0.25, -1.9, 1.7, 0.4, -0.3, "Steel")
+    # nervuri de racire pe motor
+    for k in range(8):
+        z = -1.55 + k * 0.16
+        p.lathe((0.0, 1.0, 0.0), [(0.69, z), (0.69, z + 0.04)], "MotorPaint", 24, axis="z")
+    # tevi de aspiratie / refulare
+    p.cylinder((-0.7, 0.85, 0.9), "z", 0.28, 1.05, "Steel", segments=16)
+    p.lathe((-0.7, 0.85, 1.9), [(0.4, 0.0), (0.4, 0.06)], "Steel", 16, axis="z")
+    p.cylinder((-0.7, 2.0, -0.0), "y", 0.25, 0.45, "Steel", segments=16)
+    # cutie de comanda
+    p.box(1.2, 0.25, 0.8, 1.9, 1.8, 1.6, "Paint")
+    p.box(1.9, 1.3, 0.95, 1.93, 1.6, 1.45, "ScreenGlow")
+    return p.build()
+
+
+def piece_turbine():
+    """Turbina cu abur si generator, 6 x 3,6 x 8 (Hangar_Machine), lunga pe Z."""
+    p = Piece("K17_Turbine", bevel=0.012)
+    p.box(-3.0, 0.0, -4.0, 3.0, 0.7, 4.0, "Concrete")
+    p.box(-2.0, 0.7, -3.8, 2.0, 0.95, 3.8, "Steel")
+    # carcasa turbinei: trepte de joasa / inalta presiune
+    p.lathe((0.0, 2.0, 0.0), [(0.0, -3.8), (0.9, -3.8), (1.1, -3.6), (1.45, -3.2), (1.55, -1.2), (1.3, -0.9),
+                               (1.3, -0.6)], "TurbinePaint", 36, axis="z")
+    p.lathe((0.0, 2.0, 0.0), [(1.0, -0.6), (1.0, 0.0)], "Steel", 36, axis="z")
+    # generatorul
+    p.lathe((0.0, 2.0, 0.0), [(1.2, 0.0), (1.35, 0.15), (1.35, 3.4), (1.1, 3.6), (0.0, 3.6)], "MotorPaint", 36, axis="z")
+    for k in range(10):
+        z = 0.4 + k * 0.3
+        p.lathe((0.0, 2.0, 0.0), [(1.4, z), (1.4, z + 0.06)], "Steel", 36, axis="z")
+    # flanse
+    for z in (-3.2, -1.2):
+        p.lathe((0.0, 2.0, 0.0), [(1.62, z), (1.62, z + 0.12)], "Steel", 36, axis="z")
+    # conducte de abur care intra in carcasa de sus
+    for z in (-2.6, -1.8):
+        p.cylinder((0.0, 3.4, z), "y", 0.28, 0.2, "Steel", segments=16)
+        p.cylinder((-1.6, 3.35, z), "x", 0.22, 1.6, "Steel", segments=16)
+        p.cylinder((-2.6, 0.95, z), "y", 0.22, 2.62, "Steel", segments=16)
+    # pasarela si balustrada pe o parte
+    p.box(1.9, 0.95, -3.6, 2.9, 1.0, 3.6, "Steel")
+    for z in (-3.5, -1.0, 1.5, 3.5):
+        p.box(2.84, 1.0, z - 0.03, 2.9, 2.0, z + 0.03, "Hazard")
+    p.box(2.84, 1.95, -3.5, 2.9, 2.0, 3.5, "Hazard")
+    return p.build()
+
+
+def piece_control_panels():
+    """Pupitre de comanda si dulapuri cu ecrane, 6 x 2,2 x 3 (Lab_ServerRack); ecranele spre -Z si +Z."""
+    p = Piece("K17_Control_Panels", bevel=0.008)
+    # rand de dulapuri in mijloc
+    for k in range(6):
+        x0 = -3.0 + k * 1.0
+        p.box(x0 + 0.02, 0.0, -0.45, x0 + 0.98, 2.2, 0.45, "Paint")
+        for s in (-1, 1):
+            z = s * 0.45
+            p.box(x0 + 0.15, 1.4, z, x0 + 0.85, 1.95, z + s * 0.015, "ScreenGlow" if k % 2 == 0 else "Glass")
+            for r in range(4):
+                p.box(x0 + 0.15 + r * 0.18, 1.1, z, x0 + 0.27 + r * 0.18, 1.2, z + s * 0.02,
+                      "Hazard" if (k + r) % 3 == 0 else "Steel")
+    # pupitre inclinate pe ambele parti
+    for s in (-1, 1):
+        z0, z1 = s * 0.45, s * 1.5
+        prof = [(z0, 0.0), (z1, 0.0), (z1, 0.75), (s * 1.3, 0.95), (z0, 1.0)]
+        p.prism([(-2.9, y, z) for z, y in prof], (5.8, 0, 0), "Paint")
+        for k in range(5):
+            x = -2.6 + k * 1.15
+            p.box(x, 0.86, s * 1.22, x + 0.7, 0.9, s * 1.42, "ScreenGlow")
+    return p.build()
+
+
+def piece_hazmat_lockers():
+    """Dulapuri cu costume de protectie, 1 x 2,2 x 4 (Security_Lockers); usile spre +X."""
+    p = Piece("K17_Hazmat_Lockers", bevel=0.006)
+    for k in range(4):
+        z0 = -2.0 + k * 1.0
+        p.box(-0.5, 0.0, z0 + 0.01, 0.42, 2.2, z0 + 0.99, "Paint")
+        p.box(0.42, 0.05, z0 + 0.05, 0.47, 2.15, z0 + 0.95, "Hazard" if k == 0 else "Paint")
+        for v in range(5):
+            y = 1.7 + v * 0.06
+            p.box(0.47, y, z0 + 0.3, 0.48, y + 0.025, z0 + 0.7, "Steel")
+        p.box(0.47, 1.0, z0 + 0.82, 0.5, 1.2, z0 + 0.86, "Steel")
+        # eticheta galbena pe fiecare usa
+        p.box(0.47, 1.3, z0 + 0.35, 0.48, 1.45, z0 + 0.65, "Hazard")
+    # casti de protectie pe dulapuri
+    for k in range(4):
+        z = -1.5 + k * 1.0
+        p.lathe((0.0, 2.2, z), [(0.0, -0.001), (0.16, 0.0), (0.17, 0.06), (0.14, 0.16), (0.0, 0.19)], "Hazard", 16)
+    return p.build()
+
+
+def piece_shelf():
+    """Raft industrial de 2 m cu butoaie si cutii (Depot_Shelf, Office_Shelf; 1 x 2,2, insirat pe Z)."""
+    p = Piece("K17_Shelf", bevel=0.005)
+    for x in (-0.5, 0.45):
+        for z in (-0.98, 0.93):
+            p.box(x, 0.0, z, x + 0.05, 2.2, z + 0.05, "Hazard")
+    for y in (0.08, 0.8, 1.5, 2.12):
+        p.box(-0.5, y, -0.98, 0.5, y + 0.06, 0.98, "Steel")
+    # pe rafturi: butoaie mici si cutii
+    for y, items in ((0.14, "bb"), (0.86, "cc"), (1.56, "bc")):
+        for k, kind in enumerate(items):
+            z = -0.45 + k * 0.9
+            if kind == "b":
+                for dz in (-0.2, 0.2):
+                    p.cylinder((0.0, y, z + dz), "y", 0.17, 0.55, "BarrelPaint", segments=16)
+            else:
+                p.box(-0.35, y, z - 0.35, 0.3, y + 0.42, z + 0.35, "WoodDark")
+    return p.build()
+
+
+def piece_rubble():
+    """Moloz de beton 1 x 1 x 1 (se intinde pe cutia stancii din generator)."""
+    p = Piece("K17_Rubble", bevel=0.02)
+    chunks = [(-0.3, 0.0, -0.25, 0.5, 0.55, 0.45, 8), (0.05, 0.0, 0.0, 0.45, 0.45, 0.5, -14),
+              (-0.1, 0.4, -0.05, 0.45, 0.45, 0.4, 22), (0.25, 0.0, -0.3, 0.3, 0.3, 0.35, 31),
+              (-0.25, 0.0, 0.3, 0.4, 0.3, 0.3, -5), (0.1, 0.75, 0.1, 0.25, 0.25, 0.25, 12)]
+    for cx, y0, cz, sx, sy, sz, rot in chunks:
+        a = math.radians(rot)
+        corners = []
+        for ux, uz in ((-sx / 2, -sz / 2), (sx / 2, -sz / 2), (sx / 2, sz / 2), (-sx / 2, sz / 2)):
+            corners.append((cx + ux * math.cos(a) - uz * math.sin(a), y0, cz + ux * math.sin(a) + uz * math.cos(a)))
+        p.prism(corners, (0, min(sy, 1.0 - y0), 0), "Concrete" if rot % 2 == 0 else "ConcreteDark")
+    # armatura care iese din moloz
+    p.cylinder((0.1, 0.5, 0.2), "x", 0.015, 0.4, "Steel", segments=6)
+    p.cylinder((-0.2, 0.55, -0.3), "z", 0.015, 0.45, "Steel", segments=6)
+    return p.build()
+
+
+def piece_sign_radiation():
+    """Semn de radiatii pe perete, 0,5 x 0,6; pivot pe perete, fata spre +Z."""
+    p = Piece("K17_Sign_Radiation", bevel=0.003)
+    p.box(-0.25, -0.3, 0.0, 0.25, 0.3, 0.015, "Hazard")
+    p.box(-0.25, -0.3, 0.015, 0.25, -0.2, 0.02, "Black")
+    p.trefoil(0.0, 0.05, 0.015, 0.2, 0.006, "Black", plane="xy")
+    return p.build()
+
+
+def piece_floor_trefoil():
+    """Marcaj de radiatii pe podea, 3 m diametru (decor, 5 mm)."""
+    p = Piece("K17_Floor_Trefoil", bevel=0.0)
+    p.lathe((0, 0, 0), [(0.0, 0.0), (1.5, 0.0), (1.5, 0.004), (0.0, 0.004)], "Hazard", 48)
+    p.trefoil(0, 0.004, 0, 1.15, 0.003, "Black")
+    return p.build()
+
+
+def piece_beacon():
+    """Girofar portocaliu pe consola de perete; pivot pe perete, iese spre +Z (lumina rotitoare in Unity)."""
+    p = Piece("K17_Beacon", bevel=0.004)
+    p.box(-0.1, -0.12, 0.0, 0.1, 0.12, 0.02, "Steel")
+    p.box(-0.03, -0.03, 0.02, 0.03, 0.03, 0.2, "Steel")
+    p.cylinder((0.0, 0.03, 0.2), "y", 0.1, 0.06, "Steel", segments=16)
+    p.lathe((0.0, 0.09, 0.2), [(0.085, 0.0), (0.085, 0.12), (0.06, 0.17), (0.0, 0.19)], "BeaconGlow", 16)
+    return p.build()
+
+
+def piece_emergency_light():
+    """Lampa de urgenta rosie cu gratar, pe perete; pivot pe perete, fata spre +Z."""
+    p = Piece("K17_Emergency_Light", bevel=0.004)
+    p.box(-0.18, -0.1, 0.0, 0.18, 0.1, 0.06, "Steel")
+    p.lathe((0.0, 0.0, 0.06), [(0.0, 0.0), (0.14, 0.0), (0.14, 0.04)], "Steel", 16, axis="z")
+    p.lathe((0.0, 0.0, 0.1), [(0.11, 0.0), (0.11, 0.05), (0.07, 0.09), (0.0, 0.1)], "EmergencyGlow", 16, axis="z")
+    for x in (-0.06, 0.0, 0.06):
+        p.box(x - 0.008, -0.12, 0.1, x + 0.008, 0.12, 0.2, "Steel")
+    return p.build()
+
+
+def piece_pipe_run():
+    """Trei conducte pe console, segment de 2 m pe X; pivot pe perete (jos), iese spre +Z."""
+    p = Piece("K17_Pipe_Run", bevel=0.0)
+    p.cylinder((-1.0, 0.18, 0.2), "x", 0.14, 2.0, "PipePaint", segments=16)
+    p.cylinder((-1.0, 0.5, 0.18), "x", 0.1, 2.0, "TankPaint", segments=14)
+    p.cylinder((-1.0, 0.75, 0.15), "x", 0.07, 2.0, "Hazard", segments=12)
+    for x in (-0.6, 0.6):
+        p.box(x - 0.04, 0.0, 0.0, x + 0.04, 0.9, 0.06, "Steel")
+        for y, d in ((0.05, 0.38), (0.4, 0.32), (0.66, 0.25)):
+            p.box(x - 0.03, y, 0.0, x + 0.03, y + 0.04, d, "Steel")
+    # manson la mijloc
+    p.cylinder((-0.06, 0.18, 0.2), "x", 0.165, 0.12, "Steel", segments=16)
+    return p.build()
+
+
+def piece_decon_arch():
+    """Cadru de decontaminare pentru o usa de 1,4 x 2,4: dusuri pe bara de sus, stalpi pe margini.
+    Latimea pe X (se scaleaza dupa usa), adancimea pe Z."""
+    p = Piece("K17_Decon_Arch", bevel=0.004)
+    w = 0.7
+    for s in (-1, 1):
+        x = s * (w + 0.06)
+        p.box(x - 0.06, 0.0, -0.06, x + 0.06, 2.55, 0.06, "Hazard")
+        p.box(x - 0.065, 0.3, -0.065, x + 0.065, 0.45, 0.065, "Paint")
+        p.box(x - 0.065, 1.2, -0.065, x + 0.065, 1.35, 0.065, "Paint")
+        # duze laterale
+        for y in (0.6, 1.1, 1.6, 2.1):
+            start = x + 0.06 if s < 0 else x - 0.11
+            p.cylinder((start, y, 0.0), "x", 0.02, 0.05, "Steel", segments=6)
+    p.box(-(w + 0.12), 2.45, -0.08, w + 0.12, 2.6, 0.08, "Hazard")
+    for k in range(5):
+        x = -0.5 + k * 0.25
+        p.cylinder((x, 2.36, 0.0), "y", 0.03, 0.09, "Steel", segments=8)
+    p.cylinder((-(w + 0.12), 2.62, 0.0), "x", 0.03, 2 * (w + 0.12), "PipePaint", segments=8)
+    # gratar pe podea
+    p.box(-w, 0.0, -0.5, w, 0.025, 0.5, "Steel")
+    for k in range(9):
+        z = -0.45 + k * 0.1125
+        p.box(-w, 0.025, z, w, 0.035, z + 0.03, "Paint")
+    return p.build()
+
+
+def piece_fuel_pool():
+    """Bazin de combustibil uzat sub gratar, 6 x 4 (decor la nivelul podelii, lumina albastra)."""
+    p = Piece("K17_Fuel_Pool", bevel=0.0)
+    p.box(-3.0, 0.0, -2.0, 3.0, 0.004, 2.0, "PoolGlow")
+    p.box(-3.0, 0.004, -2.0, 3.0, 0.03, -1.9, "Hazard")
+    p.box(-3.0, 0.004, 1.9, 3.0, 0.03, 2.0, "Hazard")
+    p.box(-3.0, 0.004, -1.9, -2.9, 0.03, 1.9, "Hazard")
+    p.box(2.9, 0.004, -1.9, 3.0, 0.03, 1.9, "Hazard")
+    for k in range(27):
+        x = -2.85 + k * 0.22
+        p.box(x, 0.004, -1.9, x + 0.04, 0.03, 1.9, "Steel")
+    for z in (-0.95, 0.0, 0.95):
+        p.box(-2.9, 0.004, z - 0.03, 2.9, 0.03, z + 0.03, "Steel")
+    # elementele de combustibil vazute prin gratar
+    for i in range(6):
+        for j in range(3):
+            x, z = -2.2 + i * 0.88, -1.0 + j * 1.0
+            p.box(x - 0.2, 0.002, z - 0.2, x + 0.2, 0.003, z + 0.2, "Steel")
+    return p.build()
+
+
 PIECES = [
     piece_crate_big,
     piece_crate_stack,
@@ -474,6 +879,23 @@ PIECES = [
     piece_pillar_bunker,
     piece_barrel,
     piece_pallet,
+    piece_reactor_vessel,
+    piece_control_rod_drive,
+    piece_pressurizer,
+    piece_coolant_tank,
+    piece_coolant_pump,
+    piece_turbine,
+    piece_control_panels,
+    piece_hazmat_lockers,
+    piece_shelf,
+    piece_rubble,
+    piece_sign_radiation,
+    piece_floor_trefoil,
+    piece_beacon,
+    piece_emergency_light,
+    piece_pipe_run,
+    piece_decon_arch,
+    piece_fuel_pool,
 ]
 
 
@@ -519,6 +941,22 @@ LAYOUT = {
     "K17_Door_Leaf": (6.0, -1.7, 0),
     "K17_Barrel": (8.6, -1.4, 0),
     "K17_Pallet": (10.2, -1.2, 0),
+    "K17_Reactor_Vessel": (-10.0, -9.0, 0),
+    "K17_Pressurizer": (-5.0, -9.0, 0),
+    "K17_Coolant_Tank": (-1.0, -9.0, 0),
+    "K17_Coolant_Pump": (3.0, -9.0, 0),
+    "K17_Turbine": (9.5, -11.0, 0),
+    "K17_Control_Panels": (-9.0, -16.0, 0),
+    "K17_Hazmat_Lockers": (-4.5, -16.0, 0),
+    "K17_Shelf": (-2.8, -16.0, 0),
+    "K17_Rubble": (-0.8, -15.5, 0),
+    "K17_Fuel_Pool": (3.5, -16.5, 0),
+    "K17_Floor_Trefoil": (-6.0, -12.5, 0),
+    "K17_Decon_Arch": (0.8, -16.0, 0),
+    "K17_Pipe_Run": (6.5, -16.0, 0),
+    "K17_Sign_Radiation": (6.5, -15.5, 0),
+    "K17_Beacon": (8.0, -15.5, 0),
+    "K17_Emergency_Light": (9.0, -15.5, 0),
 }
 
 
@@ -604,6 +1042,8 @@ def main():
             render(camera, (-17, 9, -19), (0.5, 1.0, 1.5), 32, os.path.join(PREVIEW_DIR, "K17_Kit_Overview.png"))
             render(camera, (-4.5, 3.2, -9.5), (1.0, 1.2, -1.0), 30, os.path.join(PREVIEW_DIR, "K17_Kit_Props.png"))
             render(camera, (-14.5, 3.0, 9.0), (-8.0, 1.3, 5.0), 35, os.path.join(PREVIEW_DIR, "K17_Kit_ContainerDoors.png"))
+            render(camera, (-15.0, 9.0, -28.0), (0.0, 1.5, -12.5), 30, os.path.join(PREVIEW_DIR, "K17_Kit_Nuclear.png"))
+            render(camera, (-4.0, 3.0, -23.0), (3.0, 1.0, -16.0), 32, os.path.join(PREVIEW_DIR, "K17_Kit_NuclearDetail.png"))
 
         if "--no-blend" not in ARGS:
             bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, compress=True)

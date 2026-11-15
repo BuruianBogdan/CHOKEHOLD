@@ -564,3 +564,40 @@ Generatorul (`ApplyKit`, rulat după detalii) schimbă doar partea vizuală. Col
 Pe hartă sunt 180 de piese din kit. Validatorul raportează 0 erori și aceleași 28 de avertismente.
 
 Previzualizări: `Docs/Kit/K17_Kit_*.png`.
+
+---
+
+# Instalația nucleară
+
+Blacksite K-17 e acum un complex nuclear închis.
+
+**Acoperiș peste tot.** `EncloseMap` pune tavan, la 8,5 m, peste fiecare celulă care vedea cerul. Tavanul se sprijină pe vârful pereților.
+- Au fost acoperite 2.103 celule cu 70 de plăci.
+- Fostele curți au devenit hale mari, cu ferme ca în hangar.
+- Validatorul le păstrează limita de linie de vedere de spațiu deschis (44 m), deci rămân aceleași 28 de avertismente.
+
+**Lumină.** Nu mai există soare.
+- Ambientul e rece și ceața ușoară. Sunt reglate astfel încât un jucător să se vadă pe orice fundal.
+- Fiecare loc fără lampă în apropiere primește una (148 de lămpi).
+- La imaginile din `Docs/` se pune temporar un soare.
+
+**Sala reactorului (site A).**
+- Rezervorul principal a devenit vasul reactorului, cu lumină albastră.
+- Mecanismul barelor de control atârnă din tavan, deasupra capului jucătorilor de la etaj.
+- Rezervorul mic a devenit presurizor.
+- Lângă reactor sunt un bazin de combustibil sub grătar și un marcaj de radiații pe podea.
+
+**Utilaje.** Rezervoarele de răcire, pompele, turbina din hangar, pupitrele de comandă din laborator, dulapurile cu costume de protecție, rafturile și molozul de beton înlocuiesc vechile cutii. Coliziunile au rămas aceleași.
+
+**Semne și lumini.**
+- Semne de radiații lângă uși.
+- Girofare portocalii, cu lumină rotitoare, la intrările în sala A și în hangar.
+- Lămpi de urgență roșii în tuneluri și în buncăr.
+
+**Decontaminare.** Cadre cu dușuri la ușile de lângă spawn-uri: camera de securitate pentru atacatori și ușa de est a anexei pentru apărători.
+
+**Conducte.** Conducte pe console pe pereții halelor (la 6 m) și ai sălilor industriale (la 2,75 m).
+
+Tot decorul nou e fără collider: mișcarea, cover-ul și liniile de vedere nu se schimbă.
+
+Validare: 0 erori, 28 de avertismente, aceleași ca înainte.

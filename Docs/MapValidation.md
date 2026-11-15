@@ -21,7 +21,7 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 4. Linii de vedere
 
-Limite: 27,5 m în interior și 44 m în exterior (~25 / ~40 m cu 10 % toleranță). O linie care iese de sub acoperiș primește limita de exterior. Hangarul și Loading Bay sunt hale (limită de exterior).
+Limite: 27,5 m în interior și 44 m în exterior (~25 / ~40 m cu 10 % toleranță). O linie care iese de sub acoperiș primește limita de exterior. Hangarul, Loading Bay și fostele curți (acum hale acoperite, `Roof_Hall_*`) păstrează limita de spațiu deschis.
 
 Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
@@ -70,9 +70,9 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 8. Pregătire pentru texturi
 
-- ok — 3780 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
-- ok — 180 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
-- ok — 45 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
+- ok — 4249 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 819 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
+- ok — 52 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
 - ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)
 
 ## 9. Buncăr: timp de ajuns pentru fiecare echipă

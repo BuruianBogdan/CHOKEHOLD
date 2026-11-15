@@ -178,6 +178,8 @@ namespace ChokeHold.EditorTools
                     return WarmLight;
                 case Theme.Lab:
                     return ColdLight;
+                case Theme.Exterior:
+                    return HallLight;
                 default:
                     return WhiteLight;
             }
@@ -676,7 +678,10 @@ namespace ChokeHold.EditorTools
         private static bool PropKeywordsForCaps(string name)
         {
             return name.Contains("Tank") || name.Contains("_Pipe_") || name.Contains("Rock") ||
-                   name.Contains("Crate") || name.Contains("Cover") || name.Contains("Container");
+                   name.Contains("Crate") || name.Contains("Cover") || name.Contains("Container") ||
+                   // utilajele primesc piese din kit (fara capac de perete deasupra)
+                   name.Contains("Machine") || name.Contains("Generator") || name.Contains("ServerRack") ||
+                   name.Contains("Lockers") || name.Contains("Shelf");
         }
 
         // ------------------------------------------------------------------
@@ -723,7 +728,10 @@ namespace ChokeHold.EditorTools
 
                 float cx = (roof.XMin + roof.XMax) * 0.5f;
                 float cz = (roof.ZMin + roof.ZMax) * 0.5f;
-                bool hangar = ThemeAt(cx, cz) == Theme.Hangar;
+                // Hangarul si halele mari (fostele curti) au ferme; restul grinzi simple.
+                Theme roofTheme = ThemeAt(cx, cz);
+                bool hangar = roofTheme == Theme.Hangar ||
+                              (roofTheme == Theme.Exterior && roof.Y > InnerWallHeight - 0.1f && Mathf.Min(sizeX, sizeZ) >= 8f);
 
                 float depth = hangar ? 0.7f : 0.35f;
                 float width = hangar ? 0.35f : 0.25f;
@@ -1064,9 +1072,8 @@ namespace ChokeHold.EditorTools
 
                         Theme theme = level < -1f ? Theme.Tunnel : ThemeAt(x, z);
 
-                        // Exteriorul e luminat de soare; ne intereseaza doar interioarele acoperite.
-                        if (theme == Theme.Exterior ||
-                            !Physics.Raycast(p, Vector3.up, out RaycastHit ceiling, 9f, ~0, QueryTriggerInteraction.Ignore))
+                        // Complexul e acoperit peste tot (EncloseMap): orice loc fara lampa aproape primeste una.
+                        if (!Physics.Raycast(p, Vector3.up, out RaycastHit ceiling, 9f, ~0, QueryTriggerInteraction.Ignore))
                         {
                             continue;
                         }
@@ -1091,7 +1098,7 @@ namespace ChokeHold.EditorTools
                         }
 
                         float y = Mathf.Min(ceiling.point.y - 0.35f, level + 3.4f);
-                        Lamp($"Light_Fill_{added++:000}", x, y, z, LampColorOf(theme), 12f, 2.5f);
+                        Lamp($"Light_Fill_{added++:000}", x, y, z, LampColorOf(theme), 15f, 4f);
                     }
                 }
             }

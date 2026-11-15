@@ -528,7 +528,8 @@ namespace ChokeHold.EditorTools
             report.Section("4. Linii de vedere");
             report.Body.AppendLine("Limite: 27,5 m în interior și 44 m în exterior (~25 / ~40 m cu 10 % toleranță). " +
                                    "O linie care iese de sub acoperiș primește limita de exterior. " +
-                                   "Hangarul și Loading Bay sunt hale (limită de exterior).");
+                                   "Hangarul, Loading Bay și fostele curți (acum hale acoperite, `Roof_Hall_*`) " +
+                                   "păstrează limita de spațiu deschis.");
             report.Body.AppendLine();
 
             Transform upperGroup = root.transform.Find(UpperGroupName);
@@ -617,7 +618,10 @@ namespace ChokeHold.EditorTools
             {
                 cells++;
 
-                if (VRay(new Vector3(cell.x, zone.transform.position.y + 0.1f, cell.y), Vector3.up, 14f, out RaycastHit _))
+                // Tavanul pus de EncloseMap peste fostele curti face din ele hale mari: raman la limita
+                // de "exterior" (spatiu deschis), nu de camera.
+                if (VRay(new Vector3(cell.x, zone.transform.position.y + 0.1f, cell.y), Vector3.up, 14f, out RaycastHit roof) &&
+                    !roof.collider.name.StartsWith("Roof_Hall"))
                 {
                     roofed++;
                 }
@@ -636,7 +640,7 @@ namespace ChokeHold.EditorTools
 
                 float rayLimit = limit;
 
-                if (limit < VExteriorLimit && !VRay(from + dir * (length - 0.5f), Vector3.up, 14f, out RaycastHit _))
+                if (limit < VExteriorLimit && (!VRay(from + dir * (length - 0.5f), Vector3.up, 14f, out RaycastHit above) || above.collider.name.StartsWith("Roof_Hall")))
                 {
                     rayLimit = VExteriorLimit;
                 }

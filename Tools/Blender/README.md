@@ -40,6 +40,32 @@ După rulare, în Unity: **CHOKEHOLD → Map → Build Blacksite K-17**.
 | `K17_Barrel` | Ø 0,6 × 0,9 | decor, încă neplasat |
 | `K17_Pallet` | 1,2 × 0,14 × 1,0 | decor, încă neplasat |
 
+## Piese nucleare (v2)
+
+| Piesă | Dimensiuni (m) | Unde ajunge |
+|---|---|---|
+| `K17_Reactor_Vessel` | Ø 4 × 4 | `A_Tank_Main`: vasul reactorului din sala A |
+| `K17_Control_Rod_Drive` | Ø 3 × 2,1 | decor atârnat din tavan deasupra reactorului |
+| `K17_Pressurizer` | Ø 3,5 × 3,4 | `A_Tank_Small` |
+| `K17_Coolant_Tank` | Ø 3 × 3,2 | `Pumps_Tank_*` |
+| `K17_Coolant_Pump` | 4 × 2,5 × 4 | `A_Generator`, `Pumps_Machine`, `Yard_Generator` |
+| `K17_Turbine` | 6 × 3,6 × 8 | `Hangar_Machine` |
+| `K17_Control_Panels` | 6 × 2,2 × 3 | `Lab_ServerRack` |
+| `K17_Hazmat_Lockers` | 1 × 2,2 × 4 | `Security_Lockers`, cu ușile spre cameră |
+| `K17_Shelf` | 1 × 2,2 × 2, segment | `*_Shelf*`, în șir pe lungime |
+| `K17_Rubble` | 1 × 1 × 1 | stâncile (`*_Rock*`), întinse pe cutia lor |
+| `K17_Sign_Radiation` | 0,5 × 0,6 | decor: lângă uși |
+| `K17_Floor_Trefoil` | Ø 3 | decor: pe podea, lângă reactor |
+| `K17_Fuel_Pool` | 6 × 4 | decor: bazinul cu grătar din sala reactorului |
+| `K17_Beacon` | — | decor: girofar cu lumină rotitoare (`BeaconSpin`) la intrările în site-uri |
+| `K17_Emergency_Light` | — | decor: lămpi roșii în tuneluri și în buncăr |
+| `K17_Pipe_Run` | 2 m, segment | decor: conducte pe pereții halelor (6 m) și ai sălilor industriale (2,75 m) |
+| `K17_Decon_Arch` | ușă de 1,4 × 2,4 | decor: cadre de decontaminare la ușile de lângă spawn-uri |
+
+Sloturile `*Glow` (`ReactorGlow`, `PoolGlow`, `BeaconGlow`, `EmergencyGlow`, `ScreenGlow`) au emisie în Unity.
+
+Decorul îl plasează `BuildNuclearDressing` din `BlacksiteK17MapBuilder.Nuclear.cs` și nu are collider.
+
 ## Reguli
 
 - **Coordonate.** În script se folosesc coordonatele Unity: x la dreapta, y în sus, z înainte, în metri. Conversia spre Blender e făcută de funcția `U()`.
