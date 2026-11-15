@@ -543,3 +543,24 @@ Cele trei tuneluri se unesc acum într-un buncăr sub partea de vest a hangarulu
 Diferența e de 6%; validatorul avertizează automat dacă trece de 10% după o modificare de layout.
 
 Validare: 0 erori; cele 28 de avertismente sunt liniile de vedere de la suprafață, documentate mai sus.
+
+---
+
+# Kit modular (v1)
+
+Primele piese de artă vin din Blender. Le generează `Tools/Blender/k17_kit.py`, iar instrucțiunile sunt în `Tools/Blender/README.md`. Piesele sunt FBX-uri în `Assets/_Project/Art/Models/Kit`.
+
+| Piesă | Înlocuiește |
+|---|---|
+| Ladă mare, stivă de lăzi | `BigCrate_*`, `CrateStack_*` |
+| Barieră de beton joasă, blocuri de beton | `LowCover_*`, `HighCover_*`, în segmente de 2 m |
+| Containere de 20 și 40 ft, cu uși, bare de închidere și piese de colț | `Container_*`, `Container40_*` |
+| Ușă metalică cu vizor | canatul celor 15 uși |
+| Stâlp de buncăr cu bandă de avertizare | `Bunker_Pillar_*` |
+| Butoi, palet | decor pentru pasul următor |
+
+Generatorul (`ApplyKit`, rulat după detalii) schimbă doar partea vizuală. Colliderele, numele și pozițiile rămân, deci layout-ul și validarea nu se schimbă.
+
+Pe hartă sunt 180 de piese din kit. Validatorul raportează 0 erori și aceleași 28 de avertismente.
+
+Previzualizări: `Docs/Kit/K17_Kit_*.png`.

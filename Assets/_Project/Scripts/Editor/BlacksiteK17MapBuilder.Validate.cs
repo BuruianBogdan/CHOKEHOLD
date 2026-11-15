@@ -937,7 +937,7 @@ namespace ChokeHold.EditorTools
         {
             report.Section("8. Pregătire pentru texturi");
 
-            int boxes = 0, primitive = 0, wrongScale = 0;
+            int boxes = 0, primitive = 0, wrongScale = 0, kit = 0;
             HashSet<Material> materials = new HashSet<Material>();
 
             foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
@@ -958,6 +958,12 @@ namespace ChokeHold.EditorTools
                 if (mesh.name == "Cube")
                 {
                     primitive++;
+                    continue;
+                }
+
+                if (mesh.name.StartsWith("K17_"))
+                {
+                    kit++;
                     continue;
                 }
 
@@ -991,6 +997,11 @@ namespace ChokeHold.EditorTools
             if (primitive == 0 && wrongScale == 0)
             {
                 report.Ok($"{boxes} cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap");
+            }
+
+            if (kit > 0)
+            {
+                report.Ok($"{kit} piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri");
             }
 
             report.Ok($"{materials.Count} materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): " +

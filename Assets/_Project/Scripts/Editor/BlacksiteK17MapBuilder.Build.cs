@@ -101,6 +101,9 @@ namespace ChokeHold.EditorTools
             // Finisare (citeste ce au plasat zonele)
             BuildDetails(root.transform);
 
+            // Piesele din kit-ul modular (Blender) in locul cutiilor de cover, containerelor, usilor
+            ApplyKit(root);
+
             // UV la scara reala pe toate cutiile (pregatire pentru texturi)
             BakeBoxUVs(root);
 

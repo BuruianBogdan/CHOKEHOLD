@@ -70,8 +70,9 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 8. Pregătire pentru texturi
 
-- ok — 3907 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
-- ok — 42 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
+- ok — 3780 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 180 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
+- ok — 45 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
 - ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)
 
 ## 9. Buncăr: timp de ajuns pentru fiecare echipă
