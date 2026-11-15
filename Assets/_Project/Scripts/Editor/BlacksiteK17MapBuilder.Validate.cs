@@ -99,6 +99,7 @@ namespace ChokeHold.EditorTools
                 CheckOpenings(root, zones, report);
                 CheckJoints(root, report);
                 CheckTextureReadiness(root, report);
+                CheckBunkerTiming(root, report);
             }
             finally
             {
@@ -303,7 +304,7 @@ namespace ChokeHold.EditorTools
 
                     // Santul tunelului: podeaua poate fi oriunde intre -3,5 m (fundul) si 0 (rampele).
                     bool pit = IsPit(cell.x, cell.y);
-                    float lowest = pit ? TunnelFloorY - 0.6f : level - 0.6f;
+                    float lowest = (pit ? Mathf.Min(level, TunnelFloorY) : level) - 0.6f;
 
                     if (!VRay(probe, Vector3.down, probe.y - lowest, out RaycastHit _))
                     {
@@ -786,7 +787,8 @@ namespace ChokeHold.EditorTools
 
                     if (VBlocked(feet + Vector3.up * 1f, 0.3f) ||
                         !VRay(feet, Vector3.up, 2.95f, out RaycastHit hit) ||
-                        IsOpeningOrStair(hit.collider.transform))
+                        IsOpeningOrStair(hit.collider.transform) ||
+                        hit.collider.name.StartsWith("Bunker_Balcony"))   // nisele de sub balconul buncarului sunt intentionate
                     {
                         continue;
                     }
@@ -1063,6 +1065,151 @@ namespace ChokeHold.EditorTools
             return false;
         }
 
+        // ------------------------------------------------------------------
+        // 9. Buncarul: timpul de ajuns pentru fiecare echipa
+        // ------------------------------------------------------------------
+        private static void CheckBunkerTiming(GameObject root, ValidationReport report)
+        {
+            report.Section("9. Buncăr: timp de ajuns pentru fiecare echipă");
+
+            SpawnPoint[] spawns = root.GetComponentsInChildren<SpawnPoint>();
+            SpawnPoint attackers = spawns.OrderBy(s => s.name).FirstOrDefault(s => s.Team == Team.Attackers);
+            SpawnPoint defenders = spawns.OrderBy(s => s.name).FirstOrDefault(s => s.Team == Team.Defenders);
+
+            if (attackers == null || defenders == null)
+            {
+                report.Error("lipsește un punct de spawn pentru una dintre echipe");
+                return;
+            }
+
+            float attackerDistance = WalkDistanceToBunker(attackers.transform.position, out string attackerRoute);
+            float defenderDistance = WalkDistanceToBunker(defenders.transform.position, out string defenderRoute);
+
+            if (attackerDistance < 0f || defenderDistance < 0f)
+            {
+                report.Error("buncărul nu e accesibil din unul dintre spawn-uri");
+                return;
+            }
+
+            const float sprint = 7.5f;
+            float difference = Mathf.Abs(attackerDistance - defenderDistance) / Mathf.Max(attackerDistance, defenderDistance);
+
+            report.Body.AppendLine($"Drumul cel mai scurt pe jos (grilă de 1 m, cu scări și tuneluri), până la podeaua buncărului:");
+            report.Body.AppendLine();
+            report.Body.AppendLine($"| Echipă | Distanță | Timp la sprint (7,5 m/s) | Intră pe |");
+            report.Body.AppendLine($"|---|---|---|---|");
+            report.Body.AppendLine($"| Atacatori | {attackerDistance:0} m | {attackerDistance / sprint:0.0} s | {attackerRoute} |");
+            report.Body.AppendLine($"| Apărători | {defenderDistance:0} m | {defenderDistance / sprint:0.0} s | {defenderRoute} |");
+            report.Body.AppendLine();
+
+            if (difference > 0.1f)
+            {
+                report.Warning($"diferență de {difference * 100f:0}% între echipe (ținta: sub 10%)");
+            }
+            else
+            {
+                report.Ok($"diferență de {difference * 100f:0}% între echipe (sub 10%)");
+            }
+        }
+
+        /// <summary>
+        /// Cel mai scurt drum pe jos (Dijkstra pe grila de 1 m, cu diagonale) pana in buncar.
+        /// Intoarce -1 daca buncarul nu e accesibil. route = legatura prin care intra.
+        /// </summary>
+        private static float WalkDistanceToBunker(Vector3 start, out string route)
+        {
+            route = "-";
+
+            Dictionary<(int, int, int), float> best = new Dictionary<(int, int, int), float>();
+            Dictionary<(int, int, int), Vector3> feetOf = new Dictionary<(int, int, int), Vector3>();
+            Dictionary<(int, int, int), (int, int, int)> parent = new Dictionary<(int, int, int), (int, int, int)>();
+            SortedSet<(float, int, int, int)> open = new SortedSet<(float, int, int, int)>();
+
+            (int, int, int) startKey = WalkKey(start);
+            best[startKey] = 0f;
+            feetOf[startKey] = start;
+            open.Add((0f, startKey.Item1, startKey.Item2, startKey.Item3));
+
+            int[] dx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+            int[] dz = { 0, 0, 1, -1, 1, -1, 1, -1 };
+
+            while (open.Count > 0 && best.Count < 600000)
+            {
+                (float cost, int kx, int kz, int ky) = open.Min;
+                open.Remove(open.Min);
+                (int, int, int) key = (kx, kz, ky);
+                Vector3 p = feetOf[key];
+
+                if (cost > best[key] + 0.001f)
+                {
+                    continue;
+                }
+
+                if (Inside(Bunker, p.x, p.z) && p.y < BunkerFloorY + 0.3f)
+                {
+                    // Prin ce legatura a intrat: urcam pe drum inapoi pana la primul punct din afara buncarului.
+                    (int, int, int) walk = key;
+
+                    while (parent.ContainsKey(walk))
+                    {
+                        Vector3 q = feetOf[walk];
+
+                        string link = Inside(BunkerWestLink, q.x, q.z) && !Inside(Bunker, q.x, q.z) ? "West Link (tunelul de nord)"
+                            : Inside(BunkerNorthLink, q.x, q.z) ? "North Link (tunelul de est)"
+                            : (Inside(BunkerSouthLinkH, q.x, q.z) || Inside(BunkerSouthLinkV, q.x, q.z)) && !Inside(Bunker, q.x, q.z) ? "South Link (South Tunnel)"
+                            : null;
+
+                        if (link != null)
+                        {
+                            route = link;
+                            break;
+                        }
+
+                        walk = parent[walk];
+                    }
+
+                    return cost;
+                }
+
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 probe = new Vector3(p.x + dx[i], p.y + 0.8f, p.z + dz[i]);
+
+                    if (!VRay(probe, Vector3.down, 12f, out RaycastHit hit) || hit.point.y - p.y > 0.6f)
+                    {
+                        continue;
+                    }
+
+                    Vector3 feet = new Vector3(probe.x, hit.point.y, probe.z);
+
+                    if (Physics.CheckCapsule(feet + Vector3.up * 0.55f, feet + Vector3.up * 1.4f, 0.4f,
+                            ~0, QueryTriggerInteraction.Ignore))
+                    {
+                        continue;
+                    }
+
+                    float step = i < 4 ? 1f : 1.4142f;
+                    (int, int, int) next = WalkKey(feet);
+                    float nextCost = cost + step;
+
+                    if (!best.TryGetValue(next, out float known) || nextCost < known - 0.001f)
+                    {
+                        if (best.ContainsKey(next))
+                        {
+                            open.Remove((known, next.Item1, next.Item2, next.Item3));
+                        }
+
+                        best[next] = nextCost;
+                        feetOf[next] = feet;
+                        parent[next] = key;
+                        open.Add((nextCost, next.Item1, next.Item2, next.Item3));
+                    }
+                }
+            }
+
+            return -1f;
+        }
+
         private static float GroundLevelBelow(Vector3 point)
         {
             return VRay(point, Vector3.down, 12f, out RaycastHit hit) ? hit.point.y : 0f;
@@ -1074,7 +1221,7 @@ namespace ChokeHold.EditorTools
             {
                 string n = p.name;
 
-                if (n.StartsWith("Part_") || n.StartsWith("Door") || n.StartsWith("Stairs") || n.StartsWith("Hatch") ||
+                if (n.StartsWith("Part_") || n.StartsWith("Door") || n.Contains("Stairs") || n.StartsWith("Hatch") ||
                     n.Contains("Lintel") || n == "Doors" || n == "Stairs And Low Platforms")
                 {
                     return true;

@@ -516,3 +516,30 @@ Ce schimbă în joc:
 
 Validatorul confirmă: 59 din 59 de zone accesibile (inclusiv cele trei tuneluri), nicio gaură,
 nicio fantă, nimic suprapus.
+
+---
+
+# Buncărul subteran
+
+Cele trei tuneluri se unesc acum într-un buncăr sub partea de vest a hangarului
+(x 22..40, z −32..−16), plasat astfel încât ambele echipe să ajungă în el în același timp.
+
+| | |
+|---|---|
+| Podea / tavan | −6 m / −0,5 m (5,5 m înălțime); tunelurile au coborât la −3,6 m (3,1 m liberi, trepte de 0,2 m) |
+| Intrări | **West Link** — din capătul de sud al tunelului de nord (prelungit), spre est; **North Link** — din tunelul de est, coborâre scurtă; **South Link** — din South Tunnel, spre nord și apoi spre est |
+| Interior | balcon în L la nivelul tunelurilor pe laturile de vest și nord, două scări în groapa centrală, patru stâlpi de la podea până în tavan |
+| Locuri de ascuns | nișe de ~2 m sub balcon (cu cover de crouch), ladă și stivă de lăzi, paravan, cover de crouch în groapă, stâlpii |
+| Control | câte o baricadă pe fiecare legătură: apărătorii pot închide buncărul dinspre una sau mai multe părți |
+| Linii de vedere | pereți-șicană pe legături; nicio linie peste limită în tuneluri și în buncăr |
+
+**Timp de ajuns** (validatorul, secțiunea 9: drumul cel mai scurt pe jos, cu capsula jucătorului):
+
+| Echipă | Distanță | La sprint | Intră pe |
+|---|---|---|---|
+| Atacatori | 117 m | 15,7 s | West Link (prin camera de scară de lângă curte și tunelul de nord) |
+| Apărători | 110 m | 14,7 s | North Link (prin puțul din East Yard și tunelul de est) |
+
+Diferența e de 6%; validatorul avertizează automat dacă trece de 10% după o modificare de layout.
+
+Validare: 0 erori; cele 28 de avertismente sunt liniile de vedere de la suprafață, documentate mai sus.

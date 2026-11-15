@@ -71,6 +71,64 @@ namespace ChokeHold.EditorTools
 
             // Cotul spre nord: un perete care opreste linia de pe culoarul lung in puțul de scara.
             SolidBlock(gUnderground, "EastTunnel_Baffle_Corner", 66f, -1f, 68.5f, 0f, TunnelFloorY, depth - 0.5f, wallMat);
+
+            BuildBunker();
+        }
+
+        // ------------------------------------------------------------------
+        // BUNCARUL (x 22..40, z -32..-16, sub partea de vest a hangarului)
+        //
+        //   - podeaua la -6 m, tavanul (placa de la sol) la -0,5 m: 5,5 m inaltime;
+        //   - balcon in L pe vest si nord, la nivelul tunelurilor (-3,6 m); pe el ajung cele trei legaturi;
+        //   - sub balcon raman nise de ~2 m inaltime (locuri de ascuns);
+        //   - doua scari in groapa centrala, stalpi pana in tavan, cover;
+        //   - fiecare legatura are o baricada pe care aparatorii o pot monta.
+        // ------------------------------------------------------------------
+        private static void BuildBunker()
+        {
+            float floor = BunkerFloorY;
+            float balcony = TunnelFloorY;
+            float toCeiling = -0.5f - floor;
+
+            // Balcon in L (cu nise dedesubt)
+            CreatePlatform(gUnderground, "Bunker_Balcony_West", 22f, -32f, 26f, -16f, balcony);
+            CreatePlatform(gUnderground, "Bunker_Balcony_North", 26f, -20f, 40f, -16f, balcony);
+
+            // Scari de pe balcon in groapa
+            Stairs(gUnderground, "Bunker_Stairs_West", 26f, -26f, 32f, -22f, Vector3.left, floor, balcony - floor);
+            Stairs(gUnderground, "Bunker_Stairs_North", 36f, -26f, 40f, -20f, Vector3.forward, floor, balcony - floor);
+
+            // Stalpi de la podea pana in tavan (doi in groapa, doi sub muchia balconului de vest)
+            SolidBlock(gUnderground, "Bunker_Pillar_1", 29.4f, -29.6f, 30.6f, -28.4f, floor, toCeiling, wallMat);
+            SolidBlock(gUnderground, "Bunker_Pillar_2", 35.4f, -29.6f, 36.6f, -28.4f, floor, toCeiling, wallMat);
+            SolidBlock(gUnderground, "Bunker_Pillar_3", 25.4f, -29.6f, 26.6f, -28.4f, floor, toCeiling, wallMat);
+            SolidBlock(gUnderground, "Bunker_Pillar_4", 29.4f, -20.6f, 30.6f, -19.4f, floor, toCeiling, wallMat);
+
+            // Locuri de ascuns si cover in groapa
+            BigCrate(33.5f, -24.5f, floor);
+            CrateStack(38.6f, -30.6f, floor);
+            HighCover(27.2f, -31.2f, 29f, -31.2f, floor);
+            LowCover(32.5f, -30.8f, 34.5f, -30.8f, floor);
+            LowCover(23.2f, -28f, 23.2f, -25f, floor);   // in nisa de sub balconul de vest (cover de crouch)
+
+            // Lumini calde, de buncar
+            Lamp("Light_Bunker_Center", 32f, -1.1f, -27f, WarmLight, 14f, 3f);
+            Lamp("Light_Bunker_East", 38f, -1.1f, -24f, WarmLight, 12f, 2.5f);
+
+            // Pereti-sicana pe legaturile lungi: niciun culoar drept nu intra direct peste balcon.
+            float linkWall = -0.5f - TunnelFloorY;
+            SolidBlock(gUnderground, "BunkerWestLink_Baffle_1", 6f, -18f, 7f, -15.5f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "BunkerWestLink_Baffle_2", 14f, -16.5f, 15f, -14f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "BunkerSouthLink_Baffle_1", 13f, -32.5f, 14f, -30f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "BunkerSouthLink_Baffle_2", 6f, -42f, 8.5f, -41f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "BunkerWestLink_Baffle_3", 17f, -18f, 18f, -15.5f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "BunkerSouthLink_Baffle_3", 17f, -34f, 18f, -31.5f, TunnelFloorY, linkWall, wallMat);
+            SolidBlock(gUnderground, "NorthTunnel_Baffle_South", -4.5f, -6f, -2f, -5f, TunnelFloorY, linkWall, wallMat);
+
+            // Baricade pe cele trei legaturi (aparatorii pot inchide buncarul dinspre o parte)
+            Barricade(gBarricades, "Barricade_Bunker_West", 20f, -16f, TunnelFloorY, 4f, 3f, false);
+            Barricade(gBarricades, "Barricade_Bunker_North", 34f, -11f, TunnelFloorY, 4f, 3f, true);
+            Barricade(gBarricades, "Barricade_Bunker_South", 20f, -32f, TunnelFloorY, 4f, 3f, false);
         }
     }
 }

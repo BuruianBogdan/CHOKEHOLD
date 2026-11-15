@@ -236,31 +236,36 @@ namespace ChokeHold.EditorTools
                 }
 
                 // Tunelul are si portiunea acoperita (sub harta plina), care nu e "walkable" la sol.
-                if (theme == Theme.Tunnel)
-                {
-                    for (int i = 0; i < GridX; i++)
-                    {
-                        for (int j = 0; j < GridZ; j++)
-                        {
-                            cells[i, j] = IsPit(CellCenterX(i), CellCenterZ(j));
-                        }
-                    }
-                }
-
-                float y = theme == Theme.Tunnel ? TunnelFloorY : 0f;
+                // Subteranul are doua niveluri de podea (tuneluri si buncar): cate un strat pe fiecare.
+                float[] levels = theme == Theme.Tunnel ? new[] { TunnelFloorY, BunkerFloorY } : new[] { 0f };
                 Transform parent = theme == Theme.Tunnel ? tunnelGroup : group;
                 int index = 0;
 
-                MergeCells(cells, (i, j, width, depth) =>
+                foreach (float y in levels)
                 {
-                    float sizeX = width * Cell;
-                    float sizeZ = depth * Cell;
+                    if (theme == Theme.Tunnel)
+                    {
+                        for (int i = 0; i < GridX; i++)
+                        {
+                            for (int j = 0; j < GridZ; j++)
+                            {
+                                float x = CellCenterX(i), z = CellCenterZ(j);
+                                cells[i, j] = IsPit(x, z) && Mathf.Approximately(PitFloorAt(x, z), y);
+                            }
+                        }
+                    }
 
-                    Decor(parent, $"Floor_{theme}_{index++:00}",
-                        new Vector3(MinX + i * Cell + sizeX * 0.5f, y + 0.01f, MinZ + j * Cell + sizeZ * 0.5f),
-                        new Vector3(sizeX, 0.02f, sizeZ),
-                        FloorMatOf(theme));
-                });
+                    MergeCells(cells, (i, j, width, depth) =>
+                    {
+                        float sizeX = width * Cell;
+                        float sizeZ = depth * Cell;
+
+                        Decor(parent, $"Floor_{theme}_{index++:00}",
+                            new Vector3(MinX + i * Cell + sizeX * 0.5f, y + 0.01f, MinZ + j * Cell + sizeZ * 0.5f),
+                            new Vector3(sizeX, 0.02f, sizeZ),
+                            FloorMatOf(theme));
+                    });
+                }
             }
         }
 
@@ -332,10 +337,10 @@ namespace ChokeHold.EditorTools
 
                                 if (!IsPit(cx, cz) && IsPit(nx, nz))
                                 {
-                                    // Peretele santului tunelului (de la -3,5 m pana la sol)
+                                    // Peretele santului tunelului (de la -3,6 m pana la sol)
                                     exposed = true;
                                     theme = Theme.Tunnel;
-                                    baseY = TunnelFloorY;
+                                    baseY = PitFloorAt(nx, nz);
                                 }
                                 else if (!IsWalkable(cx, cz) && IsWalkable(nx, nz) && !IsOpenPit(nx, nz))
                                 {
@@ -488,7 +493,7 @@ namespace ChokeHold.EditorTools
             {
                 Vector3 ground = face.Start + face.Along * (k * step);
                 // Pilastrul urca pana in varful peretelui din spatele lui (sau pana in tavan, daca e mai jos).
-                float maxHeight = tunnelFace ? -TunnelFloorY : WallTopAt(ground - face.Normal * 1f) - face.BaseY;
+                float maxHeight = tunnelFace ? -face.BaseY : WallTopAt(ground - face.Normal * 1f) - face.BaseY;
                 float height = ClearHeightAt(ground + face.Normal * 0.4f, maxHeight);
 
                 if (height < 1.5f)
@@ -815,7 +820,8 @@ namespace ChokeHold.EditorTools
 
             foreach (PlacedRect platform in placedPlatforms)
             {
-                if (platform.Y < 1f)
+                // Platformele joase de la sol nu au nevoie de balustrada (cele din buncar, da).
+                if (platform.Y > -1f && platform.Y < 1f)
                 {
                     continue;
                 }
@@ -1034,7 +1040,7 @@ namespace ChokeHold.EditorTools
         private static void FillDarkInteriors()
         {
             const float coverage = 9f;
-            float[] levels = { TunnelFloorY, 0f, UpperFloorHeight };
+            float[] levels = { BunkerFloorY, TunnelFloorY, 0f, UpperFloorHeight };
             int added = 0;
 
             for (int i = 0; i < GridX; i++)

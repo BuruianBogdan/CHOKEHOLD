@@ -2,21 +2,21 @@
 
 Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baricadele nemontate.
 
-**0 erori, 29 avertismente.**
+**0 erori, 28 avertismente.**
 
 ## 1. Obiecte care intră unele în altele
 
-- ok — 285 obiecte de cover și structuri verificate, nicio suprapunere peste 0.1 m
+- ok — 290 obiecte de cover și structuri verificate, nicio suprapunere peste 0.1 m
 
 ## 2. Găuri în podea
 
-- ok — 12160 celule de 1 m verificate în 59 zone, nicio gaură
+- ok — 12702 celule de 1 m verificate în 64 zone, nicio gaură
 
 ## 3. Conectivitate
 
-- ok — 12887 poziții accesibile din spawn-ul T1
+- ok — 13389 poziții accesibile din spawn-ul T1
 - ok — nicio poziție accesibilă în afara conturului hărții
-- ok — 59 din 59 zone accesibile
+- ok — 64 din 64 zone accesibile
 - ok — 37 din 37 plăci și platforme de etaj accesibile
 
 ## 4. Linii de vedere
@@ -53,23 +53,34 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 - WARNING etaj, A Ramp: 35.4 m > 27.5 m, (-25, 35) → (-55.6, 52.7)
 - WARNING etaj, Lab Annex: 32.1 m > 27.5 m, (21, 37) → (-10, 28.7)
 - WARNING etaj, Lab West Door: 30.0 m > 27.5 m, (-11, 23) → (18, 30.8)
-- ok — parter: 42 din 57 zone în limită; etaj: 4 din 17
+- ok — parter: 47 din 62 zone în limită; etaj: 4 din 17
 
 ## 5. Cover
 
-- ok — 112 obiecte de cover, toate pe dimensiunile standard
+- ok — 117 obiecte de cover, toate pe dimensiunile standard
 
 ## 6. Uși, ferestre, trape și spațiu liber
 
 - ok — 49 uși, 1 ferestre și 5 trape, toate la standard
-- WARNING 453 m² de interior cu mai puțin de 3 m deasupra capului (de exemplu la (-5.5, -11.5))
+- ok — spațiu liber de minimum 3 m în toate interioarele (în afara ușilor și a scărilor)
 
 ## 7. Îmbinări (pereți, coloane, tavane)
 
-- ok — 285 pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între 0.03 și 0.8 m
+- ok — 290 pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între 0.03 și 0.8 m
 
 ## 8. Pregătire pentru texturi
 
-- ok — 3621 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 3907 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
 - ok — 42 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
 - ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)
+
+## 9. Buncăr: timp de ajuns pentru fiecare echipă
+
+Drumul cel mai scurt pe jos (grilă de 1 m, cu scări și tuneluri), până la podeaua buncărului:
+
+| Echipă | Distanță | Timp la sprint (7,5 m/s) | Intră pe |
+|---|---|---|---|
+| Atacatori | 117 m | 15.7 s | West Link (tunelul de nord) |
+| Apărători | 110 m | 14.7 s | North Link (tunelul de est) |
+
+- ok — diferență de 6% între echipe (sub 10%)

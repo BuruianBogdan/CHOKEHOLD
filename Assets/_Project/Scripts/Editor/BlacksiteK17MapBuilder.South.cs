@@ -37,7 +37,7 @@ namespace ChokeHold.EditorTools
             InnerWall(gStructures, "SouthLane_Stub_Mid", 2f, -42.5f, 2f, -38f, wall);
             InnerWall(gStructures, "SouthLane_Stub_East", 14f, -46f, 14f, -41.5f, wall);
 
-            // ---------------- South Tunnel (subteran, -3,5 m) ----------------
+            // ---------------- South Tunnel (subteran, -3,6 m) ----------------
             float depth = -TunnelFloorY;
 
             // Rampe la ambele capete: din spawn-ul T1 si din Loading Bay
