@@ -326,3 +326,34 @@ ușile laboratorului, East Yard și ușa de sub A Heaven (5). Restul sunt la 4 s
 - **Limite:** aplicate cu toleranța de 10 % și cu hangarul tratat ca spațiu deschis.
 - **Echilibrul spre A** (atacatorii ajung primii) nu a fost schimbat prin rute; rămâne de reglat după
   teste de joc.
+
+---
+
+# Rezultate Faza 3 — finisare vizuală
+
+Toată finisarea e generată în `BlacksiteK17MapBuilder.Detail.cs`, după ce zonele sunt construite, din
+ce au plasat ele (fețele de perete de pe grilă, acoperișurile, planșeele, luminile). Nu folosește
+asset-uri externe. Detaliile nu au collider, deci nu schimbă mișcarea și nici liniile de vedere
+măsurate în Faza 2 (re-măsurat: aceleași 33 din 49 de zone în limită, totul conectat). Excepție:
+balustradele, care au collider.
+
+| Element | Cum arată |
+|---|---|
+| Pereți | plintă de 0,25 m peste tot; pe teme: industrial (A) — benzi ruginii la 1,0 și 3,0 m + pilaștri la 5 m; laborator — lambriu alb, dungă turcoaz, pilaștri albi la 6 m; hangar — bandă galbenă de siguranță + stâlpi metalici de 0,5 × 0,3 m la 6 m; tunel — bandă de pericol + pilaștri; exterior — soclu de beton + pilaștri la 6 m |
+| Colțuri | coloană de 0,7 m pe fiecare colț convex de perete |
+| Coronament | capac închis la culoare pe toate blocurile de perete (se disting de podea din vederea de sus) |
+| Uși și ferestre | ramă cu montanți și buiandrug de 0,16 m și prag la toate ușile (simple, duble, de garaj); ramă și pervaz ieșit la fereastră; plintă pe ambele fețe ale pereților despărțitori |
+| Tavan | grinzi la 4 m sub toate acoperișurile; în hangar ferme de 0,7 m la 6 m plus grindă longitudinală |
+| Lumini | corp de iluminat fizic (lampă emisivă + carcasă + tijă până în tavan) la fiecare lumină; 52 de lămpi adăugate automat acolo unde un interior nu avea lumină pe o rază de 9 m (calde în A și în tunel, reci în laborator, albe în hangar) |
+| Balustrade | stâlpi la 1,5 m, mână curentă, riglă și plintă; colliderul rămâne un panou plin de 1 m. Pe toate muchiile libere ale platformelor și planșeelor de etaj (inclusiv golurile scărilor) se pun automat |
+| Podea | strat colorat pe teme (exterior gri cald, industrial maroniu, laborator gri deschis, hangar gri-albastru, tunel închis); bandă galben-negru pe conturul zonelor de plant și pe pragul ușilor de garaj; literele A și B pictate în site-uri; săgeți cu litera site-ului la ieșirile din spawn-uri |
+
+Paleta: Team 1 albastru, Team 2 roșu, site-uri galben, pereți moi lemn, trape galben deschis, cover
+portocaliu, platforme albastru, scări albastru-gri, ramele și balustradele gri-închis.
+
+## Ce nu s-a făcut în Faza 3
+
+- Cabluri și conducte noi pe tavan: au rămas doar țevile existente din A și din sala pompelor.
+- Teșituri suplimentare: harta e ortogonală, iar colțurile convexe primesc coloane în loc de teșire.
+- Iluminarea nu e „bake”-uită: luminile sunt în timp real. Pentru build-ul final merită un bake de
+  lumină și sonde de reflexie.

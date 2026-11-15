@@ -54,8 +54,10 @@ namespace ChokeHold.EditorTools
             }
 
             coverIndex = 0;
+            ResetDetailRecords();
             CreateMaterials();
             stairMat = GetOrCreateMaterial("GB_Stairs", new Color(0.42f, 0.5f, 0.62f));
+            CreateDetailMaterials();
             AssetDatabase.SaveAssets();
 
             RemoveExistingRoot();
@@ -91,6 +93,9 @@ namespace ChokeHold.EditorTools
             BuildSiteB();
             BuildSpawnsAndOuterZones();
             BuildSouth();
+
+            // Finisare (citeste ce au plasat zonele)
+            BuildDetails(root.transform);
 
             // Sisteme
             BuildGameMode();

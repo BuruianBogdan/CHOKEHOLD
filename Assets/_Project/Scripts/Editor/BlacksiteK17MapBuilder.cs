@@ -291,6 +291,22 @@ namespace ChokeHold.EditorTools
                         new Vector3(sizeX, SlabThickness, sizeZ),
                         material != null ? material : upperFloorMat
                     );
+
+                    // Pentru finisare: planseele de etaj primesc balustrade, acoperisurile grinzi.
+                    PlacedRect placed = new PlacedRect(
+                        xMin + i * Cell, zMin + j * Cell,
+                        xMin + i * Cell + sizeX, zMin + j * Cell + sizeZ,
+                        top);
+
+                    if (parent == gRoofs)
+                    {
+                        placed.Y = top - SlabThickness;
+                        placedRoofs.Add(placed);
+                    }
+                    else
+                    {
+                        placedPlatforms.Add(placed);
+                    }
                 }
             }
         }
@@ -455,13 +471,20 @@ namespace ChokeHold.EditorTools
                 ? new Vector3(Mathf.Abs(x1 - x0), height, thickness)
                 : new Vector3(thickness, height, Mathf.Abs(z1 - z0));
 
-            CreateBox(
+            // Colliderul ramane un panou plin (nu te poti strecura printre bare);
+            // ce se vede sunt stalpii si barele din RailingVisual.
+            GameObject collider = CreateBox(
                 parent,
                 name,
                 new Vector3((x0 + x1) * 0.5f, platformHeight + height * 0.5f, (z0 + z1) * 0.5f),
                 size,
                 pipeMat
             );
+
+            Object.DestroyImmediate(collider.GetComponent<MeshRenderer>());
+            Object.DestroyImmediate(collider.GetComponent<MeshFilter>());
+
+            RailingVisual(parent, name, x0, z0, x1, z1, platformHeight);
         }
 
         private static void CreateRoof(Transform parent, string name,
@@ -476,6 +499,8 @@ namespace ChokeHold.EditorTools
                 new Vector3(xMax - xMin, thickness, zMax - zMin),
                 roofMat
             );
+
+            placedRoofs.Add(new PlacedRect(xMin, zMin, xMax, zMax, height));
         }
 
         /// <summary>Perete interior subtire, de la (x0,z0) la (x1,z1), paralel cu o axa.</summary>
@@ -707,6 +732,8 @@ namespace ChokeHold.EditorTools
             light.color = color;
             light.range = range;
             light.intensity = intensity;
+
+            placedLights.Add(go.transform);
         }
 
         // ------------------------------------------------------------------
@@ -724,6 +751,8 @@ namespace ChokeHold.EditorTools
                 new Vector3(xMax - xMin, thickness, zMax - zMin),
                 platformMat
             );
+
+            placedPlatforms.Add(new PlacedRect(xMin, zMin, xMax, zMax, topHeight));
         }
 
         /// <summary>

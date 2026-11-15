@@ -190,6 +190,16 @@ namespace ChokeHold.EditorTools
                     SoftWall(group, $"{name}_Soft{index}", start.x, start.z, end.x, end.z, gap.BaseY, gap.Height);
                 }
 
+                if (gap.Kind == GapKind.Door || gap.Kind == GapKind.DoubleDoor || gap.Kind == GapKind.Garage)
+                {
+                    DoorFrame(group, $"{name}_Gap{index}", middle, alongX, gap.Width, gap.Height, PartitionThickness, gap.BaseY);
+                }
+
+                if (gap.Kind == GapKind.Window)
+                {
+                    WindowFrame(group, $"{name}_Gap{index}", middle, alongX, gap.Width, gap.Height, PartitionThickness, gap.BaseY);
+                }
+
                 if (gap.Barricade)
                 {
                     Barricade(gBarricades, $"Barricade_{name}_{index}", middle.x, middle.z, gap.BaseY, gap.Width, gap.Height, alongX);
@@ -223,6 +233,16 @@ namespace ChokeHold.EditorTools
                 : new Vector3(PartitionThickness, toY - fromY, lengthAlong);
 
             CreateBox(parent, name, groundPoint + Vector3.up * (fromY + toY) * 0.5f, size, wallMat);
+
+            // Plinta pe ambele fete (o singura cutie putin mai groasa decat peretele).
+            if (fromY < 0.01f && toY > 0.3f)
+            {
+                Vector3 plinth = alongX
+                    ? new Vector3(lengthAlong, 0.25f, PartitionThickness + 0.12f)
+                    : new Vector3(PartitionThickness + 0.12f, 0.25f, lengthAlong);
+
+                Decor(parent, name + "_Plinth", groundPoint + Vector3.up * 0.125f, plinth, plinthMat);
+            }
         }
 
         /// <summary>
@@ -242,6 +262,9 @@ namespace ChokeHold.EditorTools
             // Latimea golului (perpendicular pe directia de trecere) si grosimea peretelui.
             float gapWidth = passageAlongX ? cellZMax - cellZMin : cellXMax - cellXMin;
             float jamb = Mathf.Max(0f, (gapWidth - DoorWidth) * 0.5f);
+
+            float wallDepth = passageAlongX ? cellXMax - cellXMin : cellZMax - cellZMin;
+            DoorFrame(group, "Door", new Vector3(midX, 0f, midZ), !passageAlongX, DoorWidth, DoorHeight, wallDepth, 0f);
 
             if (passageAlongX)
             {
