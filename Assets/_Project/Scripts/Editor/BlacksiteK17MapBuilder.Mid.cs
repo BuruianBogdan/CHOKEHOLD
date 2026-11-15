@@ -105,7 +105,7 @@ namespace ChokeHold.EditorTools
                     new Area("West Door", -12f, 22f, -10f, 24f),
                     new Area("Annex Door", 18f, 36f, 20f, 38f),
                 },
-                new Area[0],
+                new[] { new Area("Control Room Stairs", 14f, 14f, 18f, 24f) },   // scara spre camera de control
                 roofMat);
 
             // Lumini reci, de laborator

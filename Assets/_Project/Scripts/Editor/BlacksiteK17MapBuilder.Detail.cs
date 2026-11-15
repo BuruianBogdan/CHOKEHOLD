@@ -681,7 +681,9 @@ namespace ChokeHold.EditorTools
                    name.Contains("Crate") || name.Contains("Cover") || name.Contains("Container") ||
                    // utilajele primesc piese din kit (fara capac de perete deasupra)
                    name.Contains("Machine") || name.Contains("Generator") || name.Contains("ServerRack") ||
-                   name.Contains("Lockers") || name.Contains("Shelf");
+                   name.Contains("Lockers") || name.Contains("Shelf") ||
+                   // acoperisurile accesibile au parapet, nu capac
+                   name == "Outpost_Tower" || name == "Courtyard_Shed" || name == "Outpost_Shed";
         }
 
         // ------------------------------------------------------------------
@@ -1072,8 +1074,9 @@ namespace ChokeHold.EditorTools
 
                         Theme theme = level < -1f ? Theme.Tunnel : ThemeAt(x, z);
 
-                        // Complexul e acoperit peste tot (EncloseMap): orice loc fara lampa aproape primeste una.
-                        if (!Physics.Raycast(p, Vector3.up, out RaycastHit ceiling, 9f, ~0, QueryTriggerInteraction.Ignore))
+                        // Exteriorul e luminat de soare; ne intereseaza doar interioarele acoperite.
+                        if (theme == Theme.Exterior ||
+                            !Physics.Raycast(p, Vector3.up, out RaycastHit ceiling, 9f, ~0, QueryTriggerInteraction.Ignore))
                         {
                             continue;
                         }

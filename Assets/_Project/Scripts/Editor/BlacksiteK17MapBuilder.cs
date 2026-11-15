@@ -837,22 +837,22 @@ namespace ChokeHold.EditorTools
             floorMat = GetOrCreateMaterial("GB_Floor", new Color(0.34f, 0.35f, 0.37f));
             wallMat = GetOrCreateMaterial("GB_Wall", new Color(0.55f, 0.56f, 0.58f));
             outerWallMat = GetOrCreateMaterial("GB_WallOuter", new Color(0.22f, 0.23f, 0.26f));
-            platformMat = GetOrCreateMaterial("GB_Platform", new Color(0.2f, 0.45f, 0.85f));
-            rampMat = GetOrCreateMaterial("GB_Ramp", new Color(0.3f, 0.65f, 0.95f));
-            coverMat = GetOrCreateMaterial("GB_Cover", new Color(0.9f, 0.55f, 0.15f));
+            platformMat = GetOrCreateMaterial("GB_Platform", new Color(0.3f, 0.31f, 0.33f));        // tabla de otel
+            rampMat = GetOrCreateMaterial("GB_Ramp", new Color(0.36f, 0.37f, 0.38f));
+            coverMat = GetOrCreateMaterial("GB_Cover", new Color(0.5f, 0.48f, 0.44f));             // cover-ul are piese din kit
             containerRedMat = GetOrCreateMaterial("GB_ContainerRed", new Color(0.65f, 0.22f, 0.16f));
             containerBlueMat = GetOrCreateMaterial("GB_ContainerBlue", new Color(0.16f, 0.32f, 0.58f));
             pipeMat = GetOrCreateMaterial("GB_Pipe", new Color(0.45f, 0.47f, 0.5f));
-            roofMat = GetOrCreateMaterial("GB_Roof", new Color(0.3f, 0.28f, 0.34f));
+            roofMat = GetOrCreateMaterial("GB_Roof", new Color(0.27f, 0.27f, 0.28f));           // membrana bituminoasa
             doorMat = GetOrCreateMaterial("GB_Door", new Color(0.25f, 0.6f, 0.45f));
-            upperFloorMat = GetOrCreateMaterial("GB_UpperFloor", new Color(0.3f, 0.4f, 0.56f));
-            softWallMat = GetOrCreateMaterial("GB_SoftWall", new Color(0.72f, 0.56f, 0.36f));
+            upperFloorMat = GetOrCreateMaterial("GB_UpperFloor", new Color(0.42f, 0.42f, 0.4f));  // beton
+            softWallMat = GetOrCreateMaterial("GB_SoftWall", new Color(0.68f, 0.66f, 0.6f));     // gips-carton (se sparge)
             hatchMat = GetOrCreateMaterial("GB_Hatch", new Color(0.95f, 0.8f, 0.25f));
             reinforcedMat = GetOrCreateMaterial("GB_Reinforced", new Color(0.12f, 0.13f, 0.16f));
             barricadeMat = GetOrCreateMaterial("GB_Barricade", new Color(0.55f, 0.38f, 0.2f));
-            siteFloorMat = GetOrCreateMaterial("GB_SiteFloor", new Color(0.9f, 0.75f, 0.1f));
-            t1FloorMat = GetOrCreateMaterial("GB_T1Floor", new Color(0.15f, 0.3f, 0.8f));
-            t2FloorMat = GetOrCreateMaterial("GB_T2Floor", new Color(0.8f, 0.18f, 0.15f));
+            siteFloorMat = GetOrCreateMaterial("GB_SiteFloor", new Color(0.44f, 0.42f, 0.36f));  // site-ul se vede dupa chenar si litera
+            t1FloorMat = GetOrCreateMaterial("GB_T1Floor", new Color(0.36f, 0.39f, 0.45f));      // beton cu tenta albastra
+            t2FloorMat = GetOrCreateMaterial("GB_T2Floor", new Color(0.45f, 0.37f, 0.36f));      // beton cu tenta rosie
 
             AssetDatabase.SaveAssets();
         }
@@ -1017,13 +1017,18 @@ namespace ChokeHold.EditorTools
 
             Transform upper = root.transform.Find(UpperGroupName);
 
-            // Complexul e acoperit si fara soare: pentru imagini punem temporar un soare si scoatem ceata.
-            GameObject previewSun = new GameObject("PreviewSun (temp)") { hideFlags = HideFlags.HideAndDontSave };
-            previewSun.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
-            Light sunLight = previewSun.AddComponent<Light>();
-            sunLight.type = LightType.Directional;
-            sunLight.intensity = 1.1f;
-            sunLight.shadows = LightShadows.Soft;
+            // Imaginile de ansamblu: fara ceata, ambient uniform; soare temporar doar daca scena nu are unul.
+            GameObject previewSun = null;
+
+            if (RenderSettings.sun == null || !RenderSettings.sun.isActiveAndEnabled)
+            {
+                previewSun = new GameObject("PreviewSun (temp)") { hideFlags = HideFlags.HideAndDontSave };
+                previewSun.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
+                Light sunLight = previewSun.AddComponent<Light>();
+                sunLight.type = LightType.Directional;
+                sunLight.intensity = 1.1f;
+                sunLight.shadows = LightShadows.Soft;
+            }
 
             bool fog = RenderSettings.fog;
             UnityEngine.Rendering.AmbientMode ambientMode = RenderSettings.ambientMode;
@@ -1102,7 +1107,10 @@ namespace ChokeHold.EditorTools
                     roofs.gameObject.SetActive(roofsWereActive);
                 }
 
-                Object.DestroyImmediate(previewSun);
+                if (previewSun != null)
+                {
+                    Object.DestroyImmediate(previewSun);
+                }
                 RenderSettings.fog = fog;
                 RenderSettings.ambientMode = ambientMode;
                 RenderSettings.ambientLight = ambient;

@@ -601,3 +601,42 @@ Blacksite K-17 e acum un complex nuclear închis.
 Tot decorul nou e fără collider: mișcarea, cover-ul și liniile de vedere nu se schimbă.
 
 Validare: 0 erori, 28 de avertismente, aceleași ca înainte.
+
+---
+
+# Revizie: exterior, acoperișuri, camera de control
+
+După tur s-au schimbat următoarele.
+
+**Exteriorul revine.** Curțile, spawn-urile și aleile sunt din nou în aer liber, cu soare de după-amiază și ceață ușoară. Halele (reactorul, hangarul, laboratorul) își păstrează acoperișul și lămpile.
+
+**Acoperișuri pe care se poate juca.** Se urcă pe scări de mână: W urcă, S coboară, Space sare de pe scară.
+
+| Acoperiș | Înălțime | Acces | Vede în jos spre |
+|---|---|---|---|
+| Turnul de pază (West Outpost) | 4 m | scară de mână | West Outpost, T1 Ramp, A Pipes South Door |
+| Magazia din South Courtyard | 4 m | scară de mână | South Courtyard, Choke Point, T1 Walkway South |
+| Clădirea din mijloc (laboratorul) | 8,4 m | scară de mână din Mid Connector și scara interioară | Mid Connector, Mid East Corridor, South Courtyard, North Overlook |
+
+Pe marginea fiecărui acoperiș stă un parapet de 1,1 m, care servește drept cover. Deasupra lui e o barieră invizibilă care oprește jucătorii, dar lasă să treacă gloanțele și privirea.
+
+**Camera de control (etajul 3).** E punctul de control al centralei și se află pe acoperișul laboratorului.
+- Se urcă pe o scară interioară de la etajul 2.
+- Are două uși spre acoperiș și ferestre pe toate laturile.
+- Înăuntru sunt pupitre de comandă, care servesc drept cover de crouch.
+
+**Piese refăcute sau noi:**
+- **Fosta greutate vizuală:** pompa e acum o pereche de pompe reale, bastioanele au înlocuit „sertarele albe”, iar molozul e o stivă de plăci de beton.
+- **Interioare:** mesele sunt acum pupitre de comandă.
+- **Țevile mari** au flanșe, suporturi și capete care intră în perete.
+- **Țevile de pe pereți** se termină cu cot în perete sau intră în peretele de colț.
+- **Fațadele** au burlane, tablouri electrice, grile de ventilație și lămpi.
+- **Turnul și magazia** au uși și ferestre.
+- **În spawn și în curți:** un camion în spawn-ul T1, stâlpi cu proiectoare și sârmă ghimpată pe zidul de incintă.
+- **Restul:** transformatorul din East Yard și ghereta din West Outpost.
+
+**Culorile de greybox au dispărut.** Platformele sunt acum de oțel, etajele de beton, scările de beton, iar spawn-urile au beton cu tentă de echipă. Site-urile se recunosc după chenar și literă.
+
+**Validare:** 0 erori; cele 28 de avertismente sunt aceleași linii de vedere de la sol de dinainte.
+- Secțiunea 10 a raportului arată ce se vede de pe fiecare acoperiș.
+- Acoperișurile nu intră în verificarea liniilor orizontale: o rază la 10 m înălțime nu întâlnește niciun jucător.

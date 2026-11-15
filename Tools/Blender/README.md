@@ -77,3 +77,22 @@ Decorul îl plasează `BuildNuclearDressing` din `BlacksiteK17MapBuilder.Nuclear
   - Aceste materiale se creează o singură dată; după aceea le poți texturiza liber, iar generatorul nu le mai suprascrie.
   - Slotul `Container` primește materialul roșu sau albastru al containerului.
 - **Piese noi.** O piesă nouă înseamnă o funcție `piece_*` în script, adăugată în `PIECES`, plus o regulă în `ApplyKit` din `BlacksiteK17MapBuilder.Kit.cs`.
+
+## Piese v3 (interioare, acoperișuri, exterior)
+
+| Piesă | Unde ajunge |
+|---|---|
+| `K17_Console` | toate mesele (`Crate_*`): laborator, birouri, camera de control; segmente de 2 m |
+| `K17_HVAC` | `Roof_HVAC_*`: unități de ventilație (cover) pe acoperișul laboratorului |
+| `K17_Pipe_Big`, `K17_Pipe_Cap`, `K17_Pipe_Collar` | țevile mari (`*_Pipe_*`): tronsoane cu flanșe, iar la capete flanșă oarbă sau trecere prin perete; suporturi spre tavan sau podea |
+| `K17_Pipe_Run_End`, `K17_Pipe_Run_Collar` | capetele șirurilor de țevi de pe pereți: cot în perete sau trecere în peretele de colț |
+| `K17_Ladder_Section`, `K17_Ladder_Top` | scările de mână spre acoperișuri (componenta `Ladder`) |
+| `K17_Downpipe_*`, `K17_Electrical_Box`, `K17_Wall_Vent`, `K17_Wall_Lamp` | fațadele exterioare |
+| `K17_Door_Panel`, `K17_Window_Panel`, `K17_Roll_Door` | clădirile pline (turnul de pază, magazia din curte) |
+| `K17_Truck`, `K17_Floodlight`, `K17_Razor_Wire` | spawn-uri, curți, coronamentul zidului de incintă |
+| `K17_Transformer`, `K17_Guard_Hut` | `Yard_Generator`, `Outpost_Shed` |
+
+Piese refăcute:
+- **`K17_Coolant_Pump`** are două pompe centrifuge, cu motor pe același ax, colector comun și aspirație prin podea.
+- **`K17_Barrier_High`** e acum un bastion din coșuri de plasă umplute cu pământ.
+- **`K17_Rubble`** e acum o stivă de plăci de beton prefabricate.

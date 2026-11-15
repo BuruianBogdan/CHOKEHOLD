@@ -216,7 +216,9 @@ namespace ChokeHold.Gameplay
                     ray,
                     out RaycastHit hit,
                     range,
-                    hitMask,
+                    // Stratul "Ignore Raycast" tine barierele invizibile pentru jucatori (marginea acoperisurilor):
+                    // gloantele trec prin ele.
+                    hitMask & ~(1 << 2),
                     QueryTriggerInteraction.Ignore
                 )
             )

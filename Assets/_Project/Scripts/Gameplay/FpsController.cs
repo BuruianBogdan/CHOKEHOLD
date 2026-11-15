@@ -187,6 +187,11 @@ namespace ChokeHold.Gameplay
                 moveInputSmoothing * Time.deltaTime
             );
 
+            if (ClimbLadder())
+            {
+                return;
+            }
+
             Vector3 direction =
                 transform.right * moveInput.x +
                 transform.forward * moveInput.y;
@@ -267,6 +272,60 @@ namespace ChokeHold.Gameplay
                 verticalVelocity *
                 Time.deltaTime
             );
+        }
+
+        // ------------------------------------------------------------------
+        // Scari de mana (acoperisuri)
+        // ------------------------------------------------------------------
+        private float ladderCooldown;
+
+        /// <summary>
+        /// Pe scara: W urca, S coboara, A/D te muta usor lateral; Space sare de pe scara.
+        /// La baza, S te duce inapoi pe podea; sus, W te impinge pe acoperis.
+        /// </summary>
+        private bool ClimbLadder()
+        {
+            if (ladderCooldown > 0f)
+            {
+                ladderCooldown -= Time.deltaTime;
+                return false;
+            }
+
+            Ladder ladder = Ladder.Find(transform.position + Vector3.up * 0.9f);
+
+            if (ladder == null || (isGrounded && moveInput.y <= 0.05f))
+            {
+                return false;
+            }
+
+            Vector3 outward = ladder.Outward;
+            Vector3 direction = transform.right * moveInput.x + transform.forward * moveInput.y;
+
+            // Nu te desprinzi de scara mergand inapoi: componenta spre exterior se anuleaza.
+            float away = Vector3.Dot(direction, outward);
+            if (away > 0f)
+            {
+                direction -= outward * away;
+            }
+
+            direction = Vector3.ClampMagnitude(direction, 1f);
+
+            // W / S urca si coboara indiferent unde privesti (ca in majoritatea shooterelor).
+            float climb = moveInput.y * ladder.ClimbSpeed;
+
+            controller.Move((direction * walkSpeed * 0.4f + Vector3.up * climb) * Time.deltaTime);
+            verticalVelocity = 0f;
+            coyoteTimeCounter = 0f;
+
+            if (!InputLocked && Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+            {
+                // Sari de pe scara, cu spatele la perete.
+                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity) * 0.6f;
+                controller.Move(outward * 0.3f);
+                ladderCooldown = 0.4f;
+            }
+
+            return true;
         }
 
         private void UpdateLean()

@@ -100,6 +100,7 @@ namespace ChokeHold.EditorTools
                 CheckJoints(root, report);
                 CheckTextureReadiness(root, report);
                 CheckBunkerTiming(root, report);
+                CheckRooftops(zones, report);
             }
             finally
             {
@@ -140,7 +141,8 @@ namespace ChokeHold.EditorTools
 
         private static bool VRay(Vector3 from, Vector3 dir, float max, out RaycastHit hit)
         {
-            return Physics.Raycast(from, dir, out hit, max, ~0, QueryTriggerInteraction.Ignore);
+            // Fara stratul "Ignore Raycast": barierele invizibile de pe acoperisuri opresc jucatorii, nu privirea.
+            return Physics.Raycast(from, dir, out hit, max, ~(1 << 2), QueryTriggerInteraction.Ignore);
         }
 
         private static bool VBlocked(Vector3 point, float radius)
@@ -287,6 +289,12 @@ namespace ChokeHold.EditorTools
 
             foreach (MapZone zone in zones)
             {
+                // Zona unui acoperis cuprinde si curtile de sub marginea lui (parapetul e marginea).
+                if (zone.DisplayName.EndsWith("Roof"))
+                {
+                    continue;
+                }
+
                 int zoneHoles = 0;
                 Vector3 first = Vector3.zero;
 
@@ -306,7 +314,10 @@ namespace ChokeHold.EditorTools
                     bool pit = IsPit(cell.x, cell.y);
                     float lowest = (pit ? Mathf.Min(level, TunnelFloorY) : level) - 0.6f;
 
-                    if (!VRay(probe, Vector3.down, probe.y - lowest, out RaycastHit _))
+                    // Golul unei scari interioare (scara spre camera de control): treptele sunt dedesubt.
+                    if (!VRay(probe, Vector3.down, probe.y - lowest, out RaycastHit _) &&
+                        !(VRay(probe, Vector3.down, 6f, out RaycastHit below) &&
+                          (below.collider.name == "WalkSurface" || below.collider.name.StartsWith("Step"))))
                     {
                         if (zoneHoles == 0)
                         {
@@ -472,9 +483,36 @@ namespace ChokeHold.EditorTools
             int[] dx = { 1, -1, 0, 0 };
             int[] dz = { 0, 0, 1, -1 };
 
+            // Scarile de mana leaga piciorul scarii de acoperis (in ambele sensuri).
+            List<(Vector3 from, Vector3 to)> ladderLinks = new List<(Vector3, Vector3)>();
+
+            foreach (Ladder ladder in Object.FindObjectsByType<Ladder>(FindObjectsInactive.Exclude))
+            {
+                Vector3 foot = ladder.Bottom + ladder.Outward * 0.5f;
+                Vector3 roof = ladder.Top - ladder.Outward * 1.2f;
+                ladderLinks.Add((foot, roof));
+                ladderLinks.Add((roof, foot));
+            }
+
             while (queue.Count > 0 && visited.Count < 500000)
             {
                 Vector3 p = queue.Dequeue();
+
+                foreach ((Vector3 from, Vector3 to) in ladderLinks)
+                {
+                    if (Mathf.Abs(p.y - from.y) > 0.7f || new Vector2(p.x - from.x, p.z - from.z).sqrMagnitude > 1.5f * 1.5f ||
+                        !VRay(to + Vector3.up * 0.8f, Vector3.down, 2f, out RaycastHit landing))
+                    {
+                        continue;
+                    }
+
+                    Vector3 target = new Vector3(to.x, landing.point.y, to.z);
+
+                    if (visited.Add(WalkKey(target)))
+                    {
+                        queue.Enqueue(target);
+                    }
+                }
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -528,8 +566,7 @@ namespace ChokeHold.EditorTools
             report.Section("4. Linii de vedere");
             report.Body.AppendLine("Limite: 27,5 m în interior și 44 m în exterior (~25 / ~40 m cu 10 % toleranță). " +
                                    "O linie care iese de sub acoperiș primește limita de exterior. " +
-                                   "Hangarul, Loading Bay și fostele curți (acum hale acoperite, `Roof_Hall_*`) " +
-                                   "păstrează limita de spațiu deschis.");
+                                   "Hangarul și Loading Bay sunt hale (limită de exterior).");
             report.Body.AppendLine();
 
             Transform upperGroup = root.transform.Find(UpperGroupName);
@@ -540,6 +577,14 @@ namespace ChokeHold.EditorTools
             foreach (MapZone zone in zones)
             {
                 float baseY = zone.transform.position.y;
+
+                // Acoperisurile si camera de control (peste 6 m) privesc in jos, peste crestele zidurilor:
+                // o raza orizontala de acolo nu intalneste niciun jucator. Le descrie sectiunea 10.
+                if (baseY > 6f)
+                {
+                    continue;
+                }
+
                 float limit = ZoneSightLimit(zone);
 
                 foreach (Vector2 cell in ZoneCells(zone, 2f))
@@ -618,10 +663,7 @@ namespace ChokeHold.EditorTools
             {
                 cells++;
 
-                // Tavanul pus de EncloseMap peste fostele curti face din ele hale mari: raman la limita
-                // de "exterior" (spatiu deschis), nu de camera.
-                if (VRay(new Vector3(cell.x, zone.transform.position.y + 0.1f, cell.y), Vector3.up, 14f, out RaycastHit roof) &&
-                    !roof.collider.name.StartsWith("Roof_Hall"))
+                if (VRay(new Vector3(cell.x, zone.transform.position.y + 0.1f, cell.y), Vector3.up, 14f, out RaycastHit _))
                 {
                     roofed++;
                 }
@@ -640,7 +682,7 @@ namespace ChokeHold.EditorTools
 
                 float rayLimit = limit;
 
-                if (limit < VExteriorLimit && (!VRay(from + dir * (length - 0.5f), Vector3.up, 14f, out RaycastHit above) || above.collider.name.StartsWith("Roof_Hall")))
+                if (limit < VExteriorLimit && !VRay(from + dir * (length - 0.5f), Vector3.up, 14f, out RaycastHit _))
                 {
                     rayLimit = VExteriorLimit;
                 }
@@ -1083,6 +1125,67 @@ namespace ChokeHold.EditorTools
         // ------------------------------------------------------------------
         // 9. Buncarul: timpul de ajuns pentru fiecare echipa
         // ------------------------------------------------------------------
+        // ------------------------------------------------------------------
+        // 10. Acoperisuri: ce zone de la sol se vad de sus
+        // ------------------------------------------------------------------
+        private static void CheckRooftops(MapZone[] zones, ValidationReport report)
+        {
+            report.Section("10. Acoperișuri și camera de control");
+
+            Ladder[] ladders = Object.FindObjectsByType<Ladder>(FindObjectsInactive.Exclude);
+            report.Ok($"{ladders.Length} scări de mână ({string.Join(", ", ladders.Select(l => $"{l.name} {l.Height:0.#} m"))})");
+
+            MapZone[] ground = zones.Where(z => Mathf.Abs(z.transform.position.y) < 0.5f).ToArray();
+            int[] pitches = { -6, -12, -20, -32, -45 };
+
+            foreach (MapZone roof in zones.Where(z => z.DisplayName.Contains("Roof") || z.DisplayName == "Control Room"))
+            {
+                Dictionary<string, int> seen = new Dictionary<string, int>();
+
+                foreach (Vector2 cell in ZoneCells(roof, 2f))
+                {
+                    Vector3 eye = new Vector3(cell.x, roof.transform.position.y + VEye, cell.y);
+
+                    if (VBlocked(eye, 0.3f) || !VRay(eye, Vector3.down, VEye + 0.6f, out RaycastHit _))
+                    {
+                        continue;
+                    }
+
+                    for (int a = 0; a < 360; a += 15)
+                    {
+                        foreach (int pitch in pitches)
+                        {
+                            Vector3 dir = Quaternion.Euler(-pitch, a, 0f) * Vector3.forward;
+
+                            if (!VRay(eye, dir, 120f, out RaycastHit hit) || hit.point.y > 0.3f || hit.point.y < -0.3f)
+                            {
+                                continue;
+                            }
+
+                            foreach (MapZone z in ground)
+                            {
+                                Vector3 c = z.transform.position;
+                                Vector3 s = z.Size;
+
+                                if (Mathf.Abs(hit.point.x - c.x) <= s.x * 0.5f && Mathf.Abs(hit.point.z - c.z) <= s.z * 0.5f &&
+                                    z.DisplayName != roof.DisplayName)
+                                {
+                                    seen[z.DisplayName] = seen.TryGetValue(z.DisplayName, out int n) ? n + 1 : 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                string list = seen.Count == 0
+                    ? "nicio zonă de la sol (doar acoperișul)"
+                    : string.Join(", ", seen.OrderByDescending(p => p.Value).Select(p => p.Key));
+
+                report.Ok($"{roof.DisplayName} ({roof.transform.position.y:0.#} m) vede în jos spre: {list}");
+            }
+        }
+
         private static void CheckBunkerTiming(GameObject root, ValidationReport report)
         {
             report.Section("9. Buncăr: timp de ajuns pentru fiecare echipă");

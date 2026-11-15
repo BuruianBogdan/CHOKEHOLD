@@ -47,6 +47,16 @@ SLOT_COLORS = {
     "BarrelPaint": (0.15, 0.3, 0.55),
     "Hazard": (0.92, 0.75, 0.1),
     "Black": (0.05, 0.05, 0.05),
+    "SteelDark": (0.2, 0.21, 0.23),
+    "Hesco": (0.58, 0.52, 0.4),
+    "Soil": (0.33, 0.27, 0.2),
+    "Gravel": (0.4, 0.39, 0.37),
+    "Rust": (0.45, 0.25, 0.15),
+    "PipePaintGrey": (0.48, 0.5, 0.5),
+    "LampGlow": (1.0, 0.95, 0.85),
+    "MilitaryPaint": (0.32, 0.36, 0.26),
+    "Canvas": (0.42, 0.4, 0.3),
+    "Ceramic": (0.55, 0.38, 0.28),
     "Rubber": (0.06, 0.06, 0.06),
     "Paint": (0.5, 0.52, 0.5),
     "ReactorPaint": (0.82, 0.8, 0.72),
@@ -161,6 +171,8 @@ class Piece:
                 u, v = math.cos(a) * r, math.sin(a) * r
                 if axis == "y":
                     ring.append(self.bm.verts.new(U(cx + u, cy + h, cz + v)))
+                elif axis == "x":
+                    ring.append(self.bm.verts.new(U(cx + h, cy + u, cz + v)))
                 else:
                     ring.append(self.bm.verts.new(U(cx + u, cy + v, cz + h)))
             rings.append(ring)
@@ -205,6 +217,67 @@ class Piece:
             self.cylinder((cx, cy, cz), "y", 0.2 * scale, thickness, slot, segments=20)
         else:
             self.cylinder((cx, cy, cz), "z", 0.2 * scale, thickness, slot, segments=20)
+
+    def obox(self, center, size, euler_deg, slot):
+        """Cutie rotita: centru si dimensiuni Unity, rotatie (x, y, z) in grade aplicata in ordinea Z, X, Y."""
+        index = self.slot(slot)
+        rx, ry, rz = (math.radians(a) for a in euler_deg)
+        hx, hy, hz = size[0] / 2, size[1] / 2, size[2] / 2
+
+        def rot(v):
+            x, y, z = v
+            # Z
+            x, y = x * math.cos(rz) - y * math.sin(rz), x * math.sin(rz) + y * math.cos(rz)
+            # X
+            y, z = y * math.cos(rx) - z * math.sin(rx), y * math.sin(rx) + z * math.cos(rx)
+            # Y
+            x, z = x * math.cos(ry) + z * math.sin(ry), -x * math.sin(ry) + z * math.cos(ry)
+            return x + center[0], y + center[1], z + center[2]
+
+        corners = [rot((sx * hx, sy * hy, sz * hz)) for sy in (-1, 1) for sx, sz in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        verts = [self.bm.verts.new(U(*c)) for c in corners]
+        quads = [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+        for q in quads:
+            self.bm.faces.new([verts[i] for i in q]).material_index = index
+
+    def tube(self, points, radius, slot, segments=12, caps=True):
+        """Teava de-a lungul unei linii frante (puncte Unity); inelele sunt perpendiculare pe directie."""
+        index = self.slot(slot)
+        pts = [Vector(p) for p in points]
+        rings = []
+
+        for i, p in enumerate(pts):
+            if i == 0:
+                t = (pts[1] - pts[0]).normalized()
+            elif i == len(pts) - 1:
+                t = (pts[-1] - pts[-2]).normalized()
+            else:
+                t = ((pts[i + 1] - pts[i]).normalized() + (pts[i] - pts[i - 1]).normalized()).normalized()
+
+            ref = Vector((0, 1, 0)) if abs(t.y) < 0.9 else Vector((1, 0, 0))
+            n = t.cross(ref).normalized()
+            b = t.cross(n).normalized()
+            ring = []
+            for k in range(segments):
+                a = 2 * math.pi * k / segments
+                q = p + (n * math.cos(a) + b * math.sin(a)) * radius
+                ring.append(self.bm.verts.new(U(q.x, q.y, q.z)))
+            rings.append(ring)
+
+        faces = []
+        for r0, r1 in zip(rings, rings[1:]):
+            for k in range(segments):
+                f = self.bm.faces.new((r0[k], r0[(k + 1) % segments], r1[(k + 1) % segments], r1[k]))
+                f.smooth = True
+                faces.append(f)
+        if caps:
+            faces.append(self.bm.faces.new(rings[0]))
+            faces.append(self.bm.faces.new(list(reversed(rings[-1]))))
+        for f in faces:
+            f.material_index = index
+
+    def rod(self, start, end, radius, slot):
+        self.tube([start, end], radius, slot, segments=6)
 
     def build(self):
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces)
@@ -368,17 +441,40 @@ def piece_barrier_low():
 
 
 def piece_barrier_high():
-    """Blocuri de beton stivuite, 2 x 2 x 0,8 (cover in picioare). Se insiruie pe lungime."""
-    p = Piece("K17_Barrier_High", bevel=0.03)
+    """Bastion de protectie (cosuri de plasa de otel cu geotextil, umplute cu pamant), 2 x 2 x 0,8.
+    Doua randuri de cate doua cosuri de 1 x 1 m; se insiruie pe lungime (cover in picioare)."""
+    p = Piece("K17_Barrier_High", bevel=0.01)
     d = 0.4
-    p.box(-0.995, 0.0, -d, -0.015, 0.985, d, "Concrete")
-    p.box(0.015, 0.0, -d, 0.995, 0.985, d, "Concrete")
-    p.box(-0.98, 1.0, -d, 0.98, 2.0, d, "ConcreteDark")
+    wire = 0.006
 
-    # urechi de ridicare (otel) inglobate in fata blocurilor
-    for x in (-0.5, 0.5):
-        p.box(x - 0.08, 0.86, -d - 0.015, x + 0.08, 0.94, -d + 0.01, "Steel")
-        p.box(x - 0.08, 0.86, d - 0.01, x + 0.08, 0.94, d + 0.015, "Steel")
+    for row in range(2):
+        y0 = row * 1.0
+        for col in range(2):
+            x0 = -1.0 + col * 1.0
+            # sacul de geotextil, putin bombat (inset fata de plasa)
+            p.box(x0 + 0.03, y0 + 0.005, -d + 0.02, x0 + 0.97, y0 + 0.97, d - 0.02, "Hesco")
+            # pamantul de deasupra (vizibil doar la randul de sus)
+            if row == 1:
+                p.box(x0 + 0.06, y0 + 0.97, -d + 0.06, x0 + 0.94, y0 + 0.985, d - 0.06, "Soil")
+            # plasa: verticale si orizontale pe fata si pe spate
+            for s in (-1, 1):
+                zf = s * d
+                for k in range(5):
+                    x = x0 + 0.02 + k * 0.24
+                    p.box(x - wire, y0, zf - s * 0.025, x + wire, y0 + 1.0, zf, "Steel")
+                for k in range(5):
+                    y = y0 + 0.02 + k * 0.24
+                    p.box(x0, y - wire, zf - s * 0.025, x0 + 1.0, y + wire, zf, "Steel")
+            # plasa pe capete (doar la marginea sirului)
+            for s in (-1, 1):
+                xe = x0 + (1.0 if s > 0 else 0.0)
+                if (col == 0 and s < 0) or (col == 1 and s > 0):
+                    for k in range(4):
+                        z = -d + 0.04 + k * 0.24
+                        p.box(xe - s * 0.025, y0, z - wire, xe, y0 + 1.0, z + wire, "Steel")
+                    for k in range(5):
+                        y = y0 + 0.02 + k * 0.24
+                        p.box(xe - s * 0.025, y - wire, -d, xe, y + wire, d, "Steel")
     return p.build()
 
 
@@ -632,26 +728,75 @@ def piece_coolant_tank():
 
 
 def piece_coolant_pump():
-    """Pompa de racire pe sasiu, 4 x 2,5 x 4 (A_Generator, Pumps_Machine, Yard_Generator)."""
-    p = Piece("K17_Coolant_Pump", bevel=0.01)
-    p.box(-2.0, 0.0, -2.0, 2.0, 0.25, 2.0, "Steel")
-    for x in (-1.9, 1.9):
-        p.box(x - 0.1, 0.25, -1.9, x + 0.1, 0.32, 1.9, "Hazard")
-    # corpul pompei (vertical) si motorul (orizontal)
-    p.lathe((-0.7, 0.25, 0), [(1.0, 0.0), (1.0, 0.9), (0.85, 1.05), (0.85, 1.5), (0.5, 1.6), (0.5, 1.75)], "TankPaint", 28)
-    p.lathe((0.0, 1.0, 0.0), [(0.0, -1.7), (0.6, -1.7), (0.65, -1.6), (0.65, -0.3), (0.45, -0.2), (0.0, -0.2)], "MotorPaint", 24, axis="z")
-    p.box(0.5, 0.25, -1.9, 1.7, 0.4, -0.3, "Steel")
-    # nervuri de racire pe motor
-    for k in range(8):
-        z = -1.55 + k * 0.16
-        p.lathe((0.0, 1.0, 0.0), [(0.69, z), (0.69, z + 0.04)], "MotorPaint", 24, axis="z")
-    # tevi de aspiratie / refulare
-    p.cylinder((-0.7, 0.85, 0.9), "z", 0.28, 1.05, "Steel", segments=16)
-    p.lathe((-0.7, 0.85, 1.9), [(0.4, 0.0), (0.4, 0.06)], "Steel", 16, axis="z")
-    p.cylinder((-0.7, 2.0, -0.0), "y", 0.25, 0.45, "Steel", segments=16)
-    # cutie de comanda
-    p.box(1.2, 0.25, 0.8, 1.9, 1.8, 1.6, "Paint")
-    p.box(1.9, 1.3, 0.95, 1.93, 1.6, 1.45, "ScreenGlow")
+    """Pompa centrifuga de racire pe sasiu, 4 x 2,5 x 4 (A_Generator, Pumps_Machine, Yard_Generator).
+    Motorul si pompa sunt pe acelasi ax (X); aspiratia intra prin podea, refularea urca si se termina
+    intr-o vana cu roata de manevra; dulapul de comanda e legat de motor prin tub de cablu."""
+    p = Piece("K17_Coolant_Pump", bevel=0.008)
+    axis_y = 0.95
+
+    # sasiu pe toata amprenta: rama, tabla striata, borduri galbene
+    p.box(-2.0, 0.0, -2.0, 2.0, 0.12, 2.0, "Steel")
+    for z in (-2.0, 1.88):
+        p.box(-2.0, 0.12, z, 2.0, 0.24, z + 0.12, "Hazard")
+    p.box(-2.0, 0.12, -1.88, 2.0, 0.2, 1.88, "SteelDark")
+
+    def pump_set(dz):
+        """Motor + cuplaj + pompa pe acelasi ax (X), centrat pe z = dz."""
+        # motorul electric: carcasa cu nervuri, ventilatorul in spate, cutia de borne, picioare
+        p.cylinder((0.15, axis_y, dz), "x", 0.44, 1.35, "MotorPaint", segments=28)
+        for k in range(12):
+            a = 2 * math.pi * k / 12
+            cy, cz = axis_y + math.sin(a) * 0.45, dz + math.cos(a) * 0.45
+            p.box(0.2, cy - 0.025, cz - 0.025, 1.45, cy + 0.025, cz + 0.025, "MotorPaint")
+        p.cylinder((1.5, axis_y, dz), "x", 0.4, 0.22, "SteelDark", segments=24)
+        for x0 in (0.3, 1.1):
+            p.box(x0, 0.2, dz - 0.38, x0 + 0.18, axis_y - 0.3, dz + 0.38, "Steel")
+        p.box(0.55, axis_y + 0.4, dz - 0.18, 0.95, axis_y + 0.62, dz + 0.18, "MotorPaint")
+
+        # cuplajul sub aparatoare galbena
+        p.box(-0.45, axis_y - 0.22, dz - 0.22, 0.15, axis_y + 0.22, dz + 0.22, "Hazard")
+
+        # lagarul si corpul spiral al pompei, pe postament
+        p.cylinder((-0.85, axis_y, dz), "x", 0.2, 0.4, "Steel", segments=16)
+        p.box(-1.05, 0.2, dz - 0.3, -0.5, axis_y - 0.15, dz + 0.3, "Steel")
+        p.cylinder((-1.35, axis_y, dz), "x", 0.62, 0.5, "TankPaint", segments=32)
+        p.cylinder((-1.4, axis_y, dz), "x", 0.68, 0.08, "Steel", segments=32)
+        p.box(-1.55, 0.2, dz - 0.4, -1.0, axis_y - 0.45, dz + 0.4, "Steel")
+
+        # aspiratia: din fata pompei spre -X, apoi in jos prin podea (cu flansa la podea)
+        p.cylinder((-1.85, axis_y, dz), "x", 0.18, 0.5, "PipePaint", segments=16)
+        p.cylinder((-1.75, 0.0, dz), "y", 0.18, axis_y + 0.18, "PipePaint", segments=16)
+        p.cylinder((-1.75, 0.2, dz), "y", 0.27, 0.06, "Steel", segments=16)
+        p.cylinder((-1.75, axis_y - 0.32, dz), "y", 0.25, 0.06, "Steel", segments=16)
+
+        # refularea: urca din varful pompei pana in colector; vana cu roata de manevra laterala
+        top = axis_y + 0.62
+        p.cylinder((-1.35, top, dz), "y", 0.13, header_y - top, "PipePaint", segments=16)
+        p.cylinder((-1.35, top + 0.08, dz), "y", 0.2, 0.05, "Steel", segments=16)
+        p.box(-1.52, top + 0.18, dz - 0.15, -1.18, top + 0.36, dz + 0.15, "Steel")
+        p.cylinder((-1.72, top + 0.27, dz), "x", 0.025, 0.2, "Steel", segments=8)
+        p.lathe((-1.76, top + 0.27, dz), [(0.18, 0.0), (0.18, 0.03), (0.14, 0.03), (0.14, 0.0)], "Hazard", 20, axis="x")
+
+    header_y = 2.12
+    pump_set(-0.95)
+    pump_set(0.95)
+
+    # colectorul comun de refulare: leaga cele doua pompe si coboara prin podea la capatul sasiului
+    p.cylinder((-1.35, header_y, -1.1), "z", 0.14, 2.8, "PipePaint", segments=16)
+    p.cylinder((-1.35, 0.0, 1.7), "y", 0.14, header_y, "PipePaint", segments=16)
+    p.lathe((-1.35, header_y, 1.7), [(0.0, 0.0), (0.15, 0.0), (0.15, 0.08), (0.0, 0.15)], "PipePaint", 16)
+    p.cylinder((-1.35, 0.2, 1.7), "y", 0.22, 0.05, "Steel", segments=16)
+    p.cylinder((-1.35, header_y, -1.18), "z", 0.19, 0.06, "Steel", segments=16)
+
+    # dulapul de comanda intre cele doua motoare, cu tuburi de cablu spre ele
+    p.box(1.25, 0.2, -0.32, 1.95, 2.2, 0.32, "Paint")
+    p.box(1.96, 1.65, -0.22, 1.98, 1.95, 0.22, "ScreenGlow")
+    for k in range(3):
+        p.box(1.96, 1.35, -0.18 + k * 0.13, 1.99, 1.45, -0.1 + k * 0.13, "Hazard" if k == 0 else "Black")
+    # tuburi de cablu de la dulap la cutiile de borne ale motoarelor (pe sasiu)
+    for dz in (-0.95, 0.95):
+        p.box(0.72, 0.2, min(dz, 0.0) - 0.03, 0.78, 0.26, max(dz, 0.0) + 0.03, "Black")
+    p.box(0.72, 0.2, -0.03, 1.25, 0.26, 0.03, "Black")
     return p.build()
 
 
@@ -750,22 +895,78 @@ def piece_shelf():
 
 
 def piece_rubble():
-    """Moloz de beton 1 x 1 x 1 (se intinde pe cutia stancii din generator)."""
-    p = Piece("K17_Rubble", bevel=0.02)
-    chunks = [(-0.3, 0.0, -0.25, 0.5, 0.55, 0.45, 8), (0.05, 0.0, 0.0, 0.45, 0.45, 0.5, -14),
-              (-0.1, 0.4, -0.05, 0.45, 0.45, 0.4, 22), (0.25, 0.0, -0.3, 0.3, 0.3, 0.35, 31),
-              (-0.25, 0.0, 0.3, 0.4, 0.3, 0.3, -5), (0.1, 0.75, 0.1, 0.25, 0.25, 0.25, 12)]
-    for cx, y0, cz, sx, sy, sz, rot in chunks:
-        a = math.radians(rot)
-        corners = []
-        for ux, uz in ((-sx / 2, -sz / 2), (sx / 2, -sz / 2), (sx / 2, sz / 2), (-sx / 2, sz / 2)):
-            corners.append((cx + ux * math.cos(a) - uz * math.sin(a), y0, cz + ux * math.sin(a) + uz * math.cos(a)))
-        p.prism(corners, (0, min(sy, 1.0 - y0), 0), "Concrete" if rot % 2 == 0 else "ConcreteDark")
-    # armatura care iese din moloz
-    p.cylinder((0.1, 0.5, 0.2), "x", 0.015, 0.4, "Steel", segments=6)
-    p.cylinder((-0.2, 0.55, -0.3), "z", 0.015, 0.45, "Steel", segments=6)
+    """Stiva de placi de beton prefabricate, depozitata pe santier, 1 x 1 x 1 (se intinde pe cutia
+    obiectului din generator, inclusiv cand e rotita): placi pe distantiere de lemn, chingi, urechi de ridicare."""
+    p = Piece("K17_Rubble", bevel=0.01)
+    layers = 4
+    gap = 0.03
+    h = (1.0 - gap * layers) / layers
+    y = 0.0
+    for k in range(layers):
+        # distantiere de lemn sub fiecare placa
+        for x in (-0.32, 0.32):
+            p.box(x - 0.05, y, -0.48, x + 0.05, y + gap, 0.48, "WoodDark")
+        y += gap
+        inset = 0.0 if k % 2 == 0 else 0.02
+        p.box(-0.5 + inset, y, -0.5 + inset, 0.5 - inset, y + h, 0.5 - inset, "Concrete" if k % 2 == 0 else "ConcreteDark")
+        # urechi de ridicare pe placa de sus
+        if k == layers - 1:
+            for x, z in ((-0.3, -0.3), (0.3, -0.3), (0.3, 0.3), (-0.3, 0.3)):
+                p.lathe((x, y + h, z), [(0.035, 0.0), (0.035, 0.03), (0.0, 0.03)], "Rust", 8)
+        y += h
+    # chingi galbene peste stiva
+    for x in (-0.18, 0.18):
+        p.box(x - 0.03, 0.0, -0.505, x + 0.03, 1.0, -0.495, "Hazard")
+        p.box(x - 0.03, 0.0, 0.495, x + 0.03, 1.0, 0.505, "Hazard")
+        p.box(x - 0.03, 0.995, -0.5, x + 0.03, 1.003, 0.5, "Hazard")
     return p.build()
 
+
+def piece_razor_wire():
+    """Sarma ghimpata in spirala (concertina), segment de 2 m pe X, pe coronamentul zidului de incinta.
+    Pivot pe varful zidului, la mijloc; stalpii in V tin spirala."""
+    p = Piece("K17_Razor_Wire", bevel=0.0)
+    turns = 10
+    r = 0.28
+    pts = []
+    for k in range(turns * 12 + 1):
+        a = 2 * math.pi * k / 12
+        x = -1.0 + 2.0 * k / (turns * 12)
+        pts.append((x, 0.42 + math.sin(a) * r, math.cos(a) * r))
+    p.tube(pts, 0.008, "Steel", segments=4, caps=False)
+    for x in (-0.9, 0.9):
+        p.rod((x, 0.0, 0.0), (x, 0.7, -0.25), 0.015, "SteelDark")
+        p.rod((x, 0.0, 0.0), (x, 0.7, 0.25), 0.015, "SteelDark")
+    return p.build()
+
+
+def piece_truck():
+    """Camion militar cu prelata, 2,5 x 3 x 6,5 (lung pe Z, cabina spre +Z)."""
+    p = Piece("K17_Truck", bevel=0.02)
+    # sasiu
+    p.box(-0.55, 0.55, -3.2, 0.55, 0.8, 3.1, "SteelDark")
+    # roti (3 axe) cu jante
+    for z in (2.2, -0.9, -2.3):
+        for x0 in (-1.25, 0.85):
+            p.cylinder((x0, 0.55, z), "x", 0.55, 0.4, "Rubber", segments=18)
+            hub = x0 - 0.02 if x0 < 0 else x0 + 0.18
+            p.cylinder((hub, 0.55, z), "x", 0.3, 0.24, "SteelDark", segments=12)
+    # cabina
+    p.box(-1.2, 0.8, 1.4, 1.2, 2.7, 3.2, "MilitaryPaint")
+    p.box(-1.15, 1.85, 3.19, 1.15, 2.55, 3.22, "Glass")
+    for s in (-1, 1):
+        p.box(s * 1.2, 1.85, 1.6, s * 1.22, 2.5, 2.8, "Glass")
+        p.box(s * 1.21, 0.9, 1.5, s * 1.23, 1.75, 2.9, "MilitaryPaint")
+    p.box(-1.2, 0.8, 3.2, 1.2, 1.3, 3.35, "SteelDark")           # bara de protectie
+    for s in (-1, 1):
+        p.box(s * 0.9, 1.0, 3.33, s * 0.6, 1.2, 3.36, "LampGlow")
+    # bena cu prelata
+    p.box(-1.25, 0.8, -3.25, 1.25, 1.4, 1.3, "MilitaryPaint")
+    p.box(-1.25, 1.4, -3.25, 1.25, 2.6, 1.3, "Canvas")
+    p.prism([(-1.25, 2.6, -3.25), (1.25, 2.6, -3.25), (0.9, 3.0, -3.25), (-0.9, 3.0, -3.25)], (0, 0, 4.55), "Canvas")
+    for z in (-2.6, -1.4, -0.2, 1.0):
+        p.box(-1.27, 1.4, z - 0.04, 1.27, 2.62, z + 0.04, "Canvas")
+    return p.build()
 
 def piece_sign_radiation():
     """Semn de radiatii pe perete, 0,5 x 0,6; pivot pe perete, fata spre +Z."""
@@ -868,6 +1069,316 @@ def piece_fuel_pool():
     return p.build()
 
 
+# ----------------------------------------------------------------------------------------------
+# v3: interioare, acoperisuri, conducte cu capete logice, fatade
+# ----------------------------------------------------------------------------------------------
+
+def piece_console():
+    """Pupitru de comanda inclinat, segment de 2 m pe X (1,1 x 1,2); operatorul sta pe -Z.
+    Inlocuieste mesele (Crate_*) din laborator, birouri si camera de control."""
+    p = Piece("K17_Console", bevel=0.006)
+    # dulapul de jos, retras la picioare
+    p.box(-0.98, 0.0, -0.45, 0.98, 0.08, 0.6, "SteelDark")
+    p.box(-0.98, 0.08, -0.4, 0.98, 0.72, 0.6, "Paint")
+    # blatul inclinat: de la 0,78 m (fata) la 1,1 m (spate)
+    prof = [(-0.6, 0.72), (0.6, 0.72), (0.6, 1.1), (0.25, 1.1), (-0.6, 0.8)]
+    p.prism([(-0.98, y, z) for z, y in prof], (1.96, 0, 0), "Paint")
+    # ecrane in panta si un rand de butoane
+    import math as _m
+    slope = _m.degrees(_m.atan2(1.1 - 0.8, 0.25 + 0.6))
+    for x in (-0.55, 0.0, 0.55):
+        p.obox((x, 0.97, -0.12), (0.42, 0.012, 0.3), (-slope, 0.0, 0.0), "ScreenGlow")
+    for k in range(8):
+        x = -0.8 + k * 0.23
+        p.obox((x, 0.83, -0.48), (0.08, 0.02, 0.05), (-slope, 0.0, 0.0), "Hazard" if k % 3 == 0 else "Black")
+    # rama metalica pe muchii
+    p.box(-0.99, 0.0, -0.46, -0.96, 1.1, 0.61, "Steel")
+    p.box(0.96, 0.0, -0.46, 0.99, 1.1, 0.61, "Steel")
+    return p.build()
+
+
+def piece_hvac():
+    """Unitate de ventilatie pe acoperis, 3 x 1,6 x 2 (cover): carcasa cu lamele, doua ventilatoare sus."""
+    p = Piece("K17_HVAC", bevel=0.01)
+    for x in (-1.4, 1.3):
+        p.box(x, 0.0, -1.0, x + 0.1, 0.12, 1.0, "SteelDark")
+    p.box(-1.5, 0.12, -0.98, 1.5, 1.45, 0.98, "Paint")
+    p.box(-1.5, 1.45, -1.0, 1.5, 1.5, 1.0, "Steel")
+    # lamele pe laturile lungi
+    for s in (-1, 1):
+        z = s * 0.98
+        for k in range(9):
+            y = 0.25 + k * 0.12
+            p.box(-1.35, y, z, 1.35, y + 0.04, z + s * 0.025, "SteelDark")
+    # ventilatoare cu grila
+    for x in (-0.72, 0.72):
+        p.lathe((x, 1.5, 0.0), [(0.62, 0.0), (0.62, 0.08), (0.56, 0.08), (0.56, 0.02)], "Steel", 24)
+        for k in range(5):
+            a = k * 36
+            p.obox((x, 1.56, 0.0), (1.1, 0.02, 0.03), (0.0, a, 0.0), "SteelDark")
+        p.cylinder((x, 1.5, 0.0), "y", 0.12, 0.08, "SteelDark", segments=12)
+    # tub de cablu care coboara in acoperis
+    p.tube([(1.5, 0.9, 0.5), (1.62, 0.9, 0.5), (1.62, 0.0, 0.5)], 0.03, "Black", segments=6)
+    return p.build()
+
+
+def piece_pipe_big():
+    """Tronson de conducta mare, 3 m pe Y, diametru 1 (se scaleaza dupa teava din generator);
+    pivot in centrul tronsonului; flanse cu suruburi la ambele capete."""
+    p = Piece("K17_Pipe_Big", bevel=0.0)
+    p.cylinder((0.0, -1.5, 0.0), "y", 0.5, 3.0, "PipePaint", segments=24)
+    for y0 in (-1.5, 1.42):
+        p.cylinder((0.0, y0, 0.0), "y", 0.6, 0.08, "Steel", segments=24)
+        for k in range(10):
+            a = 2 * math.pi * k / 10
+            p.cylinder((math.cos(a) * 0.55, y0 - 0.02, math.sin(a) * 0.55), "y", 0.025, 0.12, "SteelDark", segments=6)
+    # banda de identificare (sageata de sens) la mijloc
+    p.cylinder((0.0, -0.15, 0.0), "y", 0.505, 0.3, "Hazard", segments=24)
+    return p.build()
+
+
+def piece_pipe_cap():
+    """Flansa oarba la capatul liber al unei conducte mari (diametru 1); pivot pe axa, normala +Y."""
+    p = Piece("K17_Pipe_Cap", bevel=0.0)
+    p.cylinder((0.0, 0.0, 0.0), "y", 0.62, 0.1, "Steel", segments=24)
+    for k in range(10):
+        a = 2 * math.pi * k / 10
+        p.cylinder((math.cos(a) * 0.55, 0.08, math.sin(a) * 0.55), "y", 0.03, 0.05, "SteelDark", segments=6)
+    return p.build()
+
+
+def piece_pipe_collar():
+    """Trecere prin perete pentru o conducta mare (diametru 1): placa patrata pe perete si manson;
+    pivot pe axa conductei, la fata peretelui, conducta vine din +Y."""
+    p = Piece("K17_Pipe_Collar", bevel=0.004)
+    p.box(-0.8, 0.0, -0.8, 0.8, 0.04, 0.8, "SteelDark")
+    p.cylinder((0.0, 0.0, 0.0), "y", 0.6, 0.18, "Steel", segments=24)
+    for x, z in ((-0.7, -0.7), (0.7, -0.7), (0.7, 0.7), (-0.7, 0.7)):
+        p.cylinder((x, 0.04, z), "y", 0.04, 0.03, "Black", segments=8)
+    return p.build()
+
+
+# Cele trei conducte ale K17_Pipe_Run: (inaltime, distanta de perete, raza, slot)
+PIPE_RUN = [(0.18, 0.2, 0.14, "PipePaint"), (0.5, 0.18, 0.1, "TankPaint"), (0.75, 0.15, 0.07, "Hazard")]
+
+
+def piece_pipe_run_end():
+    """Capatul unui sir de conducte de perete: cele trei tevi fac cot de 90 de grade si intra in perete
+    (cu rozeta). Sirul vine din -X; pivot pe perete (jos), peretele e planul z = 0."""
+    p = Piece("K17_Pipe_Run_End", bevel=0.0)
+    for y, d, r, slot in PIPE_RUN:
+        arc = [(d * math.sin(math.radians(a)), y, d * math.cos(math.radians(a))) for a in range(0, 91, 10)]
+        p.tube([(-0.02, y, d)] + arc, r, slot, segments=16, caps=False)
+        p.cylinder((d, y, 0.0), "z", r + 0.04, 0.04, "Steel", segments=16)
+    p.box(-0.04, 0.0, 0.0, 0.04, 0.9, 0.06, "Steel")
+    return p.build()
+
+
+def piece_pipe_run_collar():
+    """Capatul unui sir de conducte de perete care intra drept intr-un perete perpendicular (planul x = 0):
+    placa pe perete si mansoane. Pivot pe peretele lung, la colt."""
+    p = Piece("K17_Pipe_Run_Collar", bevel=0.0)
+    p.box(-0.03, 0.0, 0.0, 0.0, 0.92, 0.45, "SteelDark")
+    for y, d, r, slot in PIPE_RUN:
+        p.cylinder((-0.1, y, d), "x", r + 0.035, 0.08, "Steel", segments=16)
+    return p.build()
+
+
+def piece_ladder_section():
+    """Tronson de 1 m de scara de mana, pe perete (pivot pe perete, jos; iese spre +Z)."""
+    p = Piece("K17_Ladder_Section", bevel=0.0)
+    for x in (-0.25, 0.25):
+        p.cylinder((x, 0.0, 0.18), "y", 0.024, 1.0, "Hazard", segments=8)
+        p.box(x - 0.02, 0.45, 0.0, x + 0.02, 0.5, 0.18, "Steel")
+    for k in range(4):
+        p.cylinder((-0.25, 0.125 + k * 0.25, 0.18), "x", 0.016, 0.5, "Steel", segments=6)
+    return p.build()
+
+
+def piece_ladder_top():
+    """Manerele de sus ale scarii: urca 1 m peste marginea acoperisului si coboara pe acoperis."""
+    p = Piece("K17_Ladder_Top", bevel=0.0)
+    for x in (-0.25, 0.25):
+        p.tube([(x, -0.02, 0.18), (x, 0.95, 0.18), (x, 1.05, 0.08), (x, 1.05, -0.35), (x, 0.95, -0.45), (x, 0.0, -0.45)],
+               0.024, "Hazard", segments=8)
+    p.cylinder((-0.25, 1.05, -0.15), "x", 0.016, 0.5, "Steel", segments=6)
+    p.box(-0.3, 0.0, -0.55, 0.3, 0.02, -0.35, "Steel")
+    return p.build()
+
+
+def piece_downpipe_section():
+    """Burlan de 1 m pe perete (pivot pe perete, jos)."""
+    p = Piece("K17_Downpipe_Section", bevel=0.0)
+    p.cylinder((0.0, 0.0, 0.1), "y", 0.055, 1.0, "PipePaintGrey", segments=12)
+    p.box(-0.07, 0.45, 0.0, 0.07, 0.5, 0.1, "Steel")
+    return p.build()
+
+
+def piece_downpipe_head():
+    """Palnia de sus a burlanului: colecteaza apa de pe acoperis (iese din perete sub coronament)."""
+    p = Piece("K17_Downpipe_Head", bevel=0.004)
+    prof = [(0.06, 0.0), (0.06, 0.08), (0.16, 0.28), (0.16, 0.36)]
+    p.lathe((0.0, -0.36, 0.1), [(r, h) for r, h in prof], "PipePaintGrey", 12)
+    p.box(-0.12, -0.08, 0.0, 0.12, 0.0, 0.26, "PipePaintGrey")
+    return p.build()
+
+
+def piece_downpipe_shoe():
+    """Cotul de jos al burlanului, care varsa intr-o rigola cu gratar."""
+    p = Piece("K17_Downpipe_Shoe", bevel=0.0)
+    p.tube([(0.0, 0.45, 0.1), (0.0, 0.2, 0.1), (0.0, 0.1, 0.2), (0.0, 0.08, 0.32)], 0.055, "PipePaintGrey", segments=12)
+    p.box(-0.25, 0.0, 0.0, 0.25, 0.015, 0.55, "SteelDark")
+    for k in range(6):
+        p.box(-0.22, 0.015, 0.05 + k * 0.08, 0.22, 0.025, 0.08 + k * 0.08, "Steel")
+    return p.build()
+
+
+def piece_electrical_box():
+    """Tablou electric pe perete (0,7 x 0,9 x 0,25), cu tub de cablu care urca si intra in perete."""
+    p = Piece("K17_Electrical_Box", bevel=0.006)
+    p.box(-0.35, 0.0, 0.0, 0.35, 0.9, 0.22, "Paint")
+    p.box(-0.33, 0.02, 0.22, 0.33, 0.88, 0.25, "Paint")
+    p.box(0.25, 0.4, 0.25, 0.29, 0.5, 0.27, "Steel")
+    # eticheta de inalta tensiune (triunghi galben)
+    p.prism([(-0.1, 0.62, 0.25), (0.1, 0.62, 0.25), (0.0, 0.79, 0.25)], (0, 0, 0.006), "Hazard")
+    # tub de cablu: iese prin capac, urca 1,1 m si intra in perete
+    p.tube([(0.0, 0.9, 0.11), (0.0, 1.9, 0.11), (0.0, 1.98, 0.06), (0.0, 1.99, -0.02)], 0.03, "Black", segments=8)
+    return p.build()
+
+
+def piece_wall_vent():
+    """Grila de ventilatie cu lamele, 1,0 x 0,6 (pivot pe perete, jos, centru)."""
+    p = Piece("K17_Wall_Vent", bevel=0.004)
+    p.box(-0.5, 0.0, 0.0, 0.5, 0.06, 0.08, "Steel")
+    p.box(-0.5, 0.54, 0.0, 0.5, 0.6, 0.08, "Steel")
+    p.box(-0.5, 0.06, 0.0, -0.44, 0.54, 0.08, "Steel")
+    p.box(0.44, 0.06, 0.0, 0.5, 0.54, 0.08, "Steel")
+    p.box(-0.44, 0.06, 0.0, 0.44, 0.54, 0.01, "Black")
+    for k in range(6):
+        p.obox((0.0, 0.1 + k * 0.08, 0.04), (0.88, 0.012, 0.07), (35.0, 0.0, 0.0), "SteelDark")
+    return p.build()
+
+
+def piece_wall_lamp():
+    """Lampa de exterior cu gratar, pe perete (pivot pe perete, centru)."""
+    p = Piece("K17_Wall_Lamp", bevel=0.004)
+    p.box(-0.12, -0.16, 0.0, 0.12, 0.16, 0.05, "SteelDark")
+    p.box(-0.04, 0.02, 0.05, 0.04, 0.08, 0.25, "SteelDark")
+    p.box(-0.2, -0.02, 0.15, 0.2, 0.06, 0.4, "SteelDark")
+    p.box(-0.18, -0.03, 0.17, 0.18, -0.02, 0.38, "LampGlow")
+    return p.build()
+
+
+def piece_floodlight():
+    """Stalp cu proiectoare (decor), 7 m; pivot la baza."""
+    p = Piece("K17_Floodlight", bevel=0.006)
+    p.box(-0.4, 0.0, -0.4, 0.4, 0.3, 0.4, "ConcreteDark")
+    p.cylinder((0.0, 0.3, 0.0), "y", 0.09, 6.5, "SteelDark", segments=12)
+    p.box(-0.9, 6.7, -0.08, 0.9, 6.8, 0.08, "SteelDark")
+    for x in (-0.6, 0.0, 0.6):
+        p.obox((x, 6.55, 0.18), (0.42, 0.32, 0.18), (25.0, 0.0, 0.0), "SteelDark")
+        p.obox((x, 6.5, 0.28), (0.36, 0.26, 0.02), (25.0, 0.0, 0.0), "LampGlow")
+    p.box(-0.18, 1.2, 0.09, 0.18, 1.7, 0.3, "Paint")          # cutia de alimentare
+    return p.build()
+
+
+def piece_transformer():
+    """Transformator de putere pe fundatie, 10 x 4 x 8 (Yard_Generator): cuva cu radiatoare,
+    izolatoare de inalta tensiune, dulap de comanda, tava de cabluri care intra in pamant."""
+    p = Piece("K17_Transformer", bevel=0.01)
+    p.box(-5.0, 0.0, -4.0, 5.0, 0.35, 4.0, "Concrete")
+    p.box(-4.9, 0.35, -3.9, 4.9, 0.45, 3.9, "Gravel")
+    # cuva
+    p.box(-2.4, 0.45, -1.6, 2.4, 3.0, 1.6, "TankPaint")
+    p.box(-2.5, 3.0, -1.7, 2.5, 3.15, 1.7, "TankPaint")
+    # radiatoare pe laturile lungi
+    for s in (-1, 1):
+        for k in range(10):
+            x = -2.2 + k * 0.48
+            p.box(x, 0.8, s * 1.6, x + 0.06, 2.7, s * 2.6, "TankPaint")
+        p.box(-2.3, 2.7, s * 1.6, 2.3, 2.78, s * 2.6, "SteelDark")
+        p.box(-2.3, 0.72, s * 1.6, 2.3, 0.8, s * 2.6, "SteelDark")
+    # izolatoare (inalta tensiune) si conservator
+    for x in (-1.4, 0.0, 1.4):
+        p.lathe((x, 3.15, -0.6), [(0.16, 0.0), (0.16, 0.1)] + [(r, 0.1 + k * 0.1) for k, r in
+                                                                 enumerate([0.22, 0.14, 0.22, 0.14, 0.22, 0.14, 0.12])],
+                "Ceramic", 12)
+        p.cylinder((x, 3.95, -0.6), "y", 0.05, 0.05, "Steel", segments=8)
+    p.cylinder((-2.0, 3.6, 0.8), "x", 0.35, 4.0, "TankPaint", segments=16)
+    for x in (-1.5, 1.5):
+        p.box(x - 0.08, 3.15, 0.7, x + 0.08, 3.3, 0.9, "SteelDark")
+    # dulapul de comanda si tava de cabluri spre pamant
+    p.box(3.0, 0.45, -1.0, 4.2, 2.4, 0.2, "Paint")
+    p.box(4.2, 1.6, -0.8, 4.22, 2.0, -0.2, "ScreenGlow")
+    p.box(2.4, 0.45, -0.25, 3.0, 0.55, 0.25, "Black")
+    p.box(4.2, 0.35, -0.25, 4.9, 0.45, 0.25, "Black")
+    # semne de pericol pe cuva
+    for s in (-1, 1):
+        p.box(-0.3, 1.8, s * 1.601, 0.3, 2.4, s * 1.61, "Hazard")
+    # gard de protectie pe fundatie
+    for x in (-4.8, 4.8):
+        p.box(x - 0.04, 0.45, -3.8, x + 0.04, 2.2, 3.8, "SteelDark")
+    for z in (-3.8, 3.8):
+        p.box(-4.8, 0.45, z - 0.04, 4.8, 2.2, z + 0.04, "SteelDark")
+    return p.build()
+
+
+def piece_guard_hut():
+    """Ghereta de paza prefabricata, 4 x 3 x 5: usa, ferestre pe toate laturile, acoperis cu streasina."""
+    p = Piece("K17_Guard_Hut", bevel=0.01)
+    p.box(-2.0, 0.0, -2.5, 2.0, 0.15, 2.5, "ConcreteDark")
+    p.box(-1.9, 0.15, -2.4, 1.9, 2.7, 2.4, "Paint")
+    p.box(-2.0, 2.7, -2.5, 2.0, 2.85, 2.5, "SteelDark")
+    p.box(-1.95, 2.85, -2.45, 1.95, 3.0, 2.45, "SteelDark")
+    # usa (+Z) si ferestre
+    p.box(-0.5, 0.15, 2.4, 0.5, 2.2, 2.45, "DoorPaint")
+    p.box(0.3, 1.0, 2.45, 0.38, 1.2, 2.48, "Steel")
+    for s in (-1, 1):
+        p.box(s * 1.9, 1.2, -1.6, s * 1.92, 2.2, 1.0, "Glass")
+        p.box(s * 1.91, 1.12, -1.7, s * 1.95, 1.2, 1.1, "Steel")
+    p.box(-1.4, 1.2, -2.42, 1.4, 2.2, -2.4, "Glass")
+    p.box(-1.5, 1.12, -2.46, 1.5, 1.2, -2.42, "Steel")
+    # aparatul de aer conditionat si lampa
+    p.box(1.0, 2.0, 2.45, 1.7, 2.5, 2.75, "Steel")
+    p.box(-1.2, 2.45, 2.45, -0.9, 2.6, 2.6, "LampGlow")
+    return p.build()
+
+
+def piece_door_panel():
+    """Usa metalica falsa pe un perete plin (decor pe cladirile pline), 1,2 x 2,2; pivot pe perete, jos."""
+    p = Piece("K17_Door_Panel", bevel=0.004)
+    p.box(-0.72, 0.0, 0.0, 0.72, 2.38, 0.06, "SteelDark")
+    p.box(-0.6, 0.0, 0.06, 0.6, 2.2, 0.08, "DoorPaint")
+    p.box(0.42, 1.0, 0.08, 0.5, 1.1, 0.12, "Steel")
+    p.box(-0.3, 1.5, 0.08, 0.3, 1.9, 0.085, "Glass")
+    p.box(-0.25, 2.25, 0.06, 0.25, 2.33, 0.1, "LampGlow")
+    return p.build()
+
+
+def piece_window_panel():
+    """Fereastra falsa (geam inchis cu rama) pe un perete plin, 1,4 x 1,0; pivot pe perete, jos."""
+    p = Piece("K17_Window_Panel", bevel=0.004)
+    p.box(-0.76, 0.0, 0.0, 0.76, 1.08, 0.06, "SteelDark")
+    p.box(-0.7, 0.04, 0.02, 0.7, 1.04, 0.065, "Glass")
+    p.box(-0.02, 0.04, 0.02, 0.02, 1.04, 0.07, "SteelDark")
+    p.box(-0.82, -0.06, 0.0, 0.82, 0.0, 0.14, "ConcreteDark")
+    return p.build()
+
+
+def piece_roll_door():
+    """Usa rulanta de garaj, 3 x 3 (decor); pivot pe perete, jos."""
+    p = Piece("K17_Roll_Door", bevel=0.004)
+    p.box(-1.6, 0.0, 0.0, -1.5, 3.2, 0.12, "SteelDark")
+    p.box(1.5, 0.0, 0.0, 1.6, 3.2, 0.12, "SteelDark")
+    p.box(-1.6, 3.0, 0.0, 1.6, 3.4, 0.3, "SteelDark")
+    for k in range(15):
+        y = k * 0.2
+        p.box(-1.5, y + 0.01, 0.03, 1.5, y + 0.19, 0.07, "Paint")
+    for x in (-1.0, 1.0):
+        p.box(x - 0.6, 0.0, 0.07, x + 0.6, 0.12, 0.09, "Hazard")
+    return p.build()
+
+
 PIECES = [
     piece_crate_big,
     piece_crate_stack,
@@ -896,6 +1407,29 @@ PIECES = [
     piece_pipe_run,
     piece_decon_arch,
     piece_fuel_pool,
+    piece_console,
+    piece_hvac,
+    piece_pipe_big,
+    piece_pipe_cap,
+    piece_pipe_collar,
+    piece_pipe_run_end,
+    piece_pipe_run_collar,
+    piece_ladder_section,
+    piece_ladder_top,
+    piece_downpipe_section,
+    piece_downpipe_head,
+    piece_downpipe_shoe,
+    piece_electrical_box,
+    piece_wall_vent,
+    piece_wall_lamp,
+    piece_razor_wire,
+    piece_truck,
+    piece_floodlight,
+    piece_transformer,
+    piece_guard_hut,
+    piece_door_panel,
+    piece_window_panel,
+    piece_roll_door,
 ]
 
 
@@ -957,6 +1491,29 @@ LAYOUT = {
     "K17_Sign_Radiation": (6.5, -15.5, 0),
     "K17_Beacon": (8.0, -15.5, 0),
     "K17_Emergency_Light": (9.0, -15.5, 0),
+    "K17_Console": (-9.0, -22.0, 0),
+    "K17_HVAC": (-5.5, -22.0, 0),
+    "K17_Pipe_Big": (-2.0, -22.0, 0),
+    "K17_Pipe_Cap": (-1.0, -22.0, 0),
+    "K17_Pipe_Collar": (0.0, -22.0, 0),
+    "K17_Pipe_Run_End": (2.0, -21.5, 0),
+    "K17_Pipe_Run_Collar": (3.5, -21.5, 0),
+    "K17_Ladder_Section": (5.0, -21.5, 0),
+    "K17_Ladder_Top": (6.0, -21.5, 0),
+    "K17_Downpipe_Section": (7.0, -21.5, 0),
+    "K17_Downpipe_Head": (7.5, -21.5, 0),
+    "K17_Downpipe_Shoe": (8.0, -21.5, 0),
+    "K17_Electrical_Box": (9.0, -21.5, 0),
+    "K17_Wall_Vent": (10.2, -21.5, 0),
+    "K17_Wall_Lamp": (11.2, -21.0, 0),
+    "K17_Razor_Wire": (-9.0, -28.0, 0),
+    "K17_Truck": (-5.0, -29.0, 90),
+    "K17_Floodlight": (0.0, -28.0, 0),
+    "K17_Transformer": (7.0, -29.0, 0),
+    "K17_Guard_Hut": (-12.5, -29.0, 0),
+    "K17_Door_Panel": (2.0, -27.0, 0),
+    "K17_Window_Panel": (3.5, -27.0, 0),
+    "K17_Roll_Door": (13.5, -28.0, 0),
 }
 
 
@@ -1044,6 +1601,9 @@ def main():
             render(camera, (-14.5, 3.0, 9.0), (-8.0, 1.3, 5.0), 35, os.path.join(PREVIEW_DIR, "K17_Kit_ContainerDoors.png"))
             render(camera, (-15.0, 9.0, -28.0), (0.0, 1.5, -12.5), 30, os.path.join(PREVIEW_DIR, "K17_Kit_Nuclear.png"))
             render(camera, (-4.0, 3.0, -23.0), (3.0, 1.0, -16.0), 32, os.path.join(PREVIEW_DIR, "K17_Kit_NuclearDetail.png"))
+            render(camera, (-6.0, 4.0, -31.0), (1.5, 0.8, -21.5), 30, os.path.join(PREVIEW_DIR, "K17_Kit_V3.png"))
+            render(camera, (-8.0, 7.0, -42.0), (1.0, 1.5, -28.5), 30, os.path.join(PREVIEW_DIR, "K17_Kit_Exterior.png"))
+            render(camera, (-6.5, 2.4, -14.5), (0.0, 0.9, -8.0), 34, os.path.join(PREVIEW_DIR, "K17_Kit_Pump_Barrier.png"))
 
         if "--no-blend" not in ARGS:
             bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, compress=True)

@@ -23,8 +23,8 @@ namespace ChokeHold.EditorTools
             {
                 { "Wood", (new Color(0.55f, 0.42f, 0.28f), 0.2f, 0f) },
                 { "WoodDark", (new Color(0.36f, 0.27f, 0.18f), 0.2f, 0f) },
-                { "Concrete", (new Color(0.62f, 0.62f, 0.6f), 0.1f, 0f) },
-                { "ConcreteDark", (new Color(0.45f, 0.45f, 0.44f), 0.1f, 0f) },
+                { "Concrete", (new Color(0.5f, 0.5f, 0.48f), 0.1f, 0f) },
+                { "ConcreteDark", (new Color(0.38f, 0.38f, 0.37f), 0.1f, 0f) },
                 { "Steel", (new Color(0.36f, 0.37f, 0.4f), 0.45f, 0.8f) },
                 { "DoorPaint", (new Color(0.3f, 0.4f, 0.38f), 0.35f, 0.3f) },
                 { "Glass", (new Color(0.08f, 0.1f, 0.12f), 0.9f, 0f) },
@@ -44,6 +44,16 @@ namespace ChokeHold.EditorTools
                 { "BeaconGlow", (new Color(1f, 0.5f, 0.05f), 0.6f, 0f) },
                 { "EmergencyGlow", (new Color(1f, 0.1f, 0.05f), 0.6f, 0f) },
                 { "ScreenGlow", (new Color(0.25f, 0.95f, 0.55f), 0.8f, 0f) },
+                { "LampGlow", (new Color(1f, 0.95f, 0.85f), 0.6f, 0f) },
+                { "SteelDark", (new Color(0.2f, 0.21f, 0.23f), 0.4f, 0.7f) },
+                { "Hesco", (new Color(0.58f, 0.52f, 0.4f), 0.05f, 0f) },
+                { "Soil", (new Color(0.33f, 0.27f, 0.2f), 0.05f, 0f) },
+                { "Gravel", (new Color(0.4f, 0.39f, 0.37f), 0.05f, 0f) },
+                { "Rust", (new Color(0.45f, 0.25f, 0.15f), 0.2f, 0.3f) },
+                { "PipePaintGrey", (new Color(0.48f, 0.5f, 0.5f), 0.35f, 0.3f) },
+                { "MilitaryPaint", (new Color(0.32f, 0.36f, 0.26f), 0.25f, 0.2f) },
+                { "Canvas", (new Color(0.42f, 0.4f, 0.3f), 0.05f, 0f) },
+                { "Ceramic", (new Color(0.55f, 0.38f, 0.28f), 0.6f, 0f) },
             };
 
         private static readonly Dictionary<string, Material> kitMaterials = new Dictionary<string, Material>();
@@ -113,7 +123,19 @@ namespace ChokeHold.EditorTools
                 {
                     KitFixed(t, "K17_Coolant_Tank", new Vector3(3f, 3.2f, 3f));
                 }
-                else if (n == "A_Generator" || n == "Pumps_Machine" || n == "Yard_Generator")
+                else if (n == "Yard_Generator")
+                {
+                    KitFixed(t, "K17_Transformer", new Vector3(10f, 4f, 8f));
+                }
+                else if (n == "Outpost_Shed")
+                {
+                    KitFixed(t, "K17_Guard_Hut", new Vector3(4f, 3f, 5f));
+                }
+                else if (n == "T1_Truck")
+                {
+                    KitFixed(t, "K17_Truck", new Vector3(2.5f, 3f, 6.5f));
+                }
+                else if (n == "A_Generator" || n == "Pumps_Machine")
                 {
                     KitFixed(t, "K17_Coolant_Pump", new Vector3(4f, 2.5f, 4f));
                 }
@@ -136,6 +158,20 @@ namespace ChokeHold.EditorTools
                 else if (n.Contains("_Rock"))
                 {
                     KitFixed(t, "K17_Rubble", Vector3.one);
+                }
+                else if (n.StartsWith("Crate_"))
+                {
+                    // Mesele / pupitrele din laborator, birouri, camera de control
+                    KitTiled(t, "K17_Console", 1.1f, 1.2f);
+                }
+                else if (n.StartsWith("Roof_HVAC_"))
+                {
+                    KitFixed(t, "K17_HVAC", new Vector3(3f, 1.6f, 2f));
+                }
+                else if (n.Contains("_Pipe_") && t.GetComponent<MeshFilter>() != null &&
+                         t.GetComponent<MeshFilter>().sharedMesh != null && t.GetComponent<MeshFilter>().sharedMesh.name == "Cylinder")
+                {
+                    KitPipe(t);
                 }
             }
 
@@ -218,6 +254,133 @@ namespace ChokeHold.EditorTools
                     return;
                 }
             }
+        }
+
+        /// <summary>
+        /// Conducta mare (cilindrul Unity, axa pe Y local): tronsoane cu flanse de ~3 m; la capete intra
+        /// in perete printr-o trecere, altfel se termina cu flansa oarba; sustineri pana la tavan sau podea.
+        /// </summary>
+        private static void KitPipe(Transform pipe)
+        {
+            Transform holder = KitHolder(pipe, out Vector3 size);
+
+            if (holder == null)
+            {
+                return;
+            }
+
+            float length = size.y;
+            float diameter = (size.x + size.z) * 0.5f;
+            int count = Mathf.Max(1, Mathf.RoundToInt(length / 3f));
+            float segment = length / count;
+
+            for (int k = 0; k < count; k++)
+            {
+                if (!KitPiece(holder, "K17_Pipe_Big", new Vector3(0f, segment * (k + 0.5f), 0f), Quaternion.identity,
+                        new Vector3(diameter, segment / 3f, diameter), pipe))
+                {
+                    KitRevert(pipe, holder);
+                    return;
+                }
+            }
+
+            Collider own = pipe.GetComponent<Collider>();
+            Vector3 axis = pipe.up;
+            Vector3 center = own.bounds.center;
+            Transform group = holder;
+
+            // Capete
+            foreach (int s in new[] { 1, -1 })
+            {
+                Vector3 dir = axis * s;
+                Vector3 end = center + dir * (length * 0.5f);
+                RaycastHit wall = default;
+                bool intoWall = false;
+
+                foreach (RaycastHit hit in Physics.RaycastAll(end - dir * 0.3f, dir, 0.9f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (hit.collider != own && hit.collider.transform.parent != pipe && Vector3.Dot(hit.normal, -dir) > 0.7f)
+                    {
+                        wall = hit;
+                        intoWall = true;
+                        break;
+                    }
+                }
+
+                GameObject piece = intoWall
+                    ? CreateKitObject(group, "K17_Pipe_Collar", Vector3.zero, Quaternion.identity, Vector3.one)
+                    : CreateKitObject(group, "K17_Pipe_Cap", Vector3.zero, Quaternion.identity, Vector3.one);
+
+                if (piece != null)
+                {
+                    Vector3 normal = intoWall ? wall.normal : dir;
+                    piece.transform.SetPositionAndRotation(intoWall ? wall.point : end, Quaternion.FromToRotation(Vector3.up, normal));
+                    piece.transform.localScale = Vector3.one;
+                    SetWorldScale(piece.transform, new Vector3(diameter, 1f, diameter));
+                }
+            }
+
+            // Sustineri pe conductele orizontale: tije spre tavan sau picioare spre podea, la ~4 m
+            if (Mathf.Abs(axis.y) > 0.3f)
+            {
+                return;
+            }
+
+            // Grup aliniat cu lumea (holder-ul e rotit dupa teava).
+            Transform supportsGroup = CreateGroup(pipe.parent, pipe.name + "_Supports");
+            int supports = Mathf.Max(1, Mathf.FloorToInt(length / 4f));
+            float radius = diameter * 0.5f;
+            Quaternion along = Quaternion.LookRotation(new Vector3(axis.x, 0f, axis.z).normalized);
+
+            for (int k = 0; k < supports; k++)
+            {
+                Vector3 p = center + axis * (-length * 0.5f + length * (k + 0.5f) / supports);
+
+                // Conductele joase stau pe picioare; cele inalte atarna din tavan (daca e unul aproape).
+                if (p.y > 2.5f && RayIgnoringPipes(p + Vector3.up * (radius + 0.05f), Vector3.up, 6f, out RaycastHit ceiling))
+                {
+                    // Tija pana in tavan si o bratara peste teava
+                    float h = ceiling.point.y - (p.y + radius);
+                    Decor(supportsGroup, $"Hanger_{k}", new Vector3(p.x, p.y + radius + h * 0.5f, p.z), new Vector3(0.05f, h, 0.05f), frameMat);
+                    GameObject clamp = Decor(supportsGroup, $"Clamp_{k}", p + Vector3.up * (radius + 0.03f),
+                        new Vector3(diameter + 0.08f, 0.06f, 0.1f), frameMat);
+                    clamp.transform.rotation = along;
+                }
+                else if (Physics.Raycast(p - Vector3.up * (radius + 0.05f), Vector3.down, out RaycastHit floor, 8f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    // Picior din profil pana la podea si sa sub teava
+                    float h = (p.y - radius) - floor.point.y;
+                    Decor(supportsGroup, $"Support_{k}", new Vector3(p.x, floor.point.y + h * 0.5f, p.z), new Vector3(0.18f, h, 0.18f), frameMat);
+                    GameObject saddle = Decor(supportsGroup, $"Saddle_{k}", new Vector3(p.x, p.y - radius - 0.02f, p.z),
+                        new Vector3(diameter + 0.1f, 0.08f, 0.22f), frameMat);
+                    saddle.transform.rotation = along;
+                }
+            }
+        }
+
+        /// <summary>Prima suprafata pe directia data care nu e o alta conducta (tavan, podea, perete).</summary>
+        private static bool RayIgnoringPipes(Vector3 from, Vector3 dir, float max, out RaycastHit result)
+        {
+            result = default;
+            float best = float.MaxValue;
+
+            foreach (RaycastHit hit in Physics.RaycastAll(from, dir, max, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.distance < best && !hit.collider.name.Contains("_Pipe_"))
+                {
+                    best = hit.distance;
+                    result = hit;
+                }
+            }
+
+            return best < float.MaxValue;
+        }
+
+        /// <summary>Scara obiectului in lume, indiferent de parinte (fara rotatii neuniforme).</summary>
+        private static void SetWorldScale(Transform t, Vector3 world)
+        {
+            Vector3 parent = t.parent != null ? t.parent.lossyScale : Vector3.one;
+            t.localScale = new Vector3(world.x / parent.x, world.y / parent.y, world.z / parent.z);
         }
 
         /// <summary>Canatul de usa: pivotul piesei e in balama, ca la pivotul usii din generator.</summary>
@@ -392,10 +555,20 @@ namespace ChokeHold.EditorTools
             string path = $"{KitMaterialFolder}/K17_{slot}.mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
 
-            if (material == null)
+            bool created = material == null;
+
+            if (created)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
                 material = new Material(shader);
+            }
+
+            // Culoarea de baza se aplica la fiecare generare pana cand materialul primeste o textura;
+            // dupa aceea e al tau si generatorul nu il mai atinge.
+            bool textured = material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap") != null;
+
+            if (!textured)
+            {
 
                 (Color color, float smoothness, float metallic) look =
                     KitSlots.TryGetValue(slot, out var known) ? known : (new Color(0.6f, 0.6f, 0.6f), 0.2f, 0f);
@@ -427,6 +600,11 @@ namespace ChokeHold.EditorTools
                     material.SetColor("_EmissionColor", look.color * 3f);
                 }
 
+                EditorUtility.SetDirty(material);
+            }
+
+            if (created)
+            {
                 AssetDatabase.CreateAsset(material, path);
             }
 

@@ -7,57 +7,11 @@ using UnityEngine.Rendering;
 
 namespace ChokeHold.EditorTools
 {
-    // Blacksite K-17 ca instalatie nucleara inchisa:
-    //   - tot complexul e sub acoperis (curtile devin hale cu tavan la 8,5 m);
-    //   - fara soare: lumina vine doar din lampi, ambient rece si intunecat, ceata usoara.
+    // Blacksite K-17 ca instalatie nucleara: cladiri industriale (reactor, turbina, laborator de
+    // control) legate prin curti exterioare. Interioarele au lampi; afara e lumina zilei, cu cer acoperit.
     public static partial class BlacksiteK17MapBuilder
     {
         private static readonly Color HallLight = new Color(0.82f, 0.95f, 0.92f);
-
-        /// <summary>
-        /// Pune tavan peste fiecare celula walkable care vede cerul. Tavanul sta pe varful peretilor
-        /// interiori (8,5 m), deci se leaga de toti peretii; ce e deja acoperit ramane cum e.
-        /// </summary>
-        private static void EncloseMap()
-        {
-            Physics.SyncTransforms();
-
-            bool[,] open = new bool[GridX, GridZ];
-            int count = 0;
-
-            for (int i = 0; i < GridX; i++)
-            {
-                for (int j = 0; j < GridZ; j++)
-                {
-                    float x = CellCenterX(i);
-                    float z = CellCenterZ(j);
-
-                    if (!IsWalkable(x, z) && !IsOpenPit(x, z))
-                    {
-                        continue;
-                    }
-
-                    // Primul obstacol de sus in jos: daca e sub varful peretilor, celula vede cerul.
-                    bool sky = !Physics.Raycast(new Vector3(x, 40f, z), Vector3.down, out RaycastHit hit, 60f,
-                                   ~0, QueryTriggerInteraction.Ignore) ||
-                               hit.point.y < InnerWallHeight - 0.1f;
-
-                    open[i, j] = sky;
-                    count += sky ? 1 : 0;
-                }
-            }
-
-            int index = 0;
-
-            MergeCells(open, (i, j, width, depth) =>
-            {
-                float xMin = MinX + i * Cell;
-                float zMin = MinZ + j * Cell;
-                Roof($"Roof_Hall_{index++:00}", xMin, zMin, xMin + width * Cell, zMin + depth * Cell, InnerWallHeight);
-            });
-
-            Debug.Log($"Inchidere: {count} celule acoperite cu {index} placi de tavan.");
-        }
 
         // ------------------------------------------------------------------
         // Decorul instalatiei nucleare (fara collider: nu schimba jocul)
@@ -88,6 +42,9 @@ namespace ChokeHold.EditorTools
             BuildDeconFrames(doorways);
             BuildEmergencyLights();
             BuildPipeRuns();
+            BuildFacades();
+            DressReactorDeck();
+            BuildExteriorDressing();
 
             Debug.Log($"Instalatie nucleara: {nuclearPlaced} piese de decor, {doorways.Count} usi gasite.");
         }
@@ -141,7 +98,7 @@ namespace ChokeHold.EditorTools
             }
 
             // Lumina albastra a reactorului (Cerenkov)
-            NuclearLight("Light_Reactor_Glow", new Vector3(c.x, 1.6f, c.z), ReactorBlue, 9f, 3f);
+            NuclearLight("Light_Reactor_Glow", new Vector3(c.x, 1.6f, c.z), ReactorBlue, 6f, 2.2f);
 
             // Bazinul de combustibil uzat sub gratar: cel mai apropiat loc liber de 6 x 4 m din sala A
             Area hall = WalkableAreas.First(a => a.Name == "Bombsite A");
@@ -457,6 +414,255 @@ namespace ChokeHold.EditorTools
             }
         }
 
+        // ---------------- Platforma de pe site-ul A: punte de intretinere a reactorului ----------------
+
+        /// <summary>
+        /// Platforma joasa (1,2 m) de langa reactor devine puntea de intretinere: tabla striata, chenar galben
+        /// pe muchii, pupitru local si conducta de racire care coboara din ea in podea.
+        /// </summary>
+        private static void DressReactorDeck()
+        {
+            GameObject deck = GameObject.Find("A_Platform");
+
+            if (deck == null)
+            {
+                return;
+            }
+
+            Bounds b = deck.GetComponent<Collider>().bounds;
+            float top = b.max.y + 0.012f;
+            Transform group = CreateGroup(gNuclear, "Reactor Deck");
+
+            HazardStrip(group, "Edge_S", new Vector3(b.min.x, top, b.min.z + 0.1f), new Vector3(b.max.x, top, b.min.z + 0.1f), 0.2f);
+            HazardStrip(group, "Edge_E", new Vector3(b.max.x - 0.1f, top, b.min.z + 0.2f), new Vector3(b.max.x - 0.1f, top, b.max.z), 0.2f);
+
+            // Tabla striata: benzi subtiri pe toata puntea
+            for (float x = b.min.x + 0.6f; x < b.max.x - 0.3f; x += 0.6f)
+            {
+                Decor(group, "Tread", new Vector3(x, top - 0.006f, b.center.z), new Vector3(0.04f, 0.008f, b.size.z - 0.6f), frameMat);
+            }
+
+            // Fete laterale: placi de otel cu nituri (benzi verticale)
+            for (float x = b.min.x + 1f; x < b.max.x; x += 2f)
+            {
+                Decor(group, "Rib_S", new Vector3(x, b.center.y, b.min.z - 0.02f), new Vector3(0.08f, b.size.y - 0.1f, 0.04f), frameMat);
+            }
+
+            for (float z = b.min.z + 1f; z < b.max.z; z += 2f)
+            {
+                Decor(group, "Rib_E", new Vector3(b.max.x + 0.02f, b.center.y, z), new Vector3(0.04f, b.size.y - 0.1f, 0.08f), frameMat);
+            }
+        }
+
+        // ---------------- Exterior: cladiri pline, stalpi de iluminat, sarma ghimpata ----------------
+
+        private static void BuildExteriorDressing()
+        {
+            Transform group = CreateGroup(gNuclear, "Exterior");
+
+            // Turnul de paza si magazia din curte sunt blocuri pline: le dam usi, ferestre, usa rulanta.
+            // (latura, pozitie pe latura fata de mijloc, piesa, inaltime)
+            DressBlockBuilding(group, "Outpost_Tower",
+                (Vector3.back, 0f, "K17_Door_Panel", 0f),
+                (Vector3.left, 0f, "K17_Window_Panel", 1.4f),
+                (Vector3.forward, 0f, "K17_Window_Panel", 1.4f),
+                (Vector3.right, 1.9f, "K17_Window_Panel", 1.4f),
+                (Vector3.right, -1.9f, "K17_Window_Panel", 1.4f));
+
+            DressBlockBuilding(group, "Courtyard_Shed",
+                (Vector3.left, 0f, "K17_Roll_Door", 0f),
+                (Vector3.back, -2.2f, "K17_Door_Panel", 0f),
+                (Vector3.back, 2.2f, "K17_Window_Panel", 1.4f),
+                (Vector3.forward, 3f, "K17_Window_Panel", 1.4f),
+                (Vector3.forward, -3f, "K17_Window_Panel", 1.4f),
+                (Vector3.right, 0f, "K17_Window_Panel", 1.4f));
+
+            // Stalpi cu proiectoare in curtile de spawn si in curtile mari
+            foreach (Vector2 p in new[]
+                     {
+                         new Vector2(-63f, -32f), new Vector2(-47f, -51f),     // T1 Spawn
+                         new Vector2(58f, 39f), new Vector2(76f, 56f),         // T2 Spawn
+                         new Vector2(-25f, -16f), new Vector2(13f, -37f),      // South Courtyard
+                         new Vector2(48f, 36f), new Vector2(76f, 10f),         // East Yard
+                     })
+            {
+                Vector3 at = new Vector3(p.x, 0f, p.y);
+
+                if (FloorFree(at, new Vector3(1f, 0f, 1f), 0f))
+                {
+                    NuclearPiece("K17_Floodlight", at, Quaternion.LookRotation(new Vector3(-p.x, 0f, -p.y).normalized), Vector3.one, group);
+                }
+            }
+
+            // Sarma ghimpata pe coronamentul zidului de incinta (inelul exterior al hartii, 11 m)
+            Transform wire = CreateGroup(group, "Razor Wire");
+
+            void WireRun(Vector3 from, Vector3 to)
+            {
+                Vector3 dir = (to - from).normalized;
+                float length = Vector3.Distance(from, to);
+                int count = Mathf.RoundToInt(length / 2f);
+                Quaternion rotation = Quaternion.LookRotation(Vector3.Cross(dir, Vector3.up));
+
+                for (int k = 0; k < count; k++)
+                {
+                    Vector3 p = from + dir * (length * (k + 0.5f) / count);
+
+                    if (Physics.Raycast(p + Vector3.up * 20f, Vector3.down, out RaycastHit top, 25f, ~0, QueryTriggerInteraction.Ignore) &&
+                        top.point.y > OuterWallHeight - 0.3f)
+                    {
+                        NuclearPiece("K17_Razor_Wire", top.point, rotation, new Vector3(length / count / 2f, 1f, 1f), wire);
+                    }
+                }
+            }
+
+            float e = Cell * 0.5f;
+            WireRun(new Vector3(MinX + e, 0f, MinZ + e), new Vector3(MaxX - e, 0f, MinZ + e));
+            WireRun(new Vector3(MinX + e, 0f, MaxZ - e), new Vector3(MaxX - e, 0f, MaxZ - e));
+            WireRun(new Vector3(MinX + e, 0f, MinZ + e), new Vector3(MinX + e, 0f, MaxZ - e));
+            WireRun(new Vector3(MaxX - e, 0f, MinZ + e), new Vector3(MaxX - e, 0f, MaxZ - e));
+        }
+
+        /// <summary>Panouri (usa, ferestre) pe fetele libere ale unui bloc plin, ca sa arate a cladire.</summary>
+        private static void DressBlockBuilding(Transform group, string blockName,
+            params (Vector3 side, float offset, string piece, float y)[] panels)
+        {
+            GameObject block = GameObject.Find(blockName);
+
+            if (block == null)
+            {
+                return;
+            }
+
+            Bounds b = block.GetComponent<Collider>().bounds;
+
+            foreach ((Vector3 side, float offset, string piece, float y) in panels)
+            {
+                Vector3 along = Vector3.Cross(Vector3.up, side);
+                Vector3 faceCenter = new Vector3(b.center.x + side.x * b.extents.x, b.min.y, b.center.z + side.z * b.extents.z);
+                Vector3 at = faceCenter + along * offset + Vector3.up * y;
+
+                // Doar daca in fata panoului e loc liber (nu e lipit de alt perete)
+                if (Physics.CheckBox(at + side * 0.4f + Vector3.up * 1f, new Vector3(0.6f, 0.9f, 0.3f), Quaternion.LookRotation(side), ~0,
+                        QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
+
+                NuclearPiece(piece, at + side * 0.005f, Quaternion.LookRotation(side), Vector3.one, group);
+            }
+
+            // Banda de beton la baza si sub acoperis
+            float top = b.max.y;
+            Decor(group, blockName + "_Plinth", new Vector3(b.center.x, 0.2f, b.center.z), new Vector3(b.size.x + 0.08f, 0.4f, b.size.z + 0.08f), plinthMat);
+            Decor(group, blockName + "_Band", new Vector3(b.center.x, top - 0.25f, b.center.z), new Vector3(b.size.x + 0.06f, 0.2f, b.size.z + 0.06f), frameMat);
+        }
+
+        // ---------------- Fatadele exterioare ----------------
+
+        /// <summary>
+        /// Peretii exteriori primesc ce are o cladire industriala reala: burlane de la acoperis la rigola,
+        /// tablouri electrice cu tub de cablu spre interior, grile de ventilatie si lampi de exterior.
+        /// Totul fara collider, pe portiuni de perete plin (fara usi sau ferestre).
+        /// </summary>
+        private static void BuildFacades()
+        {
+            Transform group = CreateGroup(gNuclear, "Facades");
+            int faceIndex = 0;
+
+            foreach (Face face in CollectWallFaces())
+            {
+                if (face.Theme != Theme.Exterior || face.BaseY != 0f || face.Length < 6f)
+                {
+                    continue;
+                }
+
+                Quaternion rotation = Quaternion.LookRotation(face.Normal);
+                faceIndex++;
+                int k = 0;
+
+                for (float o = 3f; o < face.Length - 2f; o += 6.5f, k++)
+                {
+                    Vector3 p = face.Start + face.Along * o;
+
+                    if (!SolidWallAt(p, face.Normal, face.Along, 2.6f) ||
+                        Physics.CheckBox(p + face.Normal * 0.35f + Vector3.up * 1.4f, new Vector3(0.6f, 1.2f, 0.25f), rotation, ~0,
+                            QueryTriggerInteraction.Ignore))
+                    {
+                        continue;
+                    }
+
+                    switch ((faceIndex + k) % 3)
+                    {
+                        case 0:
+                            Downpipe(group, p, face.Normal, rotation);
+                            break;
+                        case 1:
+                            NuclearPiece("K17_Electrical_Box", p + Vector3.up * 1.0f + face.Normal * 0.005f, rotation, Vector3.one, group);
+                            WallLamp(group, p + face.Along * 1.2f, face.Normal, rotation);
+                            break;
+                        default:
+                            NuclearPiece("K17_Wall_Vent", p + Vector3.up * 2.4f + face.Normal * 0.005f, rotation, Vector3.one, group);
+                            WallLamp(group, p - face.Along * 1.4f, face.Normal, rotation);
+                            break;
+                    }
+                }
+            }
+        }
+
+        private static bool SolidWallAt(Vector3 p, Vector3 normal, Vector3 along, float height)
+        {
+            foreach (float h in new[] { 0.3f, height * 0.5f, height, height + 1.0f })
+            {
+                foreach (float s in new[] { -0.7f, 0.7f })
+                {
+                    if (!Physics.Raycast(p + along * s + Vector3.up * h + normal * 0.6f, -normal, out RaycastHit hit, 0.7f, ~0,
+                            QueryTriggerInteraction.Ignore) || hit.distance < 0.5f)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static void Downpipe(Transform group, Vector3 p, Vector3 normal, Quaternion rotation)
+        {
+            // Inaltimea peretelui (acolo e marginea acoperisului)
+            if (!Physics.Raycast(p - normal * 0.2f + Vector3.up * 30f, Vector3.down, out RaycastHit top, 40f, ~0,
+                    QueryTriggerInteraction.Ignore) || top.point.y < 3f)
+            {
+                return;
+            }
+
+            float roof = top.point.y - 0.05f;
+            float bottom = 0.45f;
+            float run = roof - 0.36f - bottom;
+            int sections = Mathf.Max(1, Mathf.RoundToInt(run));
+
+            NuclearPiece("K17_Downpipe_Shoe", p + normal * 0.005f, rotation, Vector3.one, group);
+            for (int s = 0; s < sections; s++)
+            {
+                NuclearPiece("K17_Downpipe_Section", p + Vector3.up * (bottom + s * run / sections) + normal * 0.005f, rotation,
+                    new Vector3(1f, run / sections, 1f), group);
+            }
+
+            NuclearPiece("K17_Downpipe_Head", p + Vector3.up * roof + normal * 0.005f, rotation, Vector3.one, group);
+        }
+
+        private static void WallLamp(Transform group, Vector3 p, Vector3 normal, Quaternion rotation)
+        {
+            if (!SolidWallAt(p, normal, Vector3.Cross(Vector3.up, normal), 2.6f))
+            {
+                return;
+            }
+
+            Vector3 at = p + Vector3.up * 3.3f + normal * 0.005f;
+            NuclearPiece("K17_Wall_Lamp", at, rotation, Vector3.one, group);
+            NuclearLight("Light_Facade", at + normal * 0.5f - Vector3.up * 0.2f, WarmLight, 7f, 1.2f, group);
+        }
+
         // ---------------- Conducte pe peretii halelor si ai salilor industriale ----------------
 
         private static void BuildPipeRuns()
@@ -469,7 +675,6 @@ namespace ChokeHold.EditorTools
 
                 switch (face.Theme)
                 {
-                    case Theme.Exterior:
                     case Theme.Hangar:
                         height = 6.0f;
                         break;
@@ -480,30 +685,85 @@ namespace ChokeHold.EditorTools
                         continue;
                 }
 
-                int segments = Mathf.FloorToInt(face.Length / 2f);
-                Quaternion rotation = Quaternion.LookRotation(face.Normal);
+                if (face.Length < 6f)
+                {
+                    continue;
+                }
 
+                // Tronsoanele umplu toata fata (cap la cap), ca sirul sa ajunga pana in colturi.
+                int segments = Mathf.Max(1, Mathf.RoundToInt(face.Length / 2f));
+                float segment = face.Length / segments;
+                Quaternion rotation = Quaternion.LookRotation(face.Normal);
+                Vector3 baseLine = face.Start + Vector3.up * (face.BaseY + height - face.Start.y);
+
+                // X-ul local al piesei (LookRotation(normala)) poate fi +Along sau -Along.
+                bool localXAlong = Vector3.Dot(rotation * Vector3.right, face.Along) > 0f;
+
+                bool[] fits = new bool[segments];
                 for (int k = 0; k < segments; k++)
                 {
-                    // Pozitie pe fata peretelui (pivotul piesei e pe perete, jos), centrat pe segment.
-                    Vector3 p = face.Start + face.Along * (k * 2f + 1f + (face.Length - segments * 2f) * 0.5f) +
-                                Vector3.up * (face.BaseY + height - face.Start.y);
+                    fits[k] = PipeSegmentFits(baseLine + face.Along * (segment * (k + 0.5f)), face.Normal, face.Along, segment);
+                }
 
-                    if (!PipeSegmentFits(p, face.Normal, face.Along))
+                // Siruri continue de tronsoane; fiecare sir are capete: intra in peretele de colt
+                // (daca sirul ajunge in colt) sau face cot in peretele din spate.
+                int k0 = 0;
+                while (k0 < segments)
+                {
+                    if (!fits[k0])
                     {
+                        k0++;
                         continue;
                     }
 
-                    // Piesa e modelata pe X; LookRotation(normala) pune X-ul local de-a lungul peretelui.
-                    NuclearPiece("K17_Pipe_Run", p + face.Normal * 0.01f, rotation, Vector3.one, group);
+                    int k1 = k0;
+                    while (k1 + 1 < segments && fits[k1 + 1])
+                    {
+                        k1++;
+                    }
+
+                    if (k1 - k0 + 1 >= 2)
+                    {
+                        for (int k = k0; k <= k1; k++)
+                        {
+                            Vector3 p = baseLine + face.Along * (segment * (k + 0.5f));
+                            NuclearPiece("K17_Pipe_Run", p + face.Normal * 0.01f, rotation,
+                                new Vector3(segment / 2f, 1f, 1f), group);
+                        }
+
+                        PipeRunEnd(group, baseLine + face.Along * (segment * k0), -face.Along, face.Normal, rotation, localXAlong, k0 == 0);
+                        PipeRunEnd(group, baseLine + face.Along * (segment * (k1 + 1)), face.Along, face.Normal, rotation, localXAlong,
+                            k1 == segments - 1);
+                    }
+
+                    k0 = k1 + 1;
                 }
             }
         }
 
-        /// <summary>Peretele e plin in spatele segmentului si nimic nu sta in calea conductelor.</summary>
-        private static bool PipeSegmentFits(Vector3 p, Vector3 normal, Vector3 along)
+        /// <summary>
+        /// Capatul unui sir de conducte: daca sirul ajunge intr-un colt interior, tevile intra drept in
+        /// peretele perpendicular (manson); altfel fac cot de 90 de grade in peretele pe care stau.
+        /// </summary>
+        private static void PipeRunEnd(Transform group, Vector3 end, Vector3 travel, Vector3 normal, Quaternion rotation,
+            bool localXAlong, bool atFaceEnd)
         {
-            foreach (float s in new[] { -0.95f, 0f, 0.95f })
+            // Piesele de capat sunt modelate pentru un sir care merge spre +X local; oglindim pe X la nevoie.
+            bool travelIsLocalX = Vector3.Dot(travel, rotation * Vector3.right) > 0f;
+            Vector3 scale = travelIsLocalX ? Vector3.one : new Vector3(-1f, 1f, 1f);
+
+            bool cornerWall = atFaceEnd && Physics.Raycast(end + normal * 0.25f + Vector3.up * 0.45f - travel * 0.1f, travel,
+                0.4f, ~0, QueryTriggerInteraction.Ignore);
+
+            NuclearPiece(cornerWall ? "K17_Pipe_Run_Collar" : "K17_Pipe_Run_End", end + normal * 0.01f, rotation, scale, group);
+        }
+
+        /// <summary>Peretele e plin in spatele segmentului si nimic nu sta in calea conductelor.</summary>
+        private static bool PipeSegmentFits(Vector3 p, Vector3 normal, Vector3 along, float length)
+        {
+            float edge = length * 0.5f - 0.05f;
+
+            foreach (float s in new[] { -edge, 0f, edge })
             {
                 foreach (float h in new[] { 0.1f, 0.8f })
                 {
@@ -517,40 +777,56 @@ namespace ChokeHold.EditorTools
                 }
             }
 
-            // Spatiul ocupat de conducte (0,9 x 0,45) liber, si tavan deasupra
+            // Spatiul ocupat de conducte (0,9 x 0,45) liber
             Vector3 center = p + normal * 0.25f + Vector3.up * 0.45f;
-            Vector3 half = new Vector3(0.95f, 0.45f, 0.2f);
+            Vector3 half = new Vector3(edge, 0.45f, 0.2f);
 
-            return !Physics.CheckBox(center, half, Quaternion.LookRotation(normal), ~0, QueryTriggerInteraction.Ignore) &&
-                   Physics.Raycast(p + normal * 0.4f, Vector3.up, 3f, ~0, QueryTriggerInteraction.Ignore);
+            return !Physics.CheckBox(center, half, Quaternion.LookRotation(normal), ~0, QueryTriggerInteraction.Ignore);
         }
 
-        /// <summary>Atmosfera de complex subteran: fara soare, ambient intunecat si rece, ceata.</summary>
+        /// <summary>
+        /// Lumina: cer acoperit de dupa-amiaza (soare bland, cu umbre), ambient din cer si o ceata
+        /// usoara care da adancime curtilor. Interioarele au lampile lor.
+        /// </summary>
         private static void BuildAtmosphere()
         {
+            Light sun = null;
+
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
             {
-                if (light.type == LightType.Directional && light.enabled)
+                if (light.type == LightType.Directional)
                 {
-                    light.enabled = false;
-                    Debug.Log($"Atmosfera: lumina directionala '{light.name}' oprita (harta e acoperita).");
+                    sun = light;
+                    break;
                 }
             }
 
-            RenderSettings.ambientMode = AmbientMode.Trilight;
-            // Destul de luminos ca un jucator sa se vada pe orice fundal (joc competitiv),
-            // destul de intunecat ca lampile sa faca atmosfera.
-            RenderSettings.ambientSkyColor = new Color(0.32f, 0.34f, 0.35f);
-            RenderSettings.ambientEquatorColor = new Color(0.24f, 0.25f, 0.25f);
-            RenderSettings.ambientGroundColor = new Color(0.13f, 0.13f, 0.135f);
+            if (sun == null)
+            {
+                GameObject go = new GameObject("Map_Sun");
+                go.transform.SetParent(gLights, false);
+                sun = go.AddComponent<Light>();
+                sun.type = LightType.Directional;
+            }
+
+            sun.enabled = true;
+            sun.gameObject.SetActive(true);
+            sun.transform.rotation = Quaternion.Euler(42f, -35f, 0f);
+            sun.color = new Color(1f, 0.93f, 0.84f);
+            sun.intensity = 1.1f;
+            sun.shadows = LightShadows.Soft;
+
+            RenderSettings.sun = sun;
+            RenderSettings.ambientMode = AmbientMode.Skybox;
+            RenderSettings.ambientIntensity = 1f;
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Exponential;
-            RenderSettings.fogDensity = 0.005f;
-            RenderSettings.fogColor = new Color(0.05f, 0.06f, 0.065f);
+            RenderSettings.fogDensity = 0.004f;
+            RenderSettings.fogColor = new Color(0.55f, 0.6f, 0.64f);
 
-            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-            RenderSettings.reflectionIntensity = 0.35f;
+            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+            RenderSettings.reflectionIntensity = 1f;
         }
     }
 }

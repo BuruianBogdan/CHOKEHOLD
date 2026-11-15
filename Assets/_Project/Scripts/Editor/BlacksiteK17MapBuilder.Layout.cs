@@ -487,6 +487,12 @@ namespace ChokeHold.EditorTools
             CreateZoneLabel(BunkerNorthLink, TunnelFloorY);
             CreateZoneLabel(BunkerSouthLinkV, TunnelFloorY);
             CreateZoneLabel(BunkerSouthLinkH, TunnelFloorY);
+
+            // Acoperisuri si camera de control
+            CreateZoneLabel(LabRoof, LabRoofY);
+            CreateZoneLabel(ControlRoom, LabRoofY);
+            CreateZoneLabel(outpostTowerRoof, 4f);
+            CreateZoneLabel(shedRoof, 4f);
         }
 
         private static void CreateZoneLabel(Area area, float y)

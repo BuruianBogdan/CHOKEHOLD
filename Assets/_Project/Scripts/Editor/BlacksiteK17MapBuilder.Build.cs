@@ -56,7 +56,7 @@ namespace ChokeHold.EditorTools
             coverIndex = 0;
             ResetDetailRecords();
             CreateMaterials();
-            stairMat = GetOrCreateMaterial("GB_Stairs", new Color(0.42f, 0.5f, 0.62f));
+            stairMat = GetOrCreateMaterial("GB_Stairs", new Color(0.46f, 0.46f, 0.45f));   // beton
             CreateDetailMaterials();
             AssetDatabase.SaveAssets();
 
@@ -98,8 +98,8 @@ namespace ChokeHold.EditorTools
             // Imbinari: recuzita lipita de pereti, fara fante
             SnapPropsToNeighbours();
 
-            // Complex inchis: tavan peste tot ce vedea cerul
-            EncloseMap();
+            // Acoperisuri accesibile si camera de control (dupa lipire: citeste pozitiile finale)
+            BuildRooftops();
 
             // Finisare (citeste ce au plasat zonele)
             BuildDetails(root.transform);

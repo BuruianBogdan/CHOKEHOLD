@@ -40,6 +40,9 @@ namespace ChokeHold.EditorTools
                 CreateSpawnPoint(gSpawnsT1, $"Spawn_T1_{i + 1}", spawnPoints[i], 0f, Team.Attackers);
             }
 
+            // Camionul cu care au venit atacatorii, parcat langa zidul de vest (cover in spawn).
+            Block(gCover, "T1_Truck", -68f, -44f, -65.5f, -37.5f, 3f);
+
             // Iesirea principala din spawn: usa dubla spre T1 Ramp.
             Partition("Part_T1Spawn_North", -60f, -28f, -44f, -28f, full, DoubleGap(13f));
 
