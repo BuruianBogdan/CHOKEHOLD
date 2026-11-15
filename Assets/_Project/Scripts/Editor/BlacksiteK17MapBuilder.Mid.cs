@@ -81,7 +81,7 @@ namespace ChokeHold.EditorTools
             LowCover(11f, 24f, 13f, 24f, up);
             BigCrate(-6f, 26f, up);
             HighCover(0.5f, 30f, 5.5f, 30f, up);          // taie axa nord-sud de la etaj
-            HighCover(0.5f, 13f, 5.5f, 13f, up);
+            HighCover(0.5f, 13f, 3.4f, 13f, up);
             HighCover(9f, 20f, 9f, 24f, up);
             HighCover(12f, 36f, 12f, 38f, up);            // taie axa usii spre anexa, la etaj
             Crate(gUpper, 8f, 34f, 3f, 1f, 1.2f, up);

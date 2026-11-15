@@ -97,12 +97,12 @@ namespace ChokeHold.EditorTools
             Pipe(gStructures, "A_Pipe_West_High", new Vector3(-57.3f, 1.8f, 32f), new Vector3(-57.3f, 1.8f, 44f), 0.7f);
             Pipe(gStructures, "A_Pipe_Overhead_1", new Vector3(-58f, 4.6f, 31f), new Vector3(-36f, 4.6f, 31f), 0.6f);
             Pipe(gStructures, "A_Pipe_Overhead_2", new Vector3(-58f, 5f, 40f), new Vector3(-44f, 5f, 40f), 0.6f);
-            Tank(gStructures, "A_Tank_Main", -36f, 31f, 4f, 4f);
+            Tank(gStructures, "A_Tank_Main", -36f, 30.5f, 4f, 4f);
             Tank(gStructures, "A_Tank_Small", -27f, 42f, 3.5f, 3.4f);
             Block(gStructures, "A_Generator", -46f, 34f, -42f, 38f, 2.5f);
 
             // Cover: pozitii de plant (generator, lada), de aparare (platforma, sub Heaven) si de intrare.
-            HighCover(-46f, 27f, -46f, 33f);           // taie banda de sud dinspre usa A Pipes
+            HighCover(-46f, 27f, -46f, 32.4f);           // taie banda de sud dinspre usa A Pipes
             HighCover(-44f, 27f, -37f, 27f);           // paravan in spatele usii duble din A Control
             LowCover(-54f, 36f, -54f, 38f);            // culoarul A Pipes
             BigCrate(-41f, 53f);                       // coltul de nord, sub luminator
@@ -123,7 +123,8 @@ namespace ChokeHold.EditorTools
 
             // Intrarea din West Rocks: o singura usa dubla, pe latura de vest.
             Partition("Part_AControl_South", -46f, 10f, -42f, 10f, full);
-            Partition("Part_AControl_West", -46f, 10f, -46f, 14f, full, DoubleGap(2f).Screened(1));
+            Partition("Part_AControl_West", -46f, 10f, -46f, 14f, full, DoubleGap(2f));
+            HighCover(-43f, 10.6f, -43f, 15f);         // paravan in spatele usii, oprit inainte de peretele de sud
 
             BigCrate(-37f, 15f);
             LowCover(-44.5f, 18f, -41.5f, 18f);
@@ -139,7 +140,7 @@ namespace ChokeHold.EditorTools
             Pipe(gStructures, "Pumps_Pipe_High", new Vector3(-75.3f, 2f, 12f), new Vector3(-75.3f, 2f, 32f), 0.7f);
             Pipe(gStructures, "Pumps_Pipe_Cross", new Vector3(-76f, 3.6f, 22f), new Vector3(-62f, 3.6f, 22f), 0.6f);
             Tank(gStructures, "Pumps_Tank_South", -66f, 15f, 3f, 3.2f);
-            Tank(gStructures, "Pumps_Tank_North", -73.5f, 27f, 3f, 3.2f);
+            Tank(gStructures, "Pumps_Tank_North", -72.8f, 27f, 3f, 3.2f);
             Block(gStructures, "Pumps_Machine", -71f, 19f, -67f, 23f, 2.2f);
 
             Lamp("Light_APipes_South", -69f, 3.8f, 15f, WarmLight, 14f, 2.5f);
@@ -162,7 +163,7 @@ namespace ChokeHold.EditorTools
 
             // ---------------- Gameplay ----------------
             CreateBombSite(gGameplay, "BombSite_A", SiteA);
-            CreateDummy(gDummies, "Dummy_Defender_SiteA", new Vector3(-40f, 0f, 40f));
+            CreateDummy(gDummies, "Dummy_Defender_SiteA", new Vector3(-44f, 0f, 41f));
             CreateDummy(gDummies, "Dummy_Defender_AHeaven", new Vector3(-33f, up, 50f));
         }
     }

@@ -357,3 +357,90 @@ portocaliu, platforme albastru, scări albastru-gri, ramele și balustradele gri
 - Teșituri suplimentare: harta e ortogonală, iar colțurile convexe primesc coloane în loc de teșire.
 - Iluminarea nu e „bake”-uită: luminile sunt în timp real. Pentru build-ul final merită un bake de
   lumină și sonde de reflexie.
+
+---
+
+# Rezultate Faza 4 — validare
+
+Validatorul e în repo: `CHOKEHOLD > Map > Validate` (`BlacksiteK17MapBuilder.Validate.cs`). Scrie
+raportul complet în `Docs/MapValidation.md`. Verifică, cu ușile deschise și baricadele nemontate:
+
+1. obiecte de recuzită (cover, rezervoare, țevi, stânci, utilaje, manechine) care intră peste 0,1 m
+   în altceva; îmbinările dintre pereți, plăci, scări și acoperișuri sunt considerate construcție;
+2. găuri în podea, pe fiecare metru din toate zonele, inclusiv tunelul;
+3. conectivitate: flood-fill cu capsula jucătorului din spawn-ul T1 — toate zonele, toate plăcile de
+   la etaj, spawn-ul T2; nicio poziție în afara conturului; punctele de spawn libere;
+4. linii de vedere peste 27,5 m în interior și 44 m în exterior;
+5. cover în afara dimensiunilor standard;
+6. uși, ferestre și trape sub standard; spațiu liber sub 3 m în interioare.
+
+Prima rulare a dat 63 de erori. Majoritatea erau îmbinări de construcție (pereți care trec printr-un
+acoperiș sau o platformă, pereți în T), așa că regula a fost restrânsă la recuzită. Reparate:
+
+- paravan din site-ul A care intra în zidul zonei de plant (scurtat);
+- rezervorul principal din A lipit de zid, rezervorul din sala pompelor peste țevi (mutate);
+- manechinul din site-ul A în interiorul unui paravan (mutat);
+- paravanul din A Control care tăia peretele de sud (înlocuit cu unul mai scurt);
+- paravanul de la etajul laboratorului care tăia peretele moale (scurtat);
+- scara stivei de containere care intra în containere (mutată cu 0,2 m);
+- o stâncă din West Rocks care intra în perete și apoi în altă stâncă (mutată);
+- zidul de sud-vest al curții, care trecea prin peretele dintre curte și South Lane (scurtat);
+- validatorul număra jucătorul ca obstacol pe punctul de spawn (corectat).
+
+**Rezultat final: 0 erori, 28 de avertismente.** Avertismentele sunt toate linii de vedere peste
+limită (15 la parter, 13 la etaj), descrise mai sus la Faza 2.
+
+| Verificare | Rezultat |
+|---|---|
+| Suprapuneri | 0 din 285 de obiecte de cover și structuri |
+| Găuri în podea | 0 din 11 573 de celule de 1 m |
+| Conectivitate | 51 din 51 de zone, 37 din 37 de plăci de etaj, spawn-ul T2 accesibil, nimic în afara hărții |
+| Linii de vedere | 34 din 49 de zone în limită la parter, 4 din 17 la etaj |
+| Cover | 112 obiecte, toate la standard |
+| Uși / ferestre / trape | 46 / 1 / 5, toate la standard; spațiu liber ≥ 3 m în interioare |
+
+---
+
+# Rezumat final
+
+## Ce s-a schimbat pe zone
+
+| Zonă | Față de punctul de plecare |
+|---|---|
+| T1 Spawn | trei ieșiri acoperite (ușă dublă spre T1 Ramp, camera de securitate nouă, rampa tunelului); din spawn nu se mai vede mid-ul |
+| West Outpost / West Rocks | intrări prin uși duble; stânci ca margine; sala pompelor (A Pipes) e acum o rută proprie spre A |
+| Site A | clădire industrială acoperită, cu luminator; 5 intrări (A Control, A Ramp, A Pipes, depozit, trapă din A Heaven); zona de plant e o cameră în cameră; galerie în L la etaj |
+| Mid Lab + anexă | două niveluri, temă de laborator; ușă dublă cu pereți moi spre Choke Point, 4 uși la parter, 3 deschideri baricadabile la etaj, 3 trape |
+| Choke Point / Mid | cameră cu trei uși decalate; Mid Connector și coridoarele din mid împărțite în camere cu uși |
+| North Overlook / North Catwalk | două curți despărțite de un perete; catwalk-ul rămâne linia de sniper spre A, oprită de peretele spawn-ului T2 |
+| T2 Spawn / East Yard | trei ieșiri acoperite; clădirea de generator face din curte un inel |
+| Site B / hangar | hală acoperită cu ferme și luminator; 5 intrări (două uși de garaj și un perete moale din Loading Bay, vest, nord cu trapă din mezanin, biroul); stivă de containere pe două niveluri |
+| Loading Bay / birou | acoperit, cover din containere de 40 ft; biroul nou leagă Loading Bay de spatele stivei |
+| South Courtyard / South Lane | magazie centrală și ziduri care fac trei culoare; aleea despărțită de curte cu două uși duble |
+| South Tunnel | subteran real la −3,5 m, cu rampe la capete, scară la mijloc și 7 pereți alternați |
+
+## Rutele finale
+
+- **Atacatori spre A:** principală T1 Ramp → West Outpost → A Control; secundară West Outpost → sala
+  pompelor (A Pipes); agresivă T1 Ramp → pasarele → Mid Connector → A Ramp sau depozit (perete moale).
+- **Atacatori spre B:** subterană prin South Tunnel → Loading Bay → uși de garaj; principală prin
+  camera de securitate → curte → Choke Point → Mid East → ușa de vest a hangarului; secundară curte →
+  South Lane → Loading Bay.
+- **Verticale:** North Catwalk → A Heaven (trapă în A); pod A ↔ etajul laboratorului; etajul
+  laboratorului → anexă → balconul din East Yard; mezaninul hangarului (trapă în B); stiva de containere.
+- **Apărători:** spre A pe North Overlook (sol) sau North Catwalk (sus); spre B prin East Yard sau Mid
+  East; între site-uri pe sus prin laborator și anexă sau prin East Yard și North Overlook, fără a trece
+  prin zona atacatorilor.
+
+## Compromisuri față de referință și față de cerințe
+
+- **Scară:** 160 × 120 m în loc de ~540 m cât ar indica bara din referință.
+- **Forme:** grilă ortogonală cu colțuri teșite și coloane, nu octogoane și diagonale ca în referință;
+  Mid Connector e un culoar cu cot, nu o diagonală.
+- **Tunel:** subteran, dar drept cu pereți alternați, nu curbat.
+- **Linii de vedere:** 15 zone la parter și 13 la etaj rămân peste limită (diagonale prin hangar și peste
+  site-ul A, axele etajului laboratorului, supravegherea de pe galerii și din mezanin). Limitele sunt
+  aplicate cu 10 % toleranță, iar hangarul e tratat ca spațiu deschis.
+- **Ferestre:** una singură; cea din A Ramp a fost scoasă pentru că deschidea o linie de 50 m.
+- **Echilibru:** atacatorii ajung pe A puțin înaintea apărătorilor; de reglat după teste de joc.
+- **Finisare:** fără cabluri noi pe tavan, iluminare în timp real (fără bake).

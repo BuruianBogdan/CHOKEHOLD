@@ -14,7 +14,7 @@ namespace ChokeHold.EditorTools
             // Magazie in centru + ziduri care impart curtea in trei culoare.
             Block(gStructures, "Courtyard_Shed", -15f, -32f, -5f, -24f, 4f);
             InnerWall(gStructures, "Courtyard_Wall_East", 7f, -34f, 7f, -26f, wall);
-            InnerWall(gStructures, "Courtyard_Wall_SouthWest", -20f, -40f, -20f, -34f, wall);
+            InnerWall(gStructures, "Courtyard_Wall_SouthWest", -20f, -37.75f, -20f, -34f, wall);
             InnerWall(gStructures, "Courtyard_Wall_North", -14f, -18f, -6f, -18f, wall);
             HighCover(-3f, -18f, -3f, -14.5f);         // taie banda de nord a curtii
 

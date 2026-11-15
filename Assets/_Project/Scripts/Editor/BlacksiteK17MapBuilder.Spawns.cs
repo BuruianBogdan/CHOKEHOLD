@@ -82,7 +82,7 @@ namespace ChokeHold.EditorTools
             // West Rocks: stanci ca margine naturala si cover pe drumul spre A Control
             Rock(gStructures, "WestRocks_Rock_1", new Vector3(-49f, 0f, 2f), new Vector3(4f, 2.5f, 3f), 25f);
             Rock(gStructures, "WestRocks_Rock_2", new Vector3(-52f, 0f, 10f), new Vector3(3f, 2f, 2.5f), -15f);
-            Rock(gStructures, "WestRocks_Rock_3", new Vector3(-44f, 0f, -2f), new Vector3(3f, 2.2f, 3f), 40f);
+            Rock(gStructures, "WestRocks_Rock_3", new Vector3(-44.3f, 0f, -2.1f), new Vector3(3f, 2.2f, 3f), 10f);
             BigCrate(-50f, 6f);
         }
 

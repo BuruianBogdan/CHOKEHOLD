@@ -648,7 +648,7 @@ namespace ChokeHold.EditorTools
 
             // CapsuleCollider are capete rotunjite - pentru cover folosim colliderul exact al mesh-ului.
             Object.DestroyImmediate(tank.GetComponent<Collider>());
-            tank.AddComponent<MeshCollider>();
+            tank.AddComponent<MeshCollider>().convex = true;
 
             FinishStaticObject(tank, pipeMat);
         }
@@ -666,7 +666,7 @@ namespace ChokeHold.EditorTools
             pipe.transform.localScale = new Vector3(diameter, Vector3.Distance(from, to) * 0.5f, diameter);
 
             Object.DestroyImmediate(pipe.GetComponent<Collider>());
-            pipe.AddComponent<MeshCollider>();
+            pipe.AddComponent<MeshCollider>().convex = true;
 
             FinishStaticObject(pipe, pipeMat);
         }
