@@ -442,39 +442,39 @@ def piece_barrier_low():
 
 def piece_barrier_high():
     """Bastion de protectie (cosuri de plasa de otel cu geotextil, umplute cu pamant), 2 x 2 x 0,8.
-    Doua randuri de cate doua cosuri de 1 x 1 m; se insiruie pe lungime (cover in picioare)."""
-    p = Piece("K17_Barrier_High", bevel=0.01)
+    Doua randuri de cate doua cosuri de 1 x 1 m; se insiruie pe lungime (cover in picioare).
+    Plasa e facuta din bare lungi (cate una pe toata latura), fara tesitura: putine triunghiuri."""
+    p = Piece("K17_Barrier_High", bevel=0.0)
     d = 0.4
-    wire = 0.006
+    wire = 0.007
 
     for row in range(2):
         y0 = row * 1.0
         for col in range(2):
             x0 = -1.0 + col * 1.0
-            # sacul de geotextil, putin bombat (inset fata de plasa)
+            # sacul de geotextil, putin retras fata de plasa
             p.box(x0 + 0.03, y0 + 0.005, -d + 0.02, x0 + 0.97, y0 + 0.97, d - 0.02, "Hesco")
-            # pamantul de deasupra (vizibil doar la randul de sus)
-            if row == 1:
-                p.box(x0 + 0.06, y0 + 0.97, -d + 0.06, x0 + 0.94, y0 + 0.985, d - 0.06, "Soil")
-            # plasa: verticale si orizontale pe fata si pe spate
-            for s in (-1, 1):
-                zf = s * d
-                for k in range(5):
-                    x = x0 + 0.02 + k * 0.24
-                    p.box(x - wire, y0, zf - s * 0.025, x + wire, y0 + 1.0, zf, "Steel")
-                for k in range(5):
-                    y = y0 + 0.02 + k * 0.24
-                    p.box(x0, y - wire, zf - s * 0.025, x0 + 1.0, y + wire, zf, "Steel")
-            # plasa pe capete (doar la marginea sirului)
-            for s in (-1, 1):
-                xe = x0 + (1.0 if s > 0 else 0.0)
-                if (col == 0 and s < 0) or (col == 1 and s > 0):
-                    for k in range(4):
-                        z = -d + 0.04 + k * 0.24
-                        p.box(xe - s * 0.025, y0, z - wire, xe, y0 + 1.0, z + wire, "Steel")
-                    for k in range(5):
-                        y = y0 + 0.02 + k * 0.24
-                        p.box(xe - s * 0.025, y - wire, -d, xe, y + wire, d, "Steel")
+        if row == 1:
+            p.box(-0.94, y0 + 0.97, -d + 0.06, 0.94, y0 + 0.985, d - 0.06, "Soil")
+
+    # plasa pe fata si pe spate: bare orizontale pe toata lungimea, verticale pe toata inaltimea
+    for s in (-1, 1):
+        zf = s * d
+        for k in range(9):
+            y = 0.02 + k * 0.245
+            p.box(-1.0, y - wire, zf - s * 0.02, 1.0, y + wire, zf, "Steel")
+        for k in range(9):
+            x = -1.0 + 0.02 + k * 0.245
+            p.box(x - wire, 0.0, zf - s * 0.02, x + wire, 2.0, zf, "Steel")
+    # plasa pe capete
+    for s in (-1, 1):
+        xe = s * 1.0
+        for k in range(4):
+            z = -d + 0.04 + k * 0.24
+            p.box(xe - s * 0.02, 0.0, z - wire, xe, 2.0, z + wire, "Steel")
+        for k in range(9):
+            y = 0.02 + k * 0.245
+            p.box(xe - s * 0.02, y - wire, -d, xe, y + wire, d, "Steel")
     return p.build()
 
 
@@ -745,7 +745,7 @@ def piece_coolant_pump():
         # motorul electric: carcasa cu nervuri, ventilatorul in spate, cutia de borne, picioare
         p.cylinder((0.15, axis_y, dz), "x", 0.44, 1.35, "MotorPaint", segments=28)
         for k in range(12):
-            a = 2 * math.pi * k / 12
+            a = 2 * math.pi * k / 8
             cy, cz = axis_y + math.sin(a) * 0.45, dz + math.cos(a) * 0.45
             p.box(0.2, cy - 0.025, cz - 0.025, 1.45, cy + 0.025, cz + 0.025, "MotorPaint")
         p.cylinder((1.5, axis_y, dz), "x", 0.4, 0.22, "SteelDark", segments=24)
@@ -926,14 +926,14 @@ def piece_razor_wire():
     """Sarma ghimpata in spirala (concertina), segment de 2 m pe X, pe coronamentul zidului de incinta.
     Pivot pe varful zidului, la mijloc; stalpii in V tin spirala."""
     p = Piece("K17_Razor_Wire", bevel=0.0)
-    turns = 10
+    turns = 8
     r = 0.28
     pts = []
-    for k in range(turns * 12 + 1):
-        a = 2 * math.pi * k / 12
-        x = -1.0 + 2.0 * k / (turns * 12)
+    for k in range(turns * 8 + 1):
+        a = 2 * math.pi * k / 8
+        x = -1.0 + 2.0 * k / (turns * 8)
         pts.append((x, 0.42 + math.sin(a) * r, math.cos(a) * r))
-    p.tube(pts, 0.008, "Steel", segments=4, caps=False)
+    p.tube(pts, 0.01, "Steel", segments=3, caps=False)
     for x in (-0.9, 0.9):
         p.rod((x, 0.0, 0.0), (x, 0.7, -0.25), 0.015, "SteelDark")
         p.rod((x, 0.0, 0.0), (x, 0.7, 0.25), 0.015, "SteelDark")

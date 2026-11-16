@@ -57,9 +57,37 @@ namespace ChokeHold.EditorTools
             {
                 go.transform.SetPositionAndRotation(position, rotation);
                 nuclearPlaced++;
+                LightweightDecor(go);
             }
 
             return go;
+        }
+
+        /// <summary>
+        /// Decorul fara collider nu arunca umbre, iar piesele mici (semne, grile, burlane, lampi, sarma ghimpata)
+        /// nu se mai desenează cand ocupa sub ~2% din inaltimea ecranului.
+        /// </summary>
+        private static void LightweightDecor(GameObject go)
+        {
+            MeshRenderer renderer = go.GetComponent<MeshRenderer>();
+
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+            Vector3 size = renderer.bounds.size;
+
+            if (Mathf.Max(size.x, size.y, size.z) > 3f)
+            {
+                return;
+            }
+
+            LODGroup lod = go.AddComponent<LODGroup>();
+            lod.SetLODs(new[] { new LOD(0.02f, new Renderer[] { renderer }) });
+            lod.RecalculateBounds();
         }
 
         private static void NuclearLight(string name, Vector3 position, Color color, float range, float intensity, Transform parent = null)

@@ -124,6 +124,9 @@ namespace ChokeHold.EditorTools
 
             MovePlayerToSpawn();
 
+            // Occlusion culling (datele vechi nu mai corespund geometriei noi, deci se recalculeaza mereu)
+            BakeOcclusionCulling();
+
             EditorSceneManager.MarkSceneDirty(root.scene);
             Selection.activeGameObject = root;
 

@@ -212,6 +212,10 @@ namespace ChokeHold.EditorTools
         {
             GameObject box = CreateBox(parent, name, center, size, material);
             Object.DestroyImmediate(box.GetComponent<Collider>());
+
+            // Detaliile (benzi, plinte, rame, podele pe teme) stau lipite de pereti si podele:
+            // umbra lor nu se vede, dar ar costa in fiecare cascada a soarelui.
+            box.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             return box;
         }
 
