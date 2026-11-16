@@ -10,7 +10,7 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 2. Găuri în podea
 
-- ok — 12824 celule de 1 m verificate în 68 zone, nicio gaură
+- ok — 12816 celule de 1 m verificate în 68 zone, nicio gaură
 
 ## 3. Conectivitate
 

@@ -135,7 +135,8 @@ namespace ChokeHold.EditorTools
         // BUNCARUL: camera subterana care leaga cele trei tuneluri, sub partea de vest a hangarului.
         // E pus aproape la mijlocul drumului dintre spawn-uri (validatorul masoara: sectiunea 9).
         // Podeaua lui e mai jos (-6 m); intrarile ajung pe un balcon la nivelul tunelurilor (-3,6 m).
-        private const float BunkerFloorY = -6f;
+        // -6,4 m: sub balconul (fata de jos la -4 m) raman 2,4 m - nisele se pot folosi in picioare.
+        private const float BunkerFloorY = -6.4f;
 
         private static readonly Area Bunker = new Area("Bunker", 22f, -32f, 40f, -16f);
 
