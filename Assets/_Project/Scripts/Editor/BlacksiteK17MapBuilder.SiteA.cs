@@ -20,7 +20,8 @@ namespace ChokeHold.EditorTools
             float full = InnerWallHeight;
 
             // ---------------- Scari si platforme ----------------
-            Stairs(gStairs, "Stairs_A_Heaven", -34f, 38f, -30f, 46f, Vector3.forward, 0f, up);
+            // Scara spre A Heaven: 6 m lata, urca pe toata latura de sud a galeriei (fara balustrada in capat).
+            Stairs(gStairs, "Stairs_A_Heaven", -36f, 38f, -30f, 46f, Vector3.forward, 0f, up);
             Stairs(gStairs, "Stairs_A_SouthGallery", -52f, 22f, -44f, 26f, Vector3.right, 0f, up);
 
             // A Platform - coltul nord-vestic, platforma plina la 1,2 m
@@ -39,7 +40,6 @@ namespace ChokeHold.EditorTools
             SolidBlock(gUpper, "A_Gallery_Screen", -27.4f, 29f, -27f, 36f, up, 2.2f, wallMat);   // paravan in fata podului
             CreatePlatform(gUpper, "A_Gallery_South", -44f, 22f, -30f, 26f, up);
             Railing(gUpper, "A_Heaven_Rail_W", -36f, 46f, -36f, 56f, up);
-            Railing(gUpper, "A_Heaven_Rail_S", -36f, 46f, -34f, 46f, up);
             Railing(gUpper, "A_Gallery_East_Rail", -30f, 26f, -30f, 46f, up);
             Railing(gUpper, "A_Gallery_South_Rail", -44f, 26f, -30f, 26f, up);
 
