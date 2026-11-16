@@ -232,7 +232,9 @@ namespace ChokeHold.Gameplay
 
                 if (targetHealth != null && !targetHealth.IsDead)
                 {
-                    targetHealth.TakeDamage(damage);
+                    // Zona de lovire (cap x4, membre x0,75); fara HitZone (capsulele vechi) ramane x1.
+                    HitZone zone = hit.collider.GetComponent<HitZone>();
+                    targetHealth.TakeDamage(damage * (zone != null ? zone.Multiplier : 1f));
 
                     if (hitMarker != null)
                     {

@@ -151,8 +151,8 @@ def export_fbx(path, objects, with_armature=True, bake_anim=False):
         object_types={"ARMATURE", "MESH", "EMPTY"} if with_armature else {"MESH", "EMPTY"},
         apply_unit_scale=True,
         apply_scale_options="FBX_SCALE_UNITS",
-        bake_space_transform=True,
-        axis_forward="Z",
+        bake_space_transform=False,     # cu armaturi e experimental; Unity coace conversia de axe la import
+        axis_forward="-Z",
         axis_up="Y",
         mesh_smooth_type="FACE",
         use_mesh_modifiers=True,

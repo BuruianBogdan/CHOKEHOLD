@@ -357,7 +357,136 @@ def reset_pose(arm):
     bpy.context.view_layer.update()
 
 
-def main():
+# ----------------------------------------------------------------------------------------------
+# Personaje complete: corp + echipament, un singur mesh pe LOD, acelasi schelet
+# ----------------------------------------------------------------------------------------------
+
+from k17_gear import Gear, build_ct_operator  # noqa: E402
+
+CHARACTER_TRIANGLES = (25000, 12500, 5000)
+CHARACTERS = {
+    "CT_Operator": build_ct_operator,
+}
+
+
+def rigid_skin(obj, arm, bone):
+    obj.parent = arm
+    modifier = obj.modifiers.new("Armature", "ARMATURE")
+    modifier.object = arm
+    group = obj.vertex_groups.new(name=bone)
+    group.add(list(range(len(obj.data.vertices))), 1.0, "REPLACE")
+
+
+def auto_skin(obj, arm):
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    arm.select_set(True)
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+
+
+def fix_unweighted(obj, arm):
+    """Vertecsii ramasi fara greutate (bone heat esueaza pe piese mici) merg pe cel mai apropiat os deformant."""
+    bones = [(b.name, arm.matrix_world @ b.head_local, arm.matrix_world @ b.tail_local)
+             for b in arm.data.bones if b.use_deform]
+    groups = {g.name: g for g in obj.vertex_groups}
+    fixed = 0
+    for v in obj.data.vertices:
+        if any(g.weight > 0.001 for g in v.groups):
+            continue
+        p = obj.matrix_world @ v.co
+        best, best_d = None, 1e9
+        for name, h, t in bones:
+            d = t - h
+            length = d.length_squared
+            s = 0.0 if length == 0 else max(0.0, min(1.0, (p - h).dot(d) / length))
+            dist = (p - (h + d * s)).length
+            if dist < best_d:
+                best, best_d = name, dist
+        if best not in groups:
+            groups[best] = obj.vertex_groups.new(name=best)
+        groups[best].add([v.index], 1.0, "REPLACE")
+        fixed += 1
+    return fixed
+
+
+def build_character(name, builder):
+    reset_scene()
+    arm = build_armature()
+    body = build_body()
+    gear = Gear(name)
+    builder(gear)
+
+    for obj, bone in gear.pieces:
+        if bone:
+            rigid_skin(obj, arm, bone)
+        else:
+            auto_skin(obj, arm)
+    auto_skin(body, arm)
+
+    # Un singur mesh: corpul + toate piesele (grupurile de vertecsi se pastreaza la join)
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj, _ in gear.pieces:
+        obj.select_set(True)
+    body.select_set(True)
+    bpy.context.view_layer.objects.active = body
+    bpy.ops.object.join()
+    body.name = f"{name}_LOD0"
+    body.data.name = body.name
+    fixed = fix_unweighted(body, arm)
+
+    activate(body)
+    bpy.ops.object.vertex_group_limit_total(group_select_mode="ALL", limit=4)
+    bpy.ops.object.vertex_group_normalize_all(group_select_mode="ALL", lock_active=False)
+    try:
+        bpy.ops.object.shade_auto_smooth(angle=math.radians(40))
+    except Exception:
+        pass
+
+    lods = [body]
+    tris0 = triangle_count(body)
+    if tris0 > CHARACTER_TRIANGLES[0]:
+        decimate = body.modifiers.new("Decimate", "DECIMATE")
+        decimate.ratio = CHARACTER_TRIANGLES[0] / tris0
+        apply_modifier(body, decimate)
+        tris0 = triangle_count(body)
+
+    for level, budget in ((1, CHARACTER_TRIANGLES[1]), (2, CHARACTER_TRIANGLES[2])):
+        lod = body.copy()
+        lod.data = body.data.copy()
+        lod.name = f"{name}_LOD{level}"
+        lod.data.name = lod.name
+        link(lod)
+        decimate = lod.modifiers.new("Decimate", "DECIMATE")
+        decimate.ratio = min(1.0, budget / tris0)
+        apply_modifier(lod, decimate)
+        lods.append(lod)
+
+    unweighted = sum(1 for v in body.data.vertices if not any(g.weight > 0.001 for g in v.groups))
+    print(f"CHARACTER {name}: LOD0 {triangle_count(lods[0])} / LOD1 {triangle_count(lods[1])} / LOD2 {triangle_count(lods[2])} "
+          f"triunghiuri, {len(gear.pieces)} piese, {fixed} vertecsi reparati, {unweighted} fara greutate, "
+          f"materiale: {', '.join(m.name for m in body.data.materials)}")
+
+    path = os.path.join(REPO, "Assets", "_Project", "Art", "Characters", name, f"{name}.fbx")
+    export_fbx(path, [arm] + lods)
+    print("FBX", os.path.relpath(path, REPO))
+
+    # Doar LOD0 in randari
+    for lod in lods[1:]:
+        lod.hide_render = True
+    cam = workbench_scene()
+    docs = os.path.join(OUT_DOCS, name)
+    render_view(cam, (0.9, 1.05, 3.6), (0, 0.92, 0), 40, os.path.join(docs, f"{name}_Front.png"))
+    render_view(cam, (-0.9, 1.05, -3.6), (0, 0.92, 0), 40, os.path.join(docs, f"{name}_Back.png"))
+    render_view(cam, (3.7, 1.0, 0.3), (0, 0.92, 0), 40, os.path.join(docs, f"{name}_Side.png"))
+    render_view(cam, (0.5, 1.75, 1.3), (0, 1.55, 0), 60, os.path.join(docs, f"{name}_Head.png"))
+    deform_pose(arm)
+    render_view(cam, (1.9, 1.3, 2.9), (0, 0.72, 0.1), 38, os.path.join(docs, f"{name}_Deform.png"))
+    reset_pose(arm)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(REPO, "Tools", "Blender", f"K17_{name}.blend"), compress=True)
+
+
+def build_base():
     reset_scene()
     arm = build_armature()
     body = build_body()
@@ -372,13 +501,20 @@ def main():
     cam = workbench_scene()
     render_view(cam, (1.6, 1.1, 3.6), (0, 0.92, 0), 38, os.path.join(OUT_DOCS, "BaseBody_Front.png"))
     render_view(cam, (3.9, 1.0, 0.0), (0, 0.92, 0), 38, os.path.join(OUT_DOCS, "BaseBody_Side.png"))
-
     deform_pose(arm)
     render_view(cam, (1.9, 1.3, 2.9), (0, 0.72, 0.1), 38, os.path.join(OUT_DOCS, "DeformTest.png"))
     render_view(cam, (-3.0, 0.9, 1.4), (0, 0.72, 0.1), 38, os.path.join(OUT_DOCS, "DeformTest_Side.png"))
     reset_pose(arm)
-
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(REPO, "Tools", "Blender", "K17_Characters.blend"), compress=True)
+
+
+def main():
+    args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    wanted = [a for a in args if a in CHARACTERS]
+    if not args or "base" in args:
+        build_base()
+    for name in (wanted or list(CHARACTERS)):
+        build_character(name, CHARACTERS[name])
     print("CHARACTERS_DONE")
 
 

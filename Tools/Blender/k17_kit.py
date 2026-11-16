@@ -1611,4 +1611,5 @@ def main():
     print("KIT_DONE", len(objects))
 
 
-main()
+if __name__ == "__main__":
+    main()

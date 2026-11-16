@@ -54,6 +54,25 @@ namespace ChokeHold.EditorTools
                 { "MilitaryPaint", (new Color(0.32f, 0.36f, 0.26f), 0.25f, 0.2f) },
                 { "Canvas", (new Color(0.42f, 0.4f, 0.3f), 0.05f, 0f) },
                 { "Ceramic", (new Color(0.55f, 0.38f, 0.28f), 0.6f, 0f) },
+                // Personaje (camuflajul si tesaturile au culoarea in textura)
+                { "Skin", (new Color(0.62f, 0.47f, 0.40f), 0.3f, 0f) },
+                { "CT_Camo", (Color.white, 0.1f, 0f) },
+                { "T_Camo", (Color.white, 0.1f, 0f) },
+                { "T_CamoDesert", (Color.white, 0.1f, 0f) },
+                { "Nylon", (Color.white, 0.15f, 0f) },
+                { "NylonOlive", (Color.white, 0.15f, 0f) },
+                { "Plastic", (Color.white, 0.35f, 0f) },
+                { "Leather", (new Color(0.28f, 0.20f, 0.14f), 0.3f, 0f) },
+                { "Maroon", (new Color(0.42f, 0.10f, 0.14f), 0.1f, 0f) },
+                { "PatchBlue", (new Color(0.12f, 0.30f, 0.75f), 0.1f, 0f) },
+                { "PatchGrey", (new Color(0.45f, 0.46f, 0.48f), 0.1f, 0f) },
+                // Arme
+                { "GunMetal", (new Color(0.30f, 0.31f, 0.33f), 0.55f, 0.9f) },
+                { "Polymer", (new Color(0.10f, 0.10f, 0.11f), 0.3f, 0f) },
+                { "CamoTape", (Color.white, 0.08f, 0f) },
+                { "BluedSteel", (new Color(0.32f, 0.38f, 0.50f), 0.7f, 1f) },
+                { "Brass", (new Color(0.80f, 0.62f, 0.30f), 0.75f, 1f) },
+                { "MagPolymer", (new Color(0.55f, 0.58f, 0.56f), 0.5f, 0f) },
             };
 
         private static readonly Dictionary<string, Material> kitMaterials = new Dictionary<string, Material>();
@@ -540,7 +559,7 @@ namespace ChokeHold.EditorTools
             return mesh != null;
         }
 
-        private static Material KitMaterial(string slot)
+        internal static Material KitMaterial(string slot)
         {
             if (kitMaterials.TryGetValue(slot, out Material cached))
             {

@@ -91,6 +91,23 @@ namespace ChokeHold.EditorTools
             { "K17_BarrelPaint", ("PaintedMetal", 1f) },
             { "K17_MilitaryPaint", ("PaintedMetal", 1f) },
             { "K17_Hazard", ("PaintedMetal", 1f) },
+
+            // Personaje
+            { "K17_CT_Camo", ("CT_Camo", 1f) },
+            { "K17_T_Camo", ("T_Camo", 1f) },
+            { "K17_T_CamoDesert", ("T_CamoDesert", 1f) },
+            { "K17_Nylon", ("Nylon", 0.5f) },
+            { "K17_NylonOlive", ("NylonOlive", 0.5f) },
+            { "K17_Plastic", ("Plastic", 1f) },
+            { "K17_Leather", ("Rubber", 0.5f) },
+            { "K17_Maroon", ("Canvas", 0.5f) },
+            { "K17_PatchBlue", ("Canvas", 0.25f) },
+            { "K17_PatchGrey", ("Canvas", 0.25f) },
+            { "K17_GunMetal", ("Steel", 0.25f) },
+            { "K17_Polymer", ("Plastic", 0.25f) },
+            { "K17_CamoTape", ("T_Camo", 0.25f) },
+            { "K17_BluedSteel", ("Steel", 0.25f) },
+            { "K17_MagPolymer", ("Plastic", 0.25f) },
         };
 
         private static void ApplySurfaces(GameObject root)

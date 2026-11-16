@@ -14,17 +14,40 @@ namespace ChokeHold.EditorTools
         private const string AnimationsFolder = "Assets/_Project/Art/Animations/";
         private const string BaseBodyPath = "Assets/_Project/Art/Characters/Base/K17_BaseBody.fbx";
 
+        private const string WeaponsFolder = "Assets/_Project/Art/Weapons/";
+
         private void OnPreprocessModel()
         {
             bool character = assetPath.StartsWith(CharactersFolder);
             bool animation = assetPath.StartsWith(AnimationsFolder);
+            bool weapon = assetPath.StartsWith(WeaponsFolder);
 
-            if (!character && !animation)
+            if (!character && !animation && !weapon)
             {
                 return;
             }
 
             ModelImporter importer = (ModelImporter)assetImporter;
+
+            if (weapon)
+            {
+                // Arme: fara rig, materialele dupa numele slotului (le leaga WeaponPrefabBuilder), socket-urile raman
+                importer.globalScale = 1f;
+                importer.useFileScale = true;
+                importer.bakeAxisConversion = true;
+                importer.importNormals = ModelImporterNormals.Import;
+                importer.addCollider = false;
+                importer.isReadable = false;
+                importer.meshCompression = ModelImporterMeshCompression.Off;
+                importer.importCameras = false;
+                importer.importLights = false;
+                importer.importAnimation = false;
+                importer.animationType = ModelImporterAnimationType.None;
+                importer.materialImportMode = ModelImporterMaterialImportMode.ImportStandard;
+                importer.materialLocation = ModelImporterMaterialLocation.InPrefab;
+                importer.preserveHierarchy = true;
+                return;
+            }
             importer.globalScale = 1f;
             importer.useFileScale = true;
             importer.bakeAxisConversion = true;
@@ -39,21 +62,10 @@ namespace ChokeHold.EditorTools
             importer.materialLocation = ModelImporterMaterialLocation.InPrefab;
             importer.animationType = ModelImporterAnimationType.Human;
 
-            if (animation || assetPath != BaseBodyPath)
-            {
-                // Toate personajele si clipurile folosesc avatarul corpului de baza (acelasi schelet).
-                Avatar baseAvatar = AssetDatabase.LoadAssetAtPath<Avatar>(BaseBodyPath);
-
-                if (baseAvatar != null)
-                {
-                    importer.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
-                    importer.sourceAvatar = baseAvatar;
-                }
-            }
-            else
-            {
-                importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-            }
+            // Fiecare FBX (personaj sau clip) are acelasi schelet K17, deci isi creeaza propriul avatar
+            // Humanoid; retargetarea intre ele merge prin spatiul Humanoid. (Copierea avatarului din
+            // corpul de baza esueaza cand radacina modelului are alt nume.)
+            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
 
             importer.importAnimation = animation;
             importer.optimizeGameObjects = false;   // oasele raman accesibile pentru socket-uri si hitbox-uri

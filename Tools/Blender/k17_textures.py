@@ -283,7 +283,51 @@ def gravel(name="Gravel", seed=240):
     texture_set(name, gray(a, (1.0, 0.98, 0.95)), stones, 3.0, 0.0, 0.1)
 
 
+# ----------------------------------------------------------------------------------------------
+# Personaje: camuflaj si tesaturi (culoarea e in textura; materialul Unity ramane alb)
+# ----------------------------------------------------------------------------------------------
+
+def camo(name, seed, colors, scale=3):
+    """Camuflaj cu pete: colors = [baza, pata1, pata2, pata3] (r, g, b); textura acopera 1 m."""
+    base = np.array(colors[0])
+    out = np.ones((RES, RES, 3)) * base
+    for k, color in enumerate(colors[1:]):
+        field = fbm(scale * (1 + k * 0.6), 3, seed + 17 * k)
+        edge = fbm(scale * 6, 2, seed + 101 * k)
+        mask = np.clip((field + (edge - 0.5) * 0.12 - (0.56 - k * 0.02)) * 18, 0, 1)
+        out = out * (1 - mask[..., None]) + np.array(color) * mask[..., None]
+    # tesatura fina si uzura
+    u, v = grid_coords(400)
+    weave = (np.sin(u * 2 * np.pi) * 0.5 + 0.5) * (np.sin(v * 2 * np.pi) * 0.5 + 0.5)
+    wear = np.clip((fbm(2, 4, seed + 7) - 0.5) * 1.5, 0, 1)
+    out = out * (0.92 + weave[..., None] * 0.1) * (1 - wear[..., None] * 0.15)
+    texture_set(name, out, weave * 0.4 + fbm(20, 3, seed + 9) * 0.3, 0.8, 0.0, 0.08 + wear * 0.06)
+
+
+def fabric(name, seed, color, threads=300, sheen=0.18):
+    """Tesatura uniforma (nylon, cordura, cagula)."""
+    u, v = grid_coords(threads)
+    weave = (np.sin(u * 2 * np.pi) * 0.5 + 0.5) * (np.sin(v * 2 * np.pi) * 0.5 + 0.5)
+    dirt = np.clip((fbm(3, 4, seed) - 0.5) * 2, 0, 1)
+    out = np.ones((RES, RES, 3)) * np.array(color) * (0.9 + weave[..., None] * 0.2) * (1 - dirt[..., None] * 0.2)
+    texture_set(name, out, weave * 0.6 + fbm(30, 2, seed + 3) * 0.2, 1.0, 0.0, sheen - dirt * 0.08)
+
+
+def plastic(name, seed, color, smooth=0.38):
+    """Plastic mat cu granulatie fina si zgarieturi (casca, genunchiere, rucsac rigid)."""
+    grain = fbm(60, 3, seed)
+    scratches = np.clip((fbm(5, 4, seed + 7, stretch=(12, 1)) - 0.66) * 8, 0, 1)
+    out = np.ones((RES, RES, 3)) * np.array(color) * (0.96 + (grain[..., None] - 0.5) * 0.08) + scratches[..., None] * 0.12
+    texture_set(name, out, grain * 0.15 - scratches * 0.3, 0.6, 0.0, smooth - scratches * 0.15)
+
+
 def main():
+    camo("CT_Camo", 300, [(0.20, 0.24, 0.34), (0.11, 0.13, 0.20), (0.36, 0.40, 0.47), (0.05, 0.06, 0.09)])
+    camo("T_Camo", 320, [(0.30, 0.34, 0.20), (0.17, 0.21, 0.12), (0.44, 0.42, 0.28), (0.10, 0.12, 0.07)])
+    camo("T_CamoDesert", 340, [(0.52, 0.45, 0.32), (0.36, 0.30, 0.20), (0.62, 0.56, 0.42), (0.30, 0.32, 0.22)])
+    fabric("Nylon", 360, (0.09, 0.09, 0.10))
+    fabric("NylonOlive", 370, (0.30, 0.32, 0.22))
+    plastic("Plastic", 380, (0.07, 0.07, 0.08))
     concrete("Concrete", 1, 0.82)
     concrete("ConcreteDark", 5, 0.72)
     concrete_floor()
