@@ -6,15 +6,15 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 1. Obiecte care intră unele în altele
 
-- ok — 358 obiecte de cover și structuri verificate, nicio suprapunere peste 0.1 m
+- ok — 355 obiecte de cover și structuri verificate, nicio suprapunere peste 0.1 m
 
 ## 2. Găuri în podea
 
-- ok — 12802 celule de 1 m verificate în 68 zone, nicio gaură
+- ok — 12848 celule de 1 m verificate în 68 zone, nicio gaură
 
 ## 3. Conectivitate
 
-- ok — 14469 poziții accesibile din spawn-ul T1
+- ok — 14523 poziții accesibile din spawn-ul T1
 - ok — nicio poziție accesibilă în afara conturului hărții
 - ok — 68 din 68 zone accesibile
 - ok — 37 din 37 plăci și platforme de etaj accesibile
@@ -57,7 +57,7 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 5. Cover
 
-- ok — 119 obiecte de cover, toate pe dimensiunile standard
+- ok — 120 obiecte de cover, toate pe dimensiunile standard
 
 ## 6. Uși, ferestre, trape și spațiu liber
 
@@ -66,13 +66,13 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 7. Îmbinări (pereți, coloane, tavane)
 
-- ok — 357 pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între 0.03 și 0.8 m
+- ok — 354 pereți, blocuri și obiecte de cover verificate: nimic oprit sub tavan, nicio fantă între 0.03 și 0.8 m
 
 ## 8. Pregătire pentru texturi
 
-- ok — 3991 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
-- ok — 1415 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
-- ok — 54 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
+- ok — 3996 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 1405 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
+- ok — 53 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
 - ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)
 
 ## 9. Buncăr: timp de ajuns pentru fiecare echipă

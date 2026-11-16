@@ -82,9 +82,7 @@ namespace ChokeHold.EditorTools
             HighCover(-72.5f, 1.5f, -69.5f, 1.5f);
             LowCover(-66f, -17f, -62f, -17f);
 
-            // West Rocks: stanci ca margine naturala si cover pe drumul spre A Control
-            Rock(gStructures, "WestRocks_Rock_1", new Vector3(-49f, 0f, 2f), new Vector3(4f, 2.5f, 3f), 25f);
-            Rock(gStructures, "WestRocks_Rock_2", new Vector3(-52f, 0f, 10f), new Vector3(3f, 2f, 2.5f), -15f);
+            // West Rocks: lada ca cover pe drumul spre A Control
             BigCrate(-50f, 6f);
         }
 
@@ -119,7 +117,7 @@ namespace ChokeHold.EditorTools
 
             // East Yard: cladirea de generator in mijloc face din curte un inel
             Block(gStructures, "Yard_Generator", 58f, 20f, 68f, 28f, 4f);
-            Rock(gStructures, "EastYard_Rock", new Vector3(75f, 0f, 16f), new Vector3(3f, 2.2f, 3f), 30f);
+            BigCrate(76.5f, 17f);          // taie linia lunga din T2 Spawn spre sudul curtii
 
             HighCover(52.5f, 26f, 52.5f, 33f);         // paravan in fata usii anexei
             HighCover(61f, 6f, 66f, 6f);               // paravan in fata usii spre hangar
@@ -177,7 +175,6 @@ namespace ChokeHold.EditorTools
             SolidBlock(gStairs, "North_Overlook_Balcony", 14f, 42f, 20f, 46f, 0f, 2f, platformMat);
             Stairs(gStairs, "North_Overlook_Steps", 8f, 42f, 14f, 46f, Vector3.right, 0f, 2f);
 
-            Rock(gStructures, "Overlook_Rock", new Vector3(52f, 0f, 45.4f), new Vector3(3f, 2f, 2.5f), 20f);
 
             LowCover(-1f, 51f, 1f, 51f);
             HighCover(18f, 47.5f, 18f, 51.5f);         // paravan in fata usii din zidul dintre curti

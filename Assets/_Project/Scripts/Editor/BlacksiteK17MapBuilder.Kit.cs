@@ -155,10 +155,6 @@ namespace ChokeHold.EditorTools
                 {
                     KitTiled(t, "K17_Shelf", 2.2f, 1f, modelAlongX: false);
                 }
-                else if (n.Contains("_Rock"))
-                {
-                    KitFixed(t, "K17_Rubble", Vector3.one);
-                }
                 else if (n.StartsWith("Crate_"))
                 {
                     // Mesele / pupitrele din laborator, birouri, camera de control
