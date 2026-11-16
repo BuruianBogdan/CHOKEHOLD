@@ -118,6 +118,10 @@ namespace ChokeHold.EditorTools
             BuildZoneLabels();
             BuildAtmosphere();
 
+            // Realism: texturi PBR pe materiale si post-procesare
+            ApplySurfaces(root);
+            BuildPostProcessing(root);
+
             MovePlayerToSpawn();
 
             EditorSceneManager.MarkSceneDirty(root.scene);

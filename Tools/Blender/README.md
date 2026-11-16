@@ -96,3 +96,26 @@ Piese refăcute:
 - **`K17_Coolant_Pump`** are două pompe centrifuge, cu motor pe același ax, colector comun și aspirație prin podea.
 - **`K17_Barrier_High`** e acum un bastion din coșuri de plasă umplute cu pământ.
 - **`K17_Rubble`** e acum o stivă de plăci de beton prefabricate.
+
+## Texturi PBR (`k17_textures.py`)
+
+```
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_textures.py
+```
+
+Scriptul generează din cod 15 seturi de texturi. Fiecare are 1024 × 1024 pixeli și se repetă fără cusătură. Ies în `Assets/_Project/Art/Textures/K17`, fiecare set în trei fișiere:
+
+| Fișier | Conținut |
+|---|---|
+| `<Set>_A` | culoarea, aproape neutră: nuanța vine din material |
+| `<Set>_N` | normal map |
+| `<Set>_M` | R = metalic, A = luciu |
+
+Seturile sunt:
+- **beton:** Concrete, ConcreteDark, ConcreteFloor;
+- **pentru exterior și acoperișuri:** Asphalt, RoofMembrane, Gravel;
+- **finisaje interioare:** Plaster, LabTiles;
+- **metale:** PaintedMetal, Steel, CheckerPlate;
+- **lemn, materiale textile și cauciuc:** Wood, Hesco, Canvas, Rubber.
+
+`ApplySurfaces` din `BlacksiteK17MapBuilder.Surfaces.cs` leagă fiecare material al hărții de un set de texturi. Tiling-ul se calculează în metri, pentru că UV-urile sunt în metri.

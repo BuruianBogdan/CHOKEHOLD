@@ -88,7 +88,7 @@ Drumul cel mai scurt pe jos (grilă de 1 m, cu scări și tuneluri), până la p
 
 ## 10. Acoperișuri și camera de control
 
-- ok — 3 scări de mână (Ladder_LabRoof 8.5 m, Ladder_OutpostTower 4 m, Ladder_CourtyardShed 4 m)
+- ok — 3 scări de mână (Ladder_LabRoof 8.5 m, Ladder_CourtyardShed 4 m, Ladder_OutpostTower 4 m)
 - ok — Lab Roof (8.4 m) vede în jos spre: Mid Connector, Mid East Corridor, South Courtyard, North Overlook
 - ok — Control Room (8.4 m) vede în jos spre: nicio zonă de la sol (doar acoperișul)
 - ok — Outpost Tower Roof (4 m) vede în jos spre: West Outpost, T1 Ramp, A Pipes South Door

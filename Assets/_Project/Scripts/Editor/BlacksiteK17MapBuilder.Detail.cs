@@ -76,7 +76,7 @@ namespace ChokeHold.EditorTools
             trussMat = GetOrCreateMaterial("GB_D_Truss", new Color(0.25f, 0.32f, 0.42f));
             hazardYellowMat = GetOrCreateMaterial("GB_D_HazardYellow", new Color(0.95f, 0.78f, 0.1f));
             hazardBlackMat = GetOrCreateMaterial("GB_D_HazardBlack", new Color(0.08f, 0.08f, 0.08f));
-            markingMat = GetOrCreateMaterial("GB_D_Marking", new Color(0.92f, 0.92f, 0.88f));
+            markingMat = GetOrCreateMaterial("GB_D_Marking", new Color(0.82f, 0.81f, 0.76f));
 
             extWainscotMat = GetOrCreateMaterial("GB_D_ExtWainscot", new Color(0.40f, 0.39f, 0.36f));
             indBandMat = GetOrCreateMaterial("GB_D_IndBand", new Color(0.55f, 0.32f, 0.17f));

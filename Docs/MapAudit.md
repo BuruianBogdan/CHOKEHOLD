@@ -640,3 +640,24 @@ Pe marginea fiecărui acoperiș stă un parapet de 1,1 m, care servește drept c
 **Validare:** 0 erori; cele 28 de avertismente sunt aceleași linii de vedere de la sol de dinainte.
 - Secțiunea 10 a raportului arată ce se vede de pe fiecare acoperiș.
 - Acoperișurile nu intră în verificarea liniilor orizontale: o rază la 10 m înălțime nu întâlnește niciun jucător.
+
+---
+
+# Realism: texturi și post-procesare
+
+**Buncărul.** Podeaua a coborât la −6,4 m, iar nișele de sub balcon au acum 2,4 m înălțime liberă. Înainte aveau 2,0 m, cât jucătorul, deci în picioare se lovea de balcon ca de un perete invizibil. Timpii de ajuns până în buncăr nu s-au schimbat.
+
+**Texturi PBR procedurale.** Le generează `Tools/Blender/k17_textures.py`: 15 seturi, cu culoare, normal map, metalic și luciu.
+- Toate materialele hărții și ale kitului sunt texturate: beton cu rosturi de cofraj, podea de beton cu fisuri și rosturi de dilatație, asfalt, tencuială, metal vopsit cu vopsea sărită, oțel periat, lemn, tablă striată, dale de laborator, pietriș, prelată, cauciuc.
+- Culoarea fiecărui material rămâne ca nuanță, iar textura adaugă detaliul.
+
+**Post-procesare.** Profilul e `Assets/_Project/Settings/K17_PostProcess.asset`:
+- tonemapping ACES;
+- expunere și contrast ajustate;
+- balans de alb rece;
+- bloom discret pe lămpi și ecrane;
+- vignetă ușoară.
+
+Camerele folosesc antialiasing SMAA, iar ocluzia ambientală din rendererul URP rămâne activă.
+
+**Validare:** 0 erori, aceleași 28 de avertismente.
