@@ -70,5 +70,49 @@ namespace ChokeHold.EditorTools
             importer.importAnimation = animation;
             importer.optimizeGameObjects = false;   // oasele raman accesibile pentru socket-uri si hitbox-uri
         }
+
+        private static readonly string[] LoopingClips =
+        {
+            "_Loco_Idle", "_Loco_Walk_", "_Loco_Run_", "_Loco_Sprint", "_Loco_CrouchIdle", "_Loco_CrouchWalk_",
+            "_Air_Fall", "_Action_Plant", "_Action_Defuse", "_Action_Ladder", "_Action_Barricade",
+        };
+
+        /// <summary>Clipurile generate: bucla dupa nume, fara root motion (miscarea vine din FpsController).</summary>
+        private void OnPreprocessAnimation()
+        {
+            if (!assetPath.StartsWith(AnimationsFolder))
+            {
+                return;
+            }
+
+            ModelImporter importer = (ModelImporter)assetImporter;
+            ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
+            string name = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+
+            foreach (ModelImporterClipAnimation clip in clips)
+            {
+                clip.name = name;
+                bool loop = false;
+                foreach (string pattern in LoopingClips)
+                {
+                    if (name.Contains(pattern))
+                    {
+                        loop = true;
+                    }
+                }
+
+                clip.loopTime = loop;
+                clip.loopPose = false;
+                clip.lockRootRotation = true;
+                clip.lockRootHeightY = true;
+                clip.lockRootPositionXZ = true;
+                clip.keepOriginalOrientation = true;
+                clip.keepOriginalPositionY = true;
+                clip.keepOriginalPositionXZ = true;
+                clip.heightFromFeet = false;
+            }
+
+            importer.clipAnimations = clips;
+        }
     }
 }

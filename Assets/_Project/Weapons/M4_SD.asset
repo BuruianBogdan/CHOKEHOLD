@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d661d60597b58e444a562451a364b1da, type: 3}
+  m_Name: M4_SD
+  m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
+  displayName: M4-SD
+  kind: 0
+  team: 1
+  firstPersonPrefab: {fileID: 6459879318491281303, guid: a390120f1fce2db49acd1ef616a863df, type: 3}
+  thirdPersonPrefab: {fileID: 7134417949603004370, guid: 53d323635067d084ca3d7dd7515e3ab8, type: 3}
+  firstPersonOffset: {x: 0.14, y: -0.16, z: 0.3}
+  damage: 30
+  fireRate: 11
+  automatic: 1
+  magazineSize: 30
+  reloadTime: 2.2
+  reloadEmptyTime: 2.8
+  range: 150
+  recoilVertical: 0.6
+  recoilHorizontal: 0.14
+  recoilKick: 0.05
+  hipSpread: 0.02
+  aimSpread: 0.003
+  aimFieldOfView: 46
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}

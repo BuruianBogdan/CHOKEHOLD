@@ -75,6 +75,9 @@ namespace ChokeHold.Gameplay
         public bool IsCrouching => isCrouching;
         public bool IsGrounded => isGrounded;
         public bool InputLocked => inputLocks.Count > 0;
+        public bool IsClimbing { get; private set; }
+        public float Pitch => pitch;
+        public float Lean => leanAngle > 0f ? currentLeanAngle / leanAngle : 0f;
 
         public bool IsSprinting
         {
@@ -187,7 +190,8 @@ namespace ChokeHold.Gameplay
                 moveInputSmoothing * Time.deltaTime
             );
 
-            if (ClimbLadder())
+            IsClimbing = ClimbLadder();
+            if (IsClimbing)
             {
                 return;
             }

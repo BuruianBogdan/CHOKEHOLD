@@ -110,7 +110,7 @@ namespace ChokeHold.EditorTools
             { "K17_MagPolymer", ("Plastic", 0.25f) },
         };
 
-        private static void ApplySurfaces(GameObject root)
+        internal static void ApplySurfaces(GameObject root)
         {
             if (!AssetDatabase.IsValidFolder(TextureFolder))
             {

@@ -299,7 +299,7 @@ def build_holster(gear, slot, side=1):
     def holster(bm):
         box(bm, x + s * 0.070, 0.60, 0.03, x + s * 0.120, 0.82, 0.115)      # corpul tocului
         box(bm, x + s * 0.075, 0.82, 0.06, x + s * 0.110, 0.90, 0.10)       # manerul pistolului
-        box(bm, x + s * 0.060, 0.84, 0.00, x + s * 0.125, 0.86, 0.12)       # placa de coapsa
+        box(bm, x + s * 0.086, 0.62, 0.00, x + s * 0.098, 0.86, 0.13)       # placa de coapsa (verticala, sub toc)
         limb_ring(bm, V((x, 0.80, 0.004)), V((0, -1, 0)), 0.100, 0.104, 0.025, segments=18)
         limb_ring(bm, V((x, 0.66, 0.008)), V((0, -1, 0)), 0.092, 0.098, 0.025, segments=18)
         # curea spre centura

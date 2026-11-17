@@ -673,17 +673,64 @@ namespace ChokeHold.EditorTools
 
         private static void CreateDummy(Transform parent, string name, Vector3 feetPosition)
         {
-            GameObject dummy = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            dummy.name = name;
+            // Tinta de antrenament: un personaj complet (CT, in idle, cu hitbox-uri pe zone), cu picioarele la sol.
+            GameObject dummy = new GameObject(name);
             dummy.transform.SetParent(parent, false);
-            dummy.transform.position = feetPosition + Vector3.up; // capsula are 2 m, pivot la mijloc
-            dummy.GetComponent<MeshRenderer>().sharedMaterial = t2FloorMat;
+            dummy.transform.position = feetPosition;
+            dummy.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
             // RequireComponent adauga automat si Health.
             TeamMember member = dummy.AddComponent<TeamMember>();
             SerializedObject serialized = new SerializedObject(member);
             serialized.FindProperty("team").enumValueIndex = (int)Team.Defenders;
             serialized.FindProperty("respawnAtSpawnPoint").boolValue = false;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            AttachCharacterVisuals(dummy, "P_SD");
+        }
+
+        internal static void AssignPlayerWeapon(FpsController player, string weaponId)
+        {
+            HitscanWeapon weapon = player.GetComponentInChildren<HitscanWeapon>(true);
+            WeaponData data = AssetDatabase.LoadAssetAtPath<WeaponData>($"Assets/_Project/Weapons/{weaponId}.asset");
+
+            if (weapon == null || data == null)
+            {
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(weapon);
+            serialized.FindProperty("data").objectReferenceValue = data;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>CharacterVisuals cu prefab-urile personajelor si arma TP data (dupa numele asset-ului WeaponData).</summary>
+        internal static void AttachCharacterVisuals(GameObject owner, string weaponId)
+        {
+            CharacterVisuals visuals = owner.GetComponent<CharacterVisuals>();
+            if (visuals == null)
+            {
+                visuals = owner.AddComponent<CharacterVisuals>();
+            }
+
+            SerializedObject serialized = new SerializedObject(visuals);
+            serialized.FindProperty("defenderPrefab").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Characters/Character_CT_Operator.prefab");
+
+            SerializedProperty attackers = serialized.FindProperty("attackerPrefabs");
+            attackers.ClearArray();
+            foreach (string name in new[] { "Character_T_Insurgent_A", "Character_T_Insurgent_B" })
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/_Project/Prefabs/Characters/{name}.prefab");
+                if (prefab != null)
+                {
+                    attackers.InsertArrayElementAtIndex(attackers.arraySize);
+                    attackers.GetArrayElementAtIndex(attackers.arraySize - 1).objectReferenceValue = prefab;
+                }
+            }
+
+            serialized.FindProperty("weapon").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<WeaponData>($"Assets/_Project/Weapons/{weaponId}.asset");
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -942,6 +989,10 @@ namespace ChokeHold.EditorTools
             }
 
             RepairPlayerReferences(player);
+
+            // Modelul complet (doar umbra pentru jucatorul local) si arma din WeaponData
+            AttachCharacterVisuals(player.gameObject, "M4A4M_Vandal");
+            AssignPlayerWeapon(player, "M4A4M_Vandal");
         }
 
         /// <summary>

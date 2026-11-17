@@ -63,6 +63,8 @@ namespace ChokeHold.EditorTools
             sockets.Resolve();
 
             string prefabPath = $"{PrefabFolder}/{name}.prefab";
+            // Texturile PBR (k17_textures.py) pe materialele K17 folosite de model; harta le aplica doar pe ce e in scena.
+            BlacksiteK17MapBuilder.ApplySurfaces(instance);
             PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
             Debug.Log($"Weapon prefab: {prefabPath} ({slots} sloturi, muzzle={sockets.Muzzle != null}, sight={sockets.Sight != null}, " +
                       $"gripL={sockets.GripLeft != null}, magazine={sockets.Magazine != null}, bolt={sockets.Bolt != null})");

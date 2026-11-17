@@ -8,6 +8,12 @@ namespace ChokeHold.Gameplay
 {
     public class HitscanWeapon : MonoBehaviour
     {
+        /// <summary>Dupa fiecare foc; dupa inceperea reincarcarii (animatii, efecte).</summary>
+        public event System.Action Fired;
+        public event System.Action ReloadStarted;
+        public int CurrentAmmo => currentAmmo;
+        public bool IsReloading => isReloading;
+
         [Header("References")]
         [SerializeField] private Camera playerCamera;
         [SerializeField] private HitMarkerUI hitMarker;
@@ -83,8 +89,61 @@ namespace ChokeHold.Gameplay
         
         private bool isAiming;
             
+        [Header("Weapon Data")]
+        [SerializeField] private WeaponData data;
+
+        private WeaponSockets sockets;
+
+        public WeaponData Data => data;
+        public WeaponSockets Sockets => sockets;
+
+        /// <summary>Statisticile si modelul de la persoana intai vin din WeaponData, daca e setat.</summary>
+        private void ApplyWeaponData()
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            damage = data.damage;
+            fireRate = data.fireRate;
+            magazineSize = data.magazineSize;
+            reloadTime = data.reloadTime;
+            range = data.range;
+            cameraRecoilVertical = data.recoilVertical;
+            cameraRecoilHorizontal = data.recoilHorizontal;
+            recoilDistance = data.recoilKick;
+            hipFireSpread = data.hipSpread;
+            aimSpread = data.aimSpread;
+            aimFieldOfView = data.aimFieldOfView;
+
+            if (weaponHolder != null && data.firstPersonPrefab != null)
+            {
+                // Modelul vechi (placeholder) se ascunde; modelul FP din kit se pune cu manerul in holder.
+                foreach (Renderer old in weaponHolder.GetComponentsInChildren<Renderer>(true))
+                {
+                    old.enabled = false;
+                }
+
+                GameObject model = Instantiate(data.firstPersonPrefab, weaponHolder);
+                model.name = data.firstPersonPrefab.name;
+                model.transform.localPosition = Vector3.zero;
+                model.transform.localRotation = Quaternion.identity;
+                sockets = model.GetComponent<WeaponSockets>();
+
+                if (sockets != null && sockets.Muzzle != null && muzzleFlash != null)
+                {
+                    muzzleFlash.transform.SetParent(sockets.Muzzle, false);
+                    muzzleFlash.transform.localPosition = Vector3.zero;
+                    muzzleFlash.transform.localRotation = Quaternion.identity;
+                }
+            }
+        }
+
         private void Awake()
         {
+            ApplyWeaponData();
+
             if (weaponHolder == null)
             {
                 Debug.LogError(
@@ -166,6 +225,7 @@ namespace ChokeHold.Gameplay
         private void Shoot()
         {
             currentAmmo--;
+            Fired?.Invoke();
             UpdateAmmoUI();
 
             recoilTargetPosition =
@@ -309,6 +369,7 @@ namespace ChokeHold.Gameplay
             }
 
             isReloading = true;
+            ReloadStarted?.Invoke();
 
             if (reloadText != null)
             {

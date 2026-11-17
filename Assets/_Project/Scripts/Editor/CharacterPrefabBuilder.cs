@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using ChokeHold.Gameplay;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace ChokeHold.EditorTools
@@ -80,28 +81,45 @@ namespace ChokeHold.EditorTools
             Animator animator = instance.GetComponent<Animator>();
             int hitboxes = animator != null ? BuildHitboxes(instance, animator) : 0;
 
-            // (fara "??": obiectele Unity distruse sau lipsa nu sunt null in sensul C#)
-            Health health = instance.GetComponent<Health>();
-            if (health == null)
+            if (animator != null)
             {
-                health = instance.AddComponent<Health>();
+                BuildWeaponMount(instance, animator);
+                BuildRagdoll(instance, animator);
+                if (instance.GetComponent<Ragdoll>() == null)
+                {
+                    instance.AddComponent<Ragdoll>();
+                }
+                AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>("Assets/_Project/Animation/Character_TP.controller");
+                if (controller != null)
+                {
+                    animator.runtimeAnimatorController = controller;
+                }
+                animator.applyRootMotion = false;
+                animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
             }
 
-            TeamMember member = instance.GetComponent<TeamMember>();
-            if (member == null)
+            if (instance.GetComponent<CharacterAnimatorDriver>() == null)
             {
-                member = instance.AddComponent<TeamMember>();
+                instance.AddComponent<CharacterAnimatorDriver>();
             }
-            SerializedObject serialized = new SerializedObject(member);
-            serialized.FindProperty("team").enumValueIndex = (int)TeamOf[name];
-            serialized.FindProperty("respawnAtSpawnPoint").boolValue = false;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            // Prefab-ul e doar partea vizuala: TeamMember si Health stau pe obiectul care il poarta
+            // (jucatorul sau tinta, prin CharacterVisuals), ca loviturile sa ajunga la un singur Health.
+            foreach (Component extra in new Component[] { instance.GetComponent<TeamMember>(), instance.GetComponent<Health>() })
+            {
+                if (extra != null)
+                {
+                    Object.DestroyImmediate(extra);
+                }
+            }
 
             string prefabPath = $"{PrefabFolder}/Character_{name}.prefab";
+            // Texturile PBR (k17_textures.py) pe materialele K17 folosite de model; harta le aplica doar pe ce e in scena.
+            BlacksiteK17MapBuilder.ApplySurfaces(instance);
             PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
 
             Debug.Log($"Prefab: {prefabPath} ({materials} sloturi de material, LOD-uri: {(lodGroup != null ? lodGroup.lodCount : 0)}, " +
-                      $"{hitboxes} hitbox-uri, health={health != null}, animator={animator != null && animator.isHuman})");
+                      $"{hitboxes} hitbox-uri, animator={animator != null && animator.isHuman})");
             Object.DestroyImmediate(instance);
         }
 
@@ -206,6 +224,109 @@ namespace ChokeHold.EditorTools
             }
 
             return count;
+        }
+
+        // ------------------------------------------------------------------
+        // Ragdoll: corpuri rigide + collidere pe oase (cinematice / dezactivate cat timp traieste)
+        // ------------------------------------------------------------------
+        private static void BuildRagdoll(GameObject instance, Animator animator)
+        {
+            Transform Bone(HumanBodyBones bone) => animator.GetBoneTransform(bone);
+
+            // (os, capatul segmentului, parinte in ragdoll, masa, raza)
+            (HumanBodyBones bone, HumanBodyBones end, HumanBodyBones parent, float mass, float radius)[] parts =
+            {
+                (HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.LastBone, 12f, 0.14f),
+                (HumanBodyBones.Spine, HumanBodyBones.UpperChest, HumanBodyBones.Hips, 10f, 0.13f),
+                (HumanBodyBones.UpperChest, HumanBodyBones.Neck, HumanBodyBones.Spine, 10f, 0.15f),
+                (HumanBodyBones.Head, HumanBodyBones.LastBone, HumanBodyBones.UpperChest, 5f, 0.12f),
+                (HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.UpperChest, 2.5f, 0.06f),
+                (HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, HumanBodyBones.RightUpperArm, 1.8f, 0.05f),
+                (HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.UpperChest, 2.5f, 0.06f),
+                (HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, HumanBodyBones.LeftUpperArm, 1.8f, 0.05f),
+                (HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.Hips, 8f, 0.09f),
+                (HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, HumanBodyBones.RightUpperLeg, 4f, 0.07f),
+                (HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.Hips, 8f, 0.09f),
+                (HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, HumanBodyBones.LeftUpperLeg, 4f, 0.07f),
+            };
+
+            foreach ((HumanBodyBones bone, HumanBodyBones end, HumanBodyBones _, float mass, float radius) in parts)
+            {
+                Transform t = Bone(bone);
+                if (t == null) continue;
+
+                Rigidbody body = t.gameObject.AddComponent<Rigidbody>();
+                body.mass = mass;
+                body.isKinematic = true;
+                body.interpolation = RigidbodyInterpolation.Interpolate;
+                body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+                if (bone == HumanBodyBones.Head)
+                {
+                    SphereCollider sphere = t.gameObject.AddComponent<SphereCollider>();
+                    sphere.radius = radius;
+                    sphere.center = t.InverseTransformPoint(t.position + Vector3.up * 0.11f);
+                    sphere.enabled = false;
+                    continue;
+                }
+
+                Transform endBone = Bone(end);
+                Vector3 endPosition = endBone != null ? endBone.position : t.position + Vector3.up * 0.2f;
+                Vector3 local = t.InverseTransformDirection(endPosition - t.position);
+                int axis = Mathf.Abs(local.x) > Mathf.Abs(local.y) && Mathf.Abs(local.x) > Mathf.Abs(local.z) ? 0
+                    : Mathf.Abs(local.y) > Mathf.Abs(local.z) ? 1 : 2;
+
+                CapsuleCollider capsule = t.gameObject.AddComponent<CapsuleCollider>();
+                capsule.direction = axis;
+                capsule.radius = radius;
+                capsule.height = Vector3.Distance(t.position, endPosition) + radius * 2f;
+                capsule.center = t.InverseTransformPoint((t.position + endPosition) * 0.5f);
+                capsule.enabled = false;
+            }
+
+            foreach ((HumanBodyBones bone, HumanBodyBones _, HumanBodyBones parent, float _, float _) in parts)
+            {
+                if (parent == HumanBodyBones.LastBone) continue;
+                Transform t = Bone(bone), p = Bone(parent);
+                if (t == null || p == null) continue;
+
+                CharacterJoint joint = t.gameObject.AddComponent<CharacterJoint>();
+                joint.connectedBody = p.GetComponent<Rigidbody>();
+                joint.enableProjection = true;
+                joint.swing1Limit = new SoftJointLimit { limit = 35f };
+                joint.swing2Limit = new SoftJointLimit { limit = 35f };
+                joint.lowTwistLimit = new SoftJointLimit { limit = -25f };
+                joint.highTwistLimit = new SoftJointLimit { limit = 25f };
+            }
+        }
+
+        /// <summary>
+        /// "WeaponMount" sub osul weapon_R: +Z de-a lungul mainii (incheietura -> baza degetului mijlociu),
+        /// +Y in sus in poza de repaus. Arma de la persoana a treia se pune aici cu transformarea identitate.
+        /// </summary>
+        private static void BuildWeaponMount(GameObject instance, Animator animator)
+        {
+            Transform hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+            Transform middle = animator.GetBoneTransform(HumanBodyBones.RightMiddleProximal);
+            Transform socket = null;
+
+            foreach (Transform t in instance.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "weapon_R")
+                {
+                    socket = t;
+                }
+            }
+
+            if (hand == null || socket == null)
+            {
+                return;
+            }
+
+            Vector3 forward = middle != null ? (middle.position - hand.position).normalized : instance.transform.forward;
+            GameObject mount = new GameObject("WeaponMount");
+            mount.transform.SetParent(socket, false);
+            mount.transform.SetPositionAndRotation(socket.position, Quaternion.LookRotation(forward, instance.transform.up));
         }
 
         private static GameObject HitboxObject(Transform bone, HitZoneKind kind, Vector3 position, Quaternion rotation)

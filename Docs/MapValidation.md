@@ -10,11 +10,11 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 2. Găuri în podea
 
-- ok — 12848 celule de 1 m verificate în 68 zone, nicio gaură
+- ok — 12864 celule de 1 m verificate în 68 zone, nicio gaură
 
 ## 3. Conectivitate
 
-- ok — 14523 poziții accesibile din spawn-ul T1
+- ok — 14529 poziții accesibile din spawn-ul T1
 - ok — nicio poziție accesibilă în afara conturului hărții
 - ok — 68 din 68 zone accesibile
 - ok — 37 din 37 plăci și platforme de etaj accesibile
@@ -48,7 +48,7 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 - WARNING etaj, A Control: 38.1 m > 27.5 m, (-43, 23) → (-23.9, 56)
 - WARNING etaj, Lab South Door: 36.4 m > 27.5 m, (3, 5) → (18.4, 38)
 - WARNING etaj, Lab North Door: 36.4 m > 27.5 m, (1, 43) → (16.4, 10)
-- WARNING etaj, Mid Lab: 52.5 m > 44 m, (11, 37) → (-2.6, -13.8)
+- WARNING etaj, Mid Lab: 52.5 m > 44 m, (-7, 37) → (6.6, -13.8)
 - WARNING etaj, Lab Annex Door: 35.4 m > 27.5 m, (19, 37) → (-10, 16.7)
 - WARNING etaj, A Ramp: 35.4 m > 27.5 m, (-25, 35) → (-55.6, 52.7)
 - WARNING etaj, Lab Annex: 32.1 m > 27.5 m, (21, 37) → (-10, 28.7)

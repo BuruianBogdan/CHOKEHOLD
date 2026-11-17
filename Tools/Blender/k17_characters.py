@@ -518,4 +518,5 @@ def main():
     print("CHARACTERS_DONE")
 
 
-main()
+if __name__ == "__main__":
+    main()

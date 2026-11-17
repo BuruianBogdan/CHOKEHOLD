@@ -113,6 +113,18 @@ namespace ChokeHold.Gameplay
 
         private void SetAliveState(bool alive)
         {
+            // Personajele cu ragdoll raman vizibile dupa moarte; Ragdoll le opreste hitbox-urile.
+            Ragdoll ragdoll = GetComponentInChildren<Ragdoll>(true);
+            if (ragdoll != null)
+            {
+                ragdoll.SetAlive(alive);
+
+                if (!IsLocalPlayer)
+                {
+                    return;
+                }
+            }
+
             if (IsLocalPlayer)
             {
                 // Jucatorul mort ramane pe loc si poate doar sa se uite in jur.
