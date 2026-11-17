@@ -22,6 +22,7 @@ namespace ChokeHold.Gameplay
         private Health health;
         private TeamMember member;
         private BombController bomb;
+        private ThirdPersonWeaponIK ik;
 
         private Vector2 move;
         private Vector3 lastPosition;
@@ -37,6 +38,7 @@ namespace ChokeHold.Gameplay
         private void Awake()
         {
             animator = GetComponent<Animator>();
+            ik = GetComponent<ThirdPersonWeaponIK>();
             fps = GetComponentInParent<FpsController>();
             controller = GetComponentInParent<CharacterController>();
             health = GetComponentInParent<Health>();
@@ -119,6 +121,12 @@ namespace ChokeHold.Gameplay
 
             float pitch = fps != null ? -fps.Pitch : 0f;
             animator.SetFloat("AimPitch", Mathf.Clamp(pitch, -60f, 60f));
+
+            // capul spre unde se uita (IK, rigging): pitch-ul camerei peste directia corpului
+            if (ik != null)
+            {
+                ik.LookAlong(Quaternion.AngleAxis(-pitch, transform.right) * transform.forward);
+            }
             animator.SetFloat("AimYaw", 0f);
 
             float lean = fps != null ? fps.Lean : 0f;

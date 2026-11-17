@@ -364,6 +364,10 @@ def reset_pose(arm):
 from k17_gear import Gear, build_ct_operator  # noqa: E402
 
 CHARACTER_TRIANGLES = (25000, 12500, 5000)
+# Tinute care acopera tot corpul (manusi, balaclava): pielea de sub gat nu se vede si doar ar strapunge hainele
+COVERED = {"CT_Operator"}
+COVERED_BELOW = 1.50
+
 CHARACTERS = {
     "CT_Operator": build_ct_operator,
 }
@@ -393,10 +397,10 @@ def nearest_skin(obj, arm):
     fix_unweighted(obj, arm)
 
 
-def fix_unweighted(obj, arm):
+def fix_unweighted(obj, arm, exclude=()):
     """Vertecsii ramasi fara greutate (bone heat esueaza pe piese mici) merg pe cel mai apropiat os deformant."""
     bones = [(b.name, arm.matrix_world @ b.head_local, arm.matrix_world @ b.tail_local)
-             for b in arm.data.bones if b.use_deform]
+             for b in arm.data.bones if b.use_deform and not any(k in b.name for k in exclude)]
     groups = {g.name: g for g in obj.vertex_groups}
     fixed = 0
     for v in obj.data.vertices:
@@ -496,6 +500,41 @@ def export_fp_arms(name, body, arm):
     bpy.data.objects.remove(fp)
 
 
+ARM_KEYS = ("UpperArm", "LowerArm", "Hand", "Thumb", "Index", "Middle", "Ring", "Little")
+
+
+def strip_arm_weights(obj, arm, region):
+    """
+    Bone heat leaga mainile (care in A-pose stau langa coapse) si de buzunarele pantalonilor, de sold sau de
+    partea de jos a vestei: cand mainile se misca, bucatile alea zboara dupa ele. In zona data (coordonate de
+    personaj: x, inaltime) greutatile bratelor se scot; vertecsii ramasi fara os merg pe cel mai apropiat os ne-brat.
+    """
+    arm_groups = {g.index for g in obj.vertex_groups if any(k in g.name for k in ARM_KEYS)}
+    stripped = 0
+    for v in obj.data.vertices:
+        p = obj.matrix_world @ v.co
+        if not region(p.x, p.z):
+            continue
+        for g in list(v.groups):
+            if g.group in arm_groups and g.weight > 0.0:
+                obj.vertex_groups[g.group].remove([v.index])
+                stripped += 1
+    fix_unweighted(obj, arm, exclude=ARM_KEYS)
+    return stripped
+
+
+def skin_piece(obj, arm):
+    """Skinning automat + curatarea greutatilor de brat acolo unde nu au ce cauta."""
+    auto_skin(obj, arm)
+    name = obj.name
+    if "Pants" in name or "Boot" in name:
+        strip_arm_weights(obj, arm, lambda x, y: True)
+    elif "Jacket" in name:
+        strip_arm_weights(obj, arm, lambda x, y: y < 1.30)
+    elif name.endswith("Body") or "Body" in name:
+        strip_arm_weights(obj, arm, lambda x, y: y < 1.25 and abs(x) < 0.32)
+
+
 def build_character(name, builder):
     reset_scene()
     arm = build_armature()
@@ -503,14 +542,23 @@ def build_character(name, builder):
     gear = Gear(name)
     builder(gear)
 
+    if name in COVERED:
+        bm = bmesh.new()
+        bm.from_mesh(body.data)
+        hidden = [face for face in bm.faces if face.calc_center_median().z < COVERED_BELOW]
+        bmesh.ops.delete(bm, geom=hidden, context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+        bm.to_mesh(body.data)
+        bm.free()
+
     for obj, bone in gear.pieces:
         if bone == "nearest":
             nearest_skin(obj, arm)
         elif bone:
             rigid_skin(obj, arm, bone)
         else:
-            auto_skin(obj, arm)
-    auto_skin(body, arm)
+            skin_piece(obj, arm)
+    skin_piece(body, arm)
 
     # Un singur mesh: corpul + toate piesele (grupurile de vertecsi se pastreaza la join)
     bpy.ops.object.select_all(action="DESELECT")
@@ -522,6 +570,14 @@ def build_character(name, builder):
     body.name = f"{name}_LOD0"
     body.data.name = body.name
     fixed = fix_unweighted(body, arm)
+
+    # UV-uri in metri pe tot personajul (piesele de echipament n-au UV-uri proprii): proiectie pe cub de 1 m,
+    # ca in kitul hartii; tiling-ul texturilor (camuflaj 1 m, nylon 0.5 m) vine din SurfaceMap.
+    activate(body)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.cube_project(cube_size=1.0, correct_aspect=False, clip_to_bounds=False, scale_to_bounds=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
 
     activate(body)
     bpy.ops.object.vertex_group_limit_total(group_select_mode="ALL", limit=4)
@@ -539,7 +595,8 @@ def build_character(name, builder):
         apply_modifier(body, decimate)
         tris0 = triangle_count(body)
 
-    for level, budget in ((1, CHARACTER_TRIANGLES[1]), (2, CHARACTER_TRIANGLES[2])):
+    # LOD1 ~ 50%, LOD2 ~ 20% din LOD0 (plafonate la bugetele absolute)
+    for level, budget in ((1, min(CHARACTER_TRIANGLES[1], tris0 * 0.5)), (2, min(CHARACTER_TRIANGLES[2], tris0 * 0.2))):
         lod = body.copy()
         lod.data = body.data.copy()
         lod.name = f"{name}_LOD{level}"

@@ -93,9 +93,9 @@ namespace ChokeHold.EditorTools
             { "K17_Hazard", ("PaintedMetal", 1f) },
 
             // Personaje
-            { "K17_CT_Camo", ("CT_Camo", 1f) },
-            { "K17_T_Camo", ("T_Camo", 1f) },
-            { "K17_T_CamoDesert", ("T_CamoDesert", 1f) },
+            { "K17_CT_Camo", ("CT_Camo", 0.5f) },
+            { "K17_T_Camo", ("T_Camo", 0.5f) },
+            { "K17_T_CamoDesert", ("T_CamoDesert", 0.5f) },
             { "K17_Nylon", ("Nylon", 0.5f) },
             { "K17_NylonOlive", ("NylonOlive", 0.5f) },
             { "K17_Plastic", ("Plastic", 1f) },

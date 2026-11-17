@@ -119,3 +119,40 @@ Seturile sunt:
 - **lemn, materiale textile și cauciuc:** Wood, Hesco, Canvas, Rubber.
 
 `ApplySurfaces` din `BlacksiteK17MapBuilder.Surfaces.cs` leagă fiecare material al hărții de un set de texturi. Tiling-ul se calculează în metri, pentru că UV-urile sunt în metri.
+
+## Personaje, arme și animații
+
+Toate rulează headless, din rădăcina repo-ului:
+
+```
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_characters.py [-- CT_Operator]
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_weapons.py
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_anims.py -- Rifle
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_anims.py -- Pistol
+```
+
+| Script | Ce face | Unde iese |
+|---|---|---|
+| `k17_characters.py` | scheletul de 55 de oase, corpul de bază, personajele cu echipament (`k17_gear.py`), LOD0/1/2, mâinile FP | `Assets/_Project/Art/Characters/<Nume>/<Nume>.fbx`, `.../FPArms/FPArms_<echipă>.fbx`, `Docs/Characters/<Nume>/*.png`, `K17_<Nume>.blend` |
+| `k17_gear.py` | piesele de echipament: cască, vestă, centură, toc, mănuși etc. | folosit de `k17_characters.py` |
+| `k17_weapons.py` | armele FP și TP cu piese animabile și socket-uri (Muzzle, Eject, Sight, Grip_R, Grip_L) | `Assets/_Project/Art/Weapons/<Armă>/<Armă>_FP.fbx` și `_TP.fbx`, `Docs/Characters/Weapons_*.png` |
+| `k17_anims.py` | clipurile TP in-place: locomoție, aer, aim offset, lean, armă, reacții, acțiuni | `Assets/_Project/Art/Animations/<Rifle\|Pistol>/<Tip>_<Grup>_<Acțiune>.fbx` |
+| `k17_anim_preview.py` | randări de control pentru poze | `Docs/Characters/Anims/` |
+
+Convenții:
+- **Coordonate:** x dreapta, y sus, z înainte; `B(x, y, z)` le trece în Blender.
+- **Personaje:** înalte de 1,80 m, cu rădăcina la Y = 0 și fața spre +Z.
+- **Arme:** originea e în palma dreaptă.
+- **UV-uri:** la personaje sunt în metri, prin proiecție pe cub.
+- **Materiale:** se leagă în Unity după numele slotului.
+
+După rulare, în Unity, din **CHOKEHOLD → Characters**:
+1. Build Prefabs
+2. Build Weapon Prefabs
+3. Build Weapon Data
+4. Build Animator
+5. Build FP Arms
+6. Build Showcase Scene
+7. Render Showcase
+
+Detaliile sunt în `Docs/CharactersReport.md`.

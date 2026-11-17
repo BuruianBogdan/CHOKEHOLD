@@ -86,6 +86,13 @@ namespace ChokeHold.Gameplay
             thirdPersonWeapon.transform.localPosition = Vector3.zero;
             thirdPersonWeapon.transform.localRotation = Quaternion.identity;
 
+            // mana stanga pe garda / peste mana dreapta (IK)
+            ThirdPersonWeaponIK ik = instance.GetComponent<ThirdPersonWeaponIK>();
+            if (ik != null)
+            {
+                ik.Bind(thirdPersonWeapon.GetComponent<WeaponSockets>(), data.kind);
+            }
+
             if (member != null && member.IsLocalPlayer)
             {
                 foreach (Renderer renderer in thirdPersonWeapon.GetComponentsInChildren<Renderer>(true))

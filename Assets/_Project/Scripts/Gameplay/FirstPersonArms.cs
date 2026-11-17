@@ -85,7 +85,7 @@ namespace ChokeHold.Gameplay
 
             if (rightTarget != null)
             {
-                Quaternion hand = HandRotation(weaponRoot.rotation, true, right);
+                Quaternion hand = GripPose.HandRotation(weaponRoot.rotation, true, kind, right.RestFrameInverse);
                 right.Solve(rightTarget.position, hand, right.Upper.position + cameraRotation * rightElbowHint);
                 right.Curl(rightCurl, triggerCurl, thumbCurl);
             }
@@ -101,40 +101,10 @@ namespace ChokeHold.Gameplay
                     weapon = Quaternion.Slerp(weapon, leftOverrideRotation, leftOverrideWeight);
                 }
 
-                Quaternion hand = HandRotation(weapon, false, left);
+                Quaternion hand = GripPose.HandRotation(weapon, false, kind, left.RestFrameInverse);
                 left.Solve(position, hand, left.Upper.position + cameraRotation * leftElbowHint);
                 left.Curl(leftCurl, leftCurl, thumbCurl);
             }
-        }
-
-        /// <summary>
-        /// Rotatia mainii din directia degetelor si normala palmei, date in spatiul armei (x dreapta, y sus, z teava).
-        /// </summary>
-        private Quaternion HandRotation(Quaternion weapon, bool isRight, Arm arm)
-        {
-            Vector3 fingers;
-            Vector3 palm;
-
-            if (isRight)
-            {
-                // mana dreapta pe manerul pistol: palma spre stanga, degetele inainte-jos in jurul manerului
-                fingers = new Vector3(-0.25f, -0.30f, 0.92f);
-                palm = new Vector3(-0.95f, 0.05f, -0.25f);
-            }
-            else if (kind == WeaponKind.Pistol)
-            {
-                // mana stanga peste degetele drepte: palma spre dreapta
-                fingers = new Vector3(0.15f, -0.45f, 0.88f);
-                palm = new Vector3(0.95f, 0.10f, -0.10f);
-            }
-            else
-            {
-                // mana stanga sub garda: palma in sus, degetele spre dreapta in jurul ei
-                fingers = new Vector3(0.70f, 0.30f, 0.65f);
-                palm = new Vector3(0.20f, 0.97f, -0.10f);
-            }
-
-            return Quaternion.LookRotation(weapon * fingers, weapon * palm) * arm.RestFrameInverse;
         }
 
         // ------------------------------------------------------------------
@@ -175,17 +145,11 @@ namespace ChokeHold.Gameplay
                 lowerRest = Lower.localRotation;
                 handRest = Hand.localRotation;
 
-                // Cadrul palmei din pozitiile oaselor: degetele spre MiddleProximal, palma din ordinea aratator -> mic.
-                Vector3 finger = (middle.position - Hand.position).normalized;
-                Vector3 across = (little.position - index.position).normalized;
-                Vector3 palm = side == "Right" ? Vector3.Cross(across, finger) : Vector3.Cross(finger, across);
-                palm = Vector3.ProjectOnPlane(palm, finger).normalized;
-
-                Quaternion inverse = Quaternion.Inverse(Hand.rotation);
-                fingerAxis = inverse * finger;
-                palmAxis = inverse * palm;
-                RestFrameInverse = Quaternion.Inverse(Quaternion.LookRotation(fingerAxis, palmAxis));
-                palmOffset = inverse * ((middle.position - Hand.position) * 0.55f + palm * 0.018f);
+                GripPose.HandFrame frame = GripPose.Measure(Hand, index, middle, little, side == "Right");
+                fingerAxis = frame.FingerAxis;
+                palmAxis = frame.PalmAxis;
+                RestFrameInverse = frame.RestFrameInverse;
+                palmOffset = frame.PalmOffset;
 
                 string[] names = { "Thumb", "Index", "Middle", "Ring", "Little" };
                 string[] phalanges = { "Proximal", "Intermediate", "Distal" };

@@ -4,6 +4,7 @@ using ChokeHold.Gameplay;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace ChokeHold.EditorTools
 {
@@ -85,6 +86,7 @@ namespace ChokeHold.EditorTools
             {
                 BuildWeaponMount(instance, animator);
                 BuildRagdoll(instance, animator);
+                BuildRig(instance, animator);
                 if (instance.GetComponent<Ragdoll>() == null)
                 {
                     instance.AddComponent<Ragdoll>();
@@ -327,6 +329,111 @@ namespace ChokeHold.EditorTools
             GameObject mount = new GameObject("WeaponMount");
             mount.transform.SetParent(socket, false);
             mount.transform.SetPositionAndRotation(socket.position, Quaternion.LookRotation(forward, instance.transform.up));
+        }
+
+        /// <summary>
+        /// Rig de IK (com.unity.animation.rigging): mana stanga pe arma (TwoBoneIK, tinta sub WeaponMount) si capul
+        /// spre AimTarget (MultiAim, limitat). ThirdPersonWeaponIK pune tintele la runtime.
+        /// </summary>
+        private static void BuildRig(GameObject instance, Animator animator)
+        {
+            Transform upper = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
+            Transform lower = animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
+            Transform hand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+            Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+            Transform chest = animator.GetBoneTransform(HumanBodyBones.UpperChest);
+            Transform mount = null;
+            foreach (Transform t in instance.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "WeaponMount")
+                {
+                    mount = t;
+                }
+            }
+
+            if (upper == null || lower == null || hand == null || head == null || mount == null)
+            {
+                Debug.LogWarning($"{instance.name}: rig-ul IK nu s-a putut face (lipsesc oase sau WeaponMount).");
+                return;
+            }
+
+            GameObject rigObject = new GameObject("Rig_IK");
+            rigObject.transform.SetParent(instance.transform, false);
+            Rig rig = rigObject.AddComponent<Rig>();
+            RigBuilder builder = instance.AddComponent<RigBuilder>();
+            builder.layers.Add(new RigLayer(rig, true));
+
+            // Mana stanga: tinta sub WeaponMount (urmeaza mana dreapta animata), cotul in jos-afara
+            GameObject target = new GameObject("LeftHandTarget");
+            target.transform.SetParent(mount, false);
+            GameObject hint = new GameObject("LeftElbowHint");
+            hint.transform.SetParent(chest != null ? chest : instance.transform, false);
+            hint.transform.position = lower.position + instance.transform.TransformVector(new Vector3(-0.25f, -0.35f, 0.05f));
+
+            GameObject leftObject = new GameObject("LeftHandIK");
+            leftObject.transform.SetParent(rigObject.transform, false);
+            TwoBoneIKConstraint ik = leftObject.AddComponent<TwoBoneIKConstraint>();
+            ik.data.root = upper;
+            ik.data.mid = lower;
+            ik.data.tip = hand;
+            ik.data.target = target.transform;
+            ik.data.hint = hint.transform;
+            ik.data.targetPositionWeight = 1f;
+            ik.data.targetRotationWeight = 1f;
+            ik.data.hintWeight = 1f;
+            ik.weight = 0f;     // pornit de ThirdPersonWeaponIK.Bind cand arma are Grip_L
+
+            // Capul: axa locala a osului care priveste inainte / in sus (depinde de importul scheletului)
+            GameObject aimTarget = new GameObject("AimTarget");
+            aimTarget.transform.SetParent(instance.transform, false);
+            aimTarget.transform.position = head.position + instance.transform.forward * 10f;
+
+            GameObject headObject = new GameObject("HeadAim");
+            headObject.transform.SetParent(rigObject.transform, false);
+            MultiAimConstraint aim = headObject.AddComponent<MultiAimConstraint>();
+            aim.data.constrainedObject = head;
+            aim.data.aimAxis = ClosestAxis(head, instance.transform.forward);
+            aim.data.upAxis = ClosestAxis(head, instance.transform.up);
+            WeightedTransformArray sources = new WeightedTransformArray();
+            sources.Add(new WeightedTransform(aimTarget.transform, 1f));
+            aim.data.sourceObjects = sources;
+            aim.data.limits = new Vector2(-50f, 50f);
+            aim.data.constrainedXAxis = true;
+            aim.data.constrainedYAxis = true;
+            aim.data.constrainedZAxis = true;
+            aim.weight = 0.55f;
+
+            ThirdPersonWeaponIK component = instance.AddComponent<ThirdPersonWeaponIK>();
+            SerializedObject serialized = new SerializedObject(component);
+            serialized.FindProperty("leftHand").objectReferenceValue = ik;
+            serialized.FindProperty("leftHandTarget").objectReferenceValue = target.transform;
+            serialized.FindProperty("headAim").objectReferenceValue = aim;
+            serialized.FindProperty("aimTarget").objectReferenceValue = aimTarget.transform;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static MultiAimConstraintData.Axis ClosestAxis(Transform bone, Vector3 world)
+        {
+            (Vector3 axis, MultiAimConstraintData.Axis value)[] axes =
+            {
+                (bone.right, MultiAimConstraintData.Axis.X), (-bone.right, MultiAimConstraintData.Axis.X_NEG),
+                (bone.up, MultiAimConstraintData.Axis.Y), (-bone.up, MultiAimConstraintData.Axis.Y_NEG),
+                (bone.forward, MultiAimConstraintData.Axis.Z), (-bone.forward, MultiAimConstraintData.Axis.Z_NEG),
+            };
+
+            MultiAimConstraintData.Axis best = MultiAimConstraintData.Axis.Z;
+            float bestDot = -2f;
+            foreach (var (axis, value) in axes)
+            {
+                float dot = Vector3.Dot(axis, world);
+                if (dot > bestDot)
+                {
+                    bestDot = dot;
+                    best = value;
+                }
+            }
+
+            return best;
         }
 
         private static GameObject HitboxObject(Transform bone, HitZoneKind kind, Vector3 position, Quaternion rotation)
