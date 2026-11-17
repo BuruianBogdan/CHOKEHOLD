@@ -264,7 +264,8 @@ def build_gloves(gear, slot, fingerless=False):
             # bratara cu velcro
             limb_ring(bm, wrist - d * 0.035, d, 0.034, 0.041, 0.025, segments=14)
 
-        gear.piece(f"Glove_{'R' if s > 0 else 'L'}", glove, slot)
+        # fiecare deget al manusii urmeaza falanga cea mai apropiata (bone heat le lega pe toate de palma)
+        gear.piece(f"Glove_{'R' if s > 0 else 'L'}", glove, slot, bone="nearest")
 
 
 def build_kneepads(gear, slot):

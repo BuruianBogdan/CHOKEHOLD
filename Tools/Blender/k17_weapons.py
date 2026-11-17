@@ -97,20 +97,37 @@ def holo_sight(w, z0, y_rail):
         p.box(-0.015, y_rail + 0.015, z0 + 0.072, 0.015, axis + 0.018, z0 + 0.074, "Glass")
 
     w.part("HoloWindow", window)
+
+    if not w.tp:
+        def reticle(p):
+            # punctul rosu al holo-ului, chiar pe axa optica, in spatele ferestrei
+            p.box(-0.0012, axis - 0.0012, z0 + 0.0705, 0.0012, axis + 0.0012, z0 + 0.0712, "EmergencyGlow")
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):        # inelul de 4 repere
+                cx, cy = dx * 0.0060, axis + dy * 0.0060
+                hw, hh = (0.0012, 0.0005) if dx else (0.0005, 0.0012)
+                p.box(cx - hw, cy - hh, z0 + 0.0705, cx + hw, cy + hh, z0 + 0.0712, "EmergencyGlow")
+
+        w.part("HoloReticle", reticle)
     return axis
 
 
 def magnifier(w, z0, y_rail, axis):
+    """Magnifier 3x pe montura flip-to-side, rabatat spre dreapta (nu se foloseste: ochirea e prin holo)."""
+    tube_x = 0.042                       # tubul rabatat langa montura, in dreapta axei optice
+    tube_y = y_rail + 0.008
+
     def mag(p):
-        p.box(-0.012, y_rail, z0, 0.012, y_rail + 0.015, z0 + 0.055, "GunMetal")
-        p.cylinder((0.0, axis, z0 - 0.005), "z", 0.017, 0.065, "Polymer", segments=w.seg)
-        p.cylinder((0.0, axis, z0 + 0.052), "z", 0.019, 0.010, "GunMetal", segments=w.seg)
-        p.cylinder((0.0, axis, z0 - 0.012), "z", 0.019, 0.008, "GunMetal", segments=w.seg)
+        p.box(-0.012, y_rail, z0, 0.012, y_rail + 0.015, z0 + 0.055, "GunMetal")                    # baza pe sina
+        p.box(0.010, y_rail + 0.006, z0 + 0.010, tube_x - 0.012, y_rail + 0.016, z0 + 0.045, "GunMetal")  # bratul balamalei
+        p.cylinder((0.014, y_rail + 0.011, z0 + 0.010), "z", 0.006, 0.035, "GunMetal", segments=8)       # balamaua
+        p.cylinder((tube_x, tube_y, z0 - 0.005), "z", 0.017, 0.065, "Polymer", segments=w.seg)
+        p.cylinder((tube_x, tube_y, z0 + 0.052), "z", 0.019, 0.010, "GunMetal", segments=w.seg)
+        p.cylinder((tube_x, tube_y, z0 - 0.012), "z", 0.019, 0.008, "GunMetal", segments=w.seg)
 
     w.part("Magnifier", mag)
 
     def lens(p):
-        p.cylinder((0.0, axis, z0 + 0.061), "z", 0.015, 0.002, "Glass", segments=w.seg)
+        p.cylinder((tube_x, tube_y, z0 + 0.061), "z", 0.015, 0.002, "Glass", segments=w.seg)
 
     w.part("MagnifierLens", lens)
 
@@ -131,6 +148,12 @@ def red_dot(w, z0, y_top):
         p.box(-0.010, y_top + 0.012, z0 + 0.042, 0.010, axis + 0.012, z0 + 0.044, "Glass")
 
     w.part("RedDotLens", lens)
+
+    if not w.tp:
+        def reticle(p):
+            p.box(-0.0010, axis - 0.0010, z0 + 0.0405, 0.0010, axis + 0.0010, z0 + 0.0412, "EmergencyGlow")
+
+        w.part("RedDotReticle", reticle)
     return axis
 
 

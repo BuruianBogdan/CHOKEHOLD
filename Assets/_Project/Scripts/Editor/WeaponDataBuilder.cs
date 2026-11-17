@@ -61,7 +61,8 @@ namespace ChokeHold.EditorTools
             data.hipSpread = hipSpread;
             data.aimSpread = aimSpread;
             data.aimFieldOfView = aimFov;
-            data.firstPersonOffset = kind == WeaponKind.Rifle ? new Vector3(0.14f, -0.16f, 0.30f) : new Vector3(0.12f, -0.13f, 0.34f);
+            data.firstPersonOffset = kind == WeaponKind.Rifle ? new Vector3(0.12f, -0.15f, 0.30f) : new Vector3(0.10f, -0.13f, 0.33f);
+            data.adsEyeRelief = kind == WeaponKind.Rifle ? 0.13f : 0.26f;
             EditorUtility.SetDirty(data);
 
             Debug.Log($"WeaponData: {path} (FP={data.firstPersonPrefab != null}, TP={data.thirdPersonPrefab != null})");

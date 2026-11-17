@@ -131,6 +131,20 @@ namespace ChokeHold.Gameplay
                 model.transform.localRotation = Quaternion.identity;
                 sockets = model.GetComponent<WeaponSockets>();
 
+                // Hip-fire: manerul la offset-ul armei. ADS: socket-ul Sight pe axa camerei, la distanta ochiului.
+                weaponHolder.localPosition = data.firstPersonOffset;
+                if (sockets != null && sockets.Sight != null)
+                {
+                    Vector3 sight = weaponHolder.InverseTransformPoint(sockets.Sight.position);
+                    aimPosition = new Vector3(-sight.x, -sight.y, data.adsEyeRelief - sight.z);
+                }
+
+                // Reincarcarea se vede acum pe arma (FirstPersonAnimator); holder-ul doar coboara putin.
+                if (GetComponent<FirstPersonAnimator>() != null)
+                {
+                    reloadOffset = new Vector3(0f, -0.02f, -0.02f);
+                }
+
                 if (sockets != null && sockets.Muzzle != null && muzzleFlash != null)
                 {
                     muzzleFlash.transform.SetParent(sockets.Muzzle, false);

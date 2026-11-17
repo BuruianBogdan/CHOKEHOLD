@@ -385,6 +385,14 @@ def auto_skin(obj, arm):
     bpy.ops.object.parent_set(type="ARMATURE_AUTO")
 
 
+def nearest_skin(obj, arm):
+    """Fiecare vertex pe osul deformant cel mai apropiat (greutate 1): pentru manusi, ca degetele sa se indoaie."""
+    obj.parent = arm
+    modifier = obj.modifiers.new("Armature", "ARMATURE")
+    modifier.object = arm
+    fix_unweighted(obj, arm)
+
+
 def fix_unweighted(obj, arm):
     """Vertecsii ramasi fara greutate (bone heat esueaza pe piese mici) merg pe cel mai apropiat os deformant."""
     bones = [(b.name, arm.matrix_world @ b.head_local, arm.matrix_world @ b.tail_local)
@@ -410,6 +418,84 @@ def fix_unweighted(obj, arm):
     return fixed
 
 
+# Mainile de la persoana intai: aceleasi maneci, manusi si cotiere ca modelul complet (din LOD0), fara restul
+# corpului. Scheletul ramane intreg (aceleasi nume de oase), ca IK-ul din Unity sa lucreze pe UpperArm/LowerArm/Hand.
+# nume -> (mesh FP, pastreaza pielea): cu manusi intregi pielea e toata acoperita si doar ar strapunge manusa
+FP_ARMS = {"CT_Operator": ("FPArms_CT", False), "T_Insurgent_A": ("FPArms_T", True)}
+FP_ARM_BONES = ("UpperArm", "LowerArm", "Hand", "Thumb", "Index", "Middle", "Ring", "Little")
+FP_ARMS_TRIANGLES = 10000
+FP_MIN_ISLAND = 60            # insulele cu mai putini vertecsi (petice plate, resturi) nu intra in mainile FP
+
+
+def export_fp_arms(name, body, arm):
+    if name not in FP_ARMS:
+        return
+    fp_name, keep_skin = FP_ARMS[name]
+    fp = body.copy()
+    fp.data = body.data.copy()
+    fp.name = fp_name
+    fp.data.name = fp_name
+    link(fp)
+
+    arm_groups = {g.index for g in fp.vertex_groups if any(k in g.name for k in FP_ARM_BONES)}
+    bm = bmesh.new()
+    bm.from_mesh(fp.data)
+    deform = bm.verts.layers.deform.verify()
+    doomed = [v for v in bm.verts if sum(w for g, w in v[deform].items() if g in arm_groups) < 0.5]
+    bmesh.ops.delete(bm, geom=doomed, context="VERTS")
+    if not keep_skin:
+        skin_index = next((i for i, m in enumerate(fp.data.materials) if m and m.name == "Skin"), -1)
+        hidden = [face for face in bm.faces if face.material_index == skin_index]
+        bmesh.ops.delete(bm, geom=hidden, context="FACES")
+    bm.to_mesh(fp.data)
+    bm.free()
+
+    # Bucatile mici ramase separate (petice, benzi, resturi de umar) ar pluti langa camera: se scot.
+    bm = bmesh.new()
+    bm.from_mesh(fp.data)
+    bm.verts.ensure_lookup_table()
+    seen = set()
+    small = []
+    for start in bm.verts:
+        if start.index in seen:
+            continue
+        island = []
+        stack = [start]
+        seen.add(start.index)
+        while stack:
+            v = stack.pop()
+            island.append(v)
+            for e in v.link_edges:
+                o = e.other_vert(v)
+                if o.index not in seen:
+                    seen.add(o.index)
+                    stack.append(o)
+        if len(island) < FP_MIN_ISLAND:
+            small.extend(island)
+    bmesh.ops.delete(bm, geom=small, context="VERTS")
+    bm.to_mesh(fp.data)
+    bm.free()
+    print(f"FP ARMS {fp_name}: {len(small)} vertecsi din insule mici scosi")
+
+    tris = triangle_count(fp)
+    if tris > FP_ARMS_TRIANGLES:
+        decimate = fp.modifiers.new("Decimate", "DECIMATE")
+        decimate.ratio = FP_ARMS_TRIANGLES / tris
+        apply_modifier(fp, decimate)
+
+    # materialele nefolosite (casca, vesta...) nu mai intra in FBX
+    used = {p.material_index for p in fp.data.polygons}
+    for index in sorted(range(len(fp.data.materials)), reverse=True):
+        if index not in used:
+            fp.data.materials.pop(index=index)
+
+    path = os.path.join(REPO, "Assets", "_Project", "Art", "Characters", "FPArms", f"{fp_name}.fbx")
+    export_fbx(path, [arm, fp])
+    print(f"FP ARMS {fp_name}: {triangle_count(fp)} triunghiuri, materiale: {', '.join(m.name for m in fp.data.materials)}")
+    print("FBX", os.path.relpath(path, REPO))
+    bpy.data.objects.remove(fp)
+
+
 def build_character(name, builder):
     reset_scene()
     arm = build_armature()
@@ -418,7 +504,9 @@ def build_character(name, builder):
     builder(gear)
 
     for obj, bone in gear.pieces:
-        if bone:
+        if bone == "nearest":
+            nearest_skin(obj, arm)
+        elif bone:
             rigid_skin(obj, arm, bone)
         else:
             auto_skin(obj, arm)
@@ -461,6 +549,8 @@ def build_character(name, builder):
         decimate.ratio = min(1.0, budget / tris0)
         apply_modifier(lod, decimate)
         lods.append(lod)
+
+    export_fp_arms(name, body, arm)
 
     unweighted = sum(1 for v in body.data.vertices if not any(g.weight > 0.001 for g in v.groups))
     print(f"CHARACTER {name}: LOD0 {triangle_count(lods[0])} / LOD1 {triangle_count(lods[1])} / LOD2 {triangle_count(lods[2])} "

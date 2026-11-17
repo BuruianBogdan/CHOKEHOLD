@@ -24,6 +24,7 @@ namespace ChokeHold.Gameplay
         public GameObject firstPersonPrefab;
         public GameObject thirdPersonPrefab;
         public Vector3 firstPersonOffset = new Vector3(0.12f, -0.14f, 0.32f);   // pozitia manerului fata de camera, in hip-fire
+        public float adsEyeRelief = 0.10f;                                         // distanta ochi - socket Sight la ADS (m)
 
         [Header("Statistici")]
         public float damage = 30f;

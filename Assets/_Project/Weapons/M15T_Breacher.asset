@@ -17,7 +17,8 @@ MonoBehaviour:
   team: 0
   firstPersonPrefab: {fileID: 1983837828436036376, guid: 5fe3630afa7b684408c34b9b5a817526, type: 3}
   thirdPersonPrefab: {fileID: 2730184439615514361, guid: 84d60cfb15deac64586ed98a57b33945, type: 3}
-  firstPersonOffset: {x: 0.12, y: -0.13, z: 0.34}
+  firstPersonOffset: {x: 0.1, y: -0.13, z: 0.33}
+  adsEyeRelief: 0.26
   damage: 45
   fireRate: 5
   automatic: 0

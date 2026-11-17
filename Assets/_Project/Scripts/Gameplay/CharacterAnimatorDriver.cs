@@ -76,7 +76,7 @@ namespace ChokeHold.Gameplay
 
         private void Start()
         {
-            bomb = FindFirstObjectByType<BombController>();
+            bomb = FindAnyObjectByType<BombController>();
             leanLayer = animator.runtimeAnimatorController != null ? animator.GetLayerIndex("Lean") : -1;
         }
 

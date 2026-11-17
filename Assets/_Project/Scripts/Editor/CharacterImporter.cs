@@ -60,12 +60,14 @@ namespace ChokeHold.EditorTools
             importer.importLights = false;
             importer.materialImportMode = animation ? ModelImporterMaterialImportMode.None : ModelImporterMaterialImportMode.ImportStandard;
             importer.materialLocation = ModelImporterMaterialLocation.InPrefab;
-            importer.animationType = ModelImporterAnimationType.Human;
+            // Mainile FP se misca prin IK din cod: rig Generic, fara avatar
+            bool fpArms = assetPath.Contains("/FPArms/");
+            importer.animationType = fpArms ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.Human;
 
             // Fiecare FBX (personaj sau clip) are acelasi schelet K17, deci isi creeaza propriul avatar
             // Humanoid; retargetarea intre ele merge prin spatiul Humanoid. (Copierea avatarului din
             // corpul de baza esueaza cand radacina modelului are alt nume.)
-            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            importer.avatarSetup = fpArms ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel;
 
             importer.importAnimation = animation;
             importer.optimizeGameObjects = false;   // oasele raman accesibile pentru socket-uri si hitbox-uri

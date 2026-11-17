@@ -702,6 +702,7 @@ namespace ChokeHold.EditorTools
             SerializedObject serialized = new SerializedObject(weapon);
             serialized.FindProperty("data").objectReferenceValue = data;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            FirstPersonBuilder.WirePlayer(player);
         }
 
         /// <summary>CharacterVisuals cu prefab-urile personajelor si arma TP data (dupa numele asset-ului WeaponData).</summary>
