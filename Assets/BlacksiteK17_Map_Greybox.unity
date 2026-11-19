@@ -67902,8 +67902,8 @@ Transform:
   m_GameObject: {fileID: 235241943}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5, z: 0}
-  m_LocalScale: {x: 6, y: 3, z: 0.15}
+  m_LocalPosition: {x: 0, y: 1.8462, z: 0}
+  m_LocalScale: {x: 6, y: 3.6924, z: 0.15}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 297870940}
@@ -142529,7 +142529,7 @@ Transform:
   m_GameObject: {fileID: 488563889}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 1.35, y: 0, z: -1.125}
+  m_LocalPosition: {x: 1.119, y: -0.021, z: -1.064}
   m_LocalScale: {x: 0.63, y: 0.01, z: 2.1599998}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -231677,8 +231677,8 @@ Transform:
   m_GameObject: {fileID: 793177982}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -62, y: 0.6, z: 5.975}
-  m_LocalScale: {x: 12, y: 0.7, z: 0.05}
+  m_LocalPosition: {x: -62.0689, y: 0.6, z: 5.975}
+  m_LocalScale: {x: 12.1380005, y: 0.7, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1885232409}
@@ -251322,7 +251322,7 @@ Transform:
   m_GameObject: {fileID: 859460372}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -74, y: 0.125, z: 5.97}
+  m_LocalPosition: {x: -73.883, y: 0.125, z: 5.97}
   m_LocalScale: {x: 8, y: 0.25, z: 0.06}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -269210,8 +269210,8 @@ Transform:
   m_GameObject: {fileID: 924497358}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 1.8000007}
-  m_LocalScale: {x: 0.9000003, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1.9026}
+  m_LocalScale: {x: 0.79740024, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 444116763}
@@ -372441,7 +372441,7 @@ Transform:
   m_GameObject: {fileID: 1273371846}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -74, y: 0.6, z: 5.975}
+  m_LocalPosition: {x: -73.883, y: 0.6, z: 5.975}
   m_LocalScale: {x: 8, y: 0.7, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -373307,8 +373307,8 @@ Transform:
   m_GameObject: {fileID: 1277489059}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 1.125, y: 0, z: 1.125}
-  m_LocalScale: {x: 0.63, y: 0.01, z: 2.1599998}
+  m_LocalPosition: {x: 1.1345, y: -0, z: 1.1856}
+  m_LocalScale: {x: 0.610974, y: 0.01, z: 2.2811759}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 768231911}
@@ -406751,8 +406751,8 @@ Transform:
   m_GameObject: {fileID: 1399463093}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -1.8000004}
-  m_LocalScale: {x: 0.9000003, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -1.2871}
+  m_LocalScale: {x: 0.79740024, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 444116763}
@@ -448788,8 +448788,8 @@ Transform:
   m_GameObject: {fileID: 1545575907}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.000000059604645}
-  m_LocalScale: {x: 0.9000003, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.3078}
+  m_LocalScale: {x: 0.79740024, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 444116763}
@@ -508142,8 +508142,8 @@ Transform:
   m_GameObject: {fileID: 1748107980}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -62, y: 0.125, z: 5.97}
-  m_LocalScale: {x: 12, y: 0.25, z: 0.06}
+  m_LocalPosition: {x: -62.0689, y: 0.125, z: 5.97}
+  m_LocalScale: {x: 12.1380005, y: 0.25, z: 0.06}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1885232409}
@@ -508215,6 +508215,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1749362982}
   - component: {fileID: 1749362983}
+  - component: {fileID: 1749362984}
   m_Layer: 0
   m_Name: Light_Facade
   m_TagString: Untagged
@@ -508302,6 +508303,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1749362984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1749362981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1749633430
 GameObject:
   m_ObjectHideFlags: 0
@@ -565912,6 +565942,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1960787461}
   - component: {fileID: 1960787462}
+  - component: {fileID: 1960787463}
   m_Layer: 0
   m_Name: Light_Facade
   m_TagString: Untagged
@@ -565999,6 +566030,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1960787463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1960787460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1960881641
 GameObject:
   m_ObjectHideFlags: 0

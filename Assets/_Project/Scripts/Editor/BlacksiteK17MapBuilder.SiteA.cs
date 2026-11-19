@@ -104,7 +104,7 @@ namespace ChokeHold.EditorTools
             Block(gStructures, "A_Generator", -46f, 34f, -42f, 38f, 2.5f);
 
             // Cover: pozitii de plant (generator, lada), de aparare (platforma, sub Heaven) si de intrare.
-            HighCover(-46f, 27f, -46f, 32.4f);           // taie banda de sud dinspre usa A Pipes
+            HighCover(-46f, 27.6f, -46f, 32.4f);         // taie banda de sud dinspre usa A Pipes (capatul de sud scurtat cu 0,6 m)
             HighCover(-44f, 27f, -37f, 27f);           // paravan in spatele usii duble din A Control
             LowCover(-54f, 36f, -54f, 38f);            // culoarul A Pipes
             BigCrate(-41f, 53f);                       // coltul de nord, sub luminator

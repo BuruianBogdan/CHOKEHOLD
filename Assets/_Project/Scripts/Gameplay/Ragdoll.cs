@@ -76,8 +76,11 @@ namespace ChokeHold.Gameplay
 
             foreach (Rigidbody body in bodies)
             {
+                // detectCollisions ramane pornit: hitbox-urile sunt copii ai oaselor cu Rigidbody, deci fac parte
+                // din corpurile astea; cu detectCollisions oprit, razele gloantelor le-ar ignora. Cat timp traieste,
+                // colliderele ragdoll-ului sunt oprite, iar hitbox-urile stau pe un layer fara coliziuni.
                 body.isKinematic = alive;
-                body.detectCollisions = !alive;
+                body.detectCollisions = true;
 
                 if (!alive)
                 {

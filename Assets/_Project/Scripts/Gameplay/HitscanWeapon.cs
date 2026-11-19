@@ -285,17 +285,9 @@ namespace ChokeHold.Gameplay
                 spreadDirection
             );
 
-            if (
-                Physics.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    range,
-                    // Stratul "Ignore Raycast" tine barierele invizibile pentru jucatori (marginea acoperisurilor):
-                    // gloantele trec prin ele.
-                    hitMask & ~(1 << 2),
-                    QueryTriggerInteraction.Ignore
-                )
-            )
+            // Stratul "Ignore Raycast" tine barierele invizibile pentru jucatori (marginea acoperisurilor):
+            // gloantele trec prin ele.
+            if (FirstHit(ray, hitMask & ~(1 << 2), out RaycastHit hit))
             {
                 SpawnImpactEffect(hit);
 
@@ -334,6 +326,31 @@ namespace ChokeHold.Gameplay
             }
         }
         
+        private readonly RaycastHit[] hits = new RaycastHit[32];
+
+        /// <summary>
+        /// Cel mai apropiat obiect lovit care nu e al tragatorului: camera sta in capul propriului personaj,
+        /// iar hitbox-urile lui (brate, piept, picioare) nu trebuie sa opreasca glontul.
+        /// </summary>
+        private bool FirstHit(Ray ray, int mask, out RaycastHit best)
+        {
+            best = default;
+            Transform self = fpsController != null ? fpsController.transform : transform.root;
+            int count = Physics.RaycastNonAlloc(ray, hits, range, mask, QueryTriggerInteraction.Ignore);
+            float nearest = float.MaxValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (hits[i].distance < nearest && !hits[i].collider.transform.IsChildOf(self))
+                {
+                    nearest = hits[i].distance;
+                    best = hits[i];
+                }
+            }
+
+            return nearest < float.MaxValue;
+        }
+
         private void UpdateCrosshair()
         {
             if (crosshairUI == null)

@@ -24,7 +24,26 @@ namespace ChokeHold.Gameplay
         private void Awake()
         {
             member = GetComponent<TeamMember>();
+            AddBodyBlocker();
             Spawn();
+        }
+
+        /// <summary>
+        /// Tintele n-au CharacterController, iar hitbox-urile nu se ciocnesc cu nimic: o capsula pe "Ignore Raycast"
+        /// opreste jucatorii sa treaca prin ele, fara sa opreasca gloantele (HitscanWeapon ignora layer-ul 2).
+        /// </summary>
+        private void AddBodyBlocker()
+        {
+            if (GetComponent<CharacterController>() != null || GetComponent<Collider>() != null)
+            {
+                return;
+            }
+
+            CapsuleCollider blocker = gameObject.AddComponent<CapsuleCollider>();
+            blocker.center = new Vector3(0f, 0.9f, 0f);
+            blocker.height = 1.8f;
+            blocker.radius = 0.28f;
+            gameObject.layer = 2;
         }
 
         public void Spawn()

@@ -418,11 +418,45 @@ namespace ChokeHold.EditorTools
                 y1 += 0.004f;
             }
 
-            Vector3 mid = face.Start + face.Along * (face.Length * 0.5f) + face.Normal * (depth * 0.5f);
+            Vector3 start = face.Start;
+            float length = face.Length;
+            TrimFix(ref start, ref length, face);
+
+            Vector3 mid = start + face.Along * (length * 0.5f) + face.Normal * (depth * 0.5f);
             mid.y = face.BaseY + (y0 + y1) * 0.5f;
 
-            Vector3 size = face.Along * face.Length + Abs(face.Normal) * depth + Vector3.up * (y1 - y0);
+            Vector3 size = face.Along * length + Abs(face.Normal) * depth + Vector3.up * (y1 - y0);
             Decor(parent, name, mid, size, material);
+        }
+
+        /// <summary>
+        /// Capete de benzi potrivite de mana in scena (peretele de exterior de la z = 6, intre x = -78 si -56):
+        /// benzile ajung pana la ancadramentul usii dintre fete. (centru x, z, lungime) ->
+        /// (cat se muta inceputul, cat se muta capatul), pe directia fetei.
+        /// </summary>
+        private static readonly (float x, float z, float length, float startShift, float endShift)[] TrimFixes =
+        {
+            (-74f, 5.95f, 8f, 0.117f, 0.117f),
+            (-62f, 5.95f, 12f, -0.138f, 0f),
+        };
+
+        private static void TrimFix(ref Vector3 start, ref float length, Face face)
+        {
+            if (face.Along != Vector3.right)
+            {
+                return;
+            }
+
+            Vector3 center = face.Start + face.Along * (face.Length * 0.5f);
+            foreach (var fix in TrimFixes)
+            {
+                if (Mathf.Abs(center.x - fix.x) < 0.05f && Mathf.Abs(center.z - fix.z) < 0.2f && Mathf.Abs(face.Length - fix.length) < 0.05f)
+                {
+                    start += face.Along * fix.startShift;
+                    length += fix.endShift - fix.startShift;
+                    return;
+                }
+            }
         }
 
         private static Vector3 Abs(Vector3 v)
@@ -981,6 +1015,8 @@ namespace ChokeHold.EditorTools
         {
             // Dungi in patratul unitate [-0.5, 0.5], cu "sus" pe +Z.
             Vector4[] strokes;
+            float[] widths = null;      // latimea fiecarei dungi, fata de cea comuna
+            float[] drops = null;       // cat coboara dunga (m), ca suprapunerile sa nu clipeasca
 
             switch (letter)
             {
@@ -1000,9 +1036,13 @@ namespace ChokeHold.EditorTools
                         new Vector4(-0.3f, 0.5f, 0.15f, 0.5f),
                         new Vector4(-0.3f, 0f, 0.15f, 0f),
                         new Vector4(-0.3f, -0.5f, 0.2f, -0.5f),
-                        new Vector4(0.25f, 0.42f, 0.25f, 0.08f),
-                        new Vector4(0.3f, -0.08f, 0.3f, -0.42f),
+                        // burtile, corectate in scena: lipite de barele orizontale; cea de jos sta cu 2 cm mai jos,
+                        // ca suprapunerea cu barele sa nu clipeasca
+                        new Vector4(0.2521f, 0.4491f, 0.2521f, 0.0779f),
+                        new Vector4(0.2487f, -0.0664f, 0.2487f, -0.4064f),
                     };
+                    widths = new[] { 1f, 1f, 1f, 1f, 0.9698f, 1f };
+                    drops = new[] { 0f, 0f, 0f, 0f, 0f, 0.021f };
                     break;
             }
 
@@ -1017,12 +1057,17 @@ namespace ChokeHold.EditorTools
                 Vector3 p0 = new Vector3(strokes[k].x, 0f, strokes[k].y) * size;
                 Vector3 p1 = new Vector3(strokes[k].z, 0f, strokes[k].w) * size;
                 Vector3 local = (p0 + p1) * 0.5f;
-                float length = Vector3.Distance(p0, p1) + width;
+                float strokeWidth = widths != null ? width * widths[k] : width;
+                float length = Vector3.Distance(p0, p1) + strokeWidth;
+                if (drops != null)
+                {
+                    local.y -= drops[k];
+                }
 
-                GameObject stroke = Decor(group, $"Stroke_{k}", Vector3.zero, new Vector3(width, 0.01f, length), markingMat);
+                GameObject stroke = Decor(group, $"Stroke_{k}", Vector3.zero, new Vector3(strokeWidth, 0.01f, length), markingMat);
                 stroke.transform.localPosition = local;
                 stroke.transform.localRotation = Quaternion.LookRotation((p1 - p0).normalized);
-                stroke.transform.localScale = new Vector3(width, 0.01f, length);
+                stroke.transform.localScale = new Vector3(strokeWidth, 0.01f, length);
             }
         }
 

@@ -88,7 +88,7 @@ namespace ChokeHold.EditorTools
 
             Barricade(gBarricades, "Barricade_Lab2_WestDoor", -11f, 23f, up, 2f, 3f, false);
             Barricade(gBarricades, "Barricade_Lab2_AnnexDoor", 19f, 37f, up, 2f, 3f, false);
-            Barricade(gBarricades, "Barricade_Lab2_NorthBalcony", 3f, 40f, up, 6f, 3f, true);
+            Barricade(gBarricades, "Barricade_Lab2_NorthBalcony", 3f, 40f, up, 6f, 3.6924f, true);   // pana sub tavanul etajului
 
             // Pod de la balconul de nord la North Catwalk
             CreatePlatform(gUpper, "Bridge_Catwalk_To_Lab", 1f, 44f, 5f, 52f, up);

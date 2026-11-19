@@ -30,6 +30,14 @@ namespace ChokeHold.EditorTools
         {
             BlacksiteK17MapBuilder.EnsureFolder(PrefabFolder);
 
+            // Hitbox-urile au layer-ul lor: primesc gloantele, nu se ciocnesc cu nimic (setarea se salveaza in proiect)
+            FirstPersonBuilder.EnsureLayer(HitZone.LayerName);
+            int hitboxLayer = LayerMask.NameToLayer(HitZone.LayerName);
+            for (int other = 0; hitboxLayer >= 0 && other < 32; other++)
+            {
+                Physics.IgnoreLayerCollision(hitboxLayer, other, true);
+            }
+
             foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { CharactersFolder }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -206,10 +214,9 @@ namespace ChokeHold.EditorTools
             (HumanBodyBones, Vector3, Vector3, HitZoneKind)[] boxes =
             {
                 (HumanBodyBones.UpperChest, new Vector3(0f, 0.08f, 0.01f), new Vector3(0.40f, 0.18f, 0.30f), HitZoneKind.Chest),
+                (HumanBodyBones.Chest, new Vector3(0f, 0.065f, 0.01f), new Vector3(0.37f, 0.17f, 0.28f), HitZoneKind.Chest),
                 (HumanBodyBones.Spine, new Vector3(0f, 0.07f, 0.01f), new Vector3(0.34f, 0.26f, 0.26f), HitZoneKind.Chest),
                 (HumanBodyBones.Hips, new Vector3(0f, -0.03f, -0.01f), new Vector3(0.36f, 0.22f, 0.26f), HitZoneKind.Abdomen),
-                (HumanBodyBones.RightHand, new Vector3(0f, 0f, 0f), new Vector3(0.10f, 0.05f, 0.18f), HitZoneKind.Arm),
-                (HumanBodyBones.LeftHand, new Vector3(0f, 0f, 0f), new Vector3(0.10f, 0.05f, 0.18f), HitZoneKind.Arm),
                 (HumanBodyBones.RightFoot, new Vector3(0f, -0.03f, 0.08f), new Vector3(0.11f, 0.09f, 0.28f), HitZoneKind.Leg),
                 (HumanBodyBones.LeftFoot, new Vector3(0f, -0.03f, 0.08f), new Vector3(0.11f, 0.09f, 0.28f), HitZoneKind.Leg),
             };
@@ -222,6 +229,18 @@ namespace ChokeHold.EditorTools
                 // Cutia e aliniata cu personajul (nu cu osul), ca dimensiunile sa fie previzibile.
                 GameObject go = HitboxObject(t, kind, t.position + offset, Quaternion.identity);
                 go.AddComponent<BoxCollider>().size = size;
+                count++;
+            }
+
+            // Mainile: cutii pe directia palmei (spre MiddleProximal), nu pe axele personajului
+            foreach ((HumanBodyBones hand, HumanBodyBones middle) in new[] { (HumanBodyBones.RightHand, HumanBodyBones.RightMiddleProximal), (HumanBodyBones.LeftHand, HumanBodyBones.LeftMiddleProximal) })
+            {
+                Transform h = Bone(hand), m = Bone(middle);
+                if (h == null || m == null) continue;
+
+                Vector3 along = m.position - h.position;
+                GameObject go = HitboxObject(h, HitZoneKind.Arm, h.position + along * 0.8f, Quaternion.LookRotation(along, instance.transform.forward));
+                go.AddComponent<BoxCollider>().size = new Vector3(0.10f, 0.05f, along.magnitude * 1.9f);
                 count++;
             }
 
