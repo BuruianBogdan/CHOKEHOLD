@@ -79,6 +79,50 @@ namespace ChokeHold.EditorTools
             Debug.Log($"Texturare: {replaced} cutii cu UV la scara reala ({cache.Count} plase, {created} noi).");
         }
 
+        /// <summary>
+        /// Dupa editari de mana in scena (cutii scalate): cutiile a caror plasa nu mai corespunde dimensiunii primesc
+        /// plasa potrivita, cu UV la scara reala. Pozitiile si scarile raman cum le-ai lasat; scena se salveaza.
+        /// </summary>
+        [MenuItem("CHOKEHOLD/Map/Refresh Box UVs")]
+        public static void RefreshBoxUVs()
+        {
+            GameObject root = GameObject.Find("MAP_BlacksiteK17_Generated");
+            if (root == null)
+            {
+                Debug.LogWarning("Harta generata nu e in scena.");
+                return;
+            }
+
+            Mesh cube = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+            int stale = 0;
+
+            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                Mesh current = filter.sharedMesh;
+                if (current == null || !current.name.StartsWith("Box_"))
+                {
+                    continue;
+                }
+
+                Vector3 size = Abs(filter.transform.lossyScale);
+                string key = $"Box_{Mathf.RoundToInt(size.x * 100f)}_{Mathf.RoundToInt(size.y * 100f)}_{Mathf.RoundToInt(size.z * 100f)}";
+                if (current.name != key)
+                {
+                    filter.sharedMesh = cube;      // BakeBoxUVs inlocuieste doar cuburile primitive
+                    stale++;
+                }
+            }
+
+            if (stale > 0)
+            {
+                BakeBoxUVs(root);
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
+                UnityEditor.SceneManagement.EditorSceneManager.SaveScene(root.scene);
+            }
+
+            Debug.Log($"Refresh Box UVs: {stale} cutii cu plasa actualizata.");
+        }
+
         /// <summary>Cub unitate (-0,5..0,5) cu UV in metri pentru dimensiunea data si UV2 pentru lightmap.</summary>
         private static Mesh CreateUVBox(string name, Vector3 size)
         {

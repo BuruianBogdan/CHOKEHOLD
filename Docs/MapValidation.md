@@ -10,11 +10,11 @@ Generat de `CHOKEHOLD > Map > Validate`. Ușile sunt considerate deschise, baric
 
 ## 2. Găuri în podea
 
-- ok — 12864 celule de 1 m verificate în 68 zone, nicio gaură
+- ok — 12862 celule de 1 m verificate în 68 zone, nicio gaură
 
 ## 3. Conectivitate
 
-- ok — 14529 poziții accesibile din spawn-ul T1
+- ok — 14528 poziții accesibile din spawn-ul T1
 - ok — nicio poziție accesibilă în afara conturului hărții
 - ok — 68 din 68 zone accesibile
 - ok — 37 din 37 plăci și platforme de etaj accesibile
@@ -70,7 +70,7 @@ Linie intenționată: North Catwalk, 100.3 m, de la (45, 53) la (-55.3, 53).
 
 ## 8. Pregătire pentru texturi
 
-- ok — 3996 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
+- ok — 3998 cutii cu UV la scară reală (1 unitate UV = 1 m) și UV2 pentru lightmap
 - ok — 1405 piese din kit-ul modular (`Assets/_Project/Art/Models/Kit`), cu UV în metri
 - ok — 53 materiale, câte unul pe tip de suprafață (`Assets/_Project/Art/Materials/Greybox`): înlocuind un material se texturează toate suprafețele de acel tip
 - ok — nicio față de sus suprapusă în același plan (fără z-fighting pe podele, capace și plăci)
@@ -88,7 +88,7 @@ Drumul cel mai scurt pe jos (grilă de 1 m, cu scări și tuneluri), până la p
 
 ## 10. Acoperișuri și camera de control
 
-- ok — 3 scări de mână (Ladder_LabRoof 8.5 m, Ladder_OutpostTower 4 m, Ladder_CourtyardShed 4 m)
+- ok — 3 scări de mână (Ladder_OutpostTower 4 m, Ladder_LabRoof 8.5 m, Ladder_CourtyardShed 4 m)
 - ok — Lab Roof (8.4 m) vede în jos spre: Mid Connector, Mid East Corridor, South Courtyard, North Overlook
 - ok — Control Room (8.4 m) vede în jos spre: nicio zonă de la sol (doar acoperișul)
 - ok — Outpost Tower Roof (4 m) vede în jos spre: West Outpost, T1 Ramp, A Pipes South Door

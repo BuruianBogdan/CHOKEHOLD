@@ -51,6 +51,8 @@ namespace ChokeHold.EditorTools
             Partition("Part_Outpost_South", -60f, -22f, -54f, -22f, full, DoubleGap(3f));
             Partition("Part_Outpost_East", -54f, -22f, -54f, -16f, full);
             Partition("Part_T1Ramp_Walkway", -36f, -22f, -36f, -16f, full, DoubleGap(3f));
+            // Inchide fanta de 1,5 m dintre capatul peretelui de pasarela si coloana de colt a cladirii de la est (z = -22)
+            Partition("Part_T1Ramp_Walkway_Link", -35.75f, -21.74f, -34.25f, -21.74f, full);
             Partition("Part_Walkway_Courtyard", -28f, -22f, -28f, -14f, full, DoorGap(2f));
             Partition("Part_Walkway_Courtyard_Corner", -28f, -14f, -26f, -14f, full);
 
