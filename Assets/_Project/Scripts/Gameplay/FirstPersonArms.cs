@@ -30,6 +30,9 @@ namespace ChokeHold.Gameplay
         private Transform rightTarget;
         private Transform leftTarget;
         private WeaponKind kind;
+        private LeftGrip leftGrip = LeftGrip.Handguard;
+        private bool reverseGrip;               // cutit tinut invers (karambit)
+        private Renderer[] renderers;
 
         private Vector3 leftOverridePosition;
         private Quaternion leftOverrideRotation;
@@ -38,10 +41,31 @@ namespace ChokeHold.Gameplay
         /// <summary>Arma pe care stau mainile: socket-urile Grip_R / Grip_L si tipul (pozitia mainilor difera).</summary>
         public void Bind(WeaponSockets sockets, WeaponKind weaponKind)
         {
+            Bind(sockets, weaponKind, weaponKind == WeaponKind.Pistol ? LeftGrip.PistolSupport : LeftGrip.Handguard);
+        }
+
+        /// <summary>Ca mai sus, cu felul in care sta mana stanga (None = mana stanga nu tine arma, ex. cutitul).</summary>
+        public void Bind(WeaponSockets sockets, WeaponKind weaponKind, LeftGrip grip, bool reverse = false)
+        {
+            reverseGrip = reverse;
             weaponRoot = sockets != null ? sockets.transform : null;
             rightTarget = sockets != null ? sockets.GripRight : null;
-            leftTarget = sockets != null ? sockets.GripLeft : null;
+            leftTarget = sockets != null && grip != LeftGrip.None ? sockets.GripLeft : null;
             kind = weaponKind;
+            leftGrip = grip;
+        }
+
+        /// <summary>Ascunde mainile (luneta: se vede doar ecranul lunetei).</summary>
+        public bool Hidden
+        {
+            set
+            {
+                renderers ??= GetComponentsInChildren<Renderer>(true);
+                foreach (Renderer r in renderers)
+                {
+                    if (r != null) r.enabled = !value;
+                }
+            }
         }
 
         /// <summary>Trimite mana stanga la o pozitie (in spatiul lumii); weight 0 = inapoi pe arma.</summary>
@@ -85,9 +109,9 @@ namespace ChokeHold.Gameplay
 
             if (rightTarget != null)
             {
-                Quaternion hand = GripPose.HandRotation(weaponRoot.rotation, true, kind, right.RestFrameInverse);
+                Quaternion hand = GripPose.HandRotation(weaponRoot.rotation, true, kind, leftGrip, reverseGrip, right.RestFrameInverse);
                 right.Solve(rightTarget.position, hand, right.Upper.position + cameraRotation * rightElbowHint);
-                right.Curl(rightCurl, triggerCurl, thumbCurl);
+                right.Curl(rightCurl, kind == WeaponKind.Knife ? rightCurl : triggerCurl, thumbCurl);
             }
 
             if (leftTarget != null)
@@ -101,7 +125,7 @@ namespace ChokeHold.Gameplay
                     weapon = Quaternion.Slerp(weapon, leftOverrideRotation, leftOverrideWeight);
                 }
 
-                Quaternion hand = GripPose.HandRotation(weapon, false, kind, left.RestFrameInverse);
+                Quaternion hand = GripPose.HandRotation(weapon, false, kind, leftGrip, left.RestFrameInverse);
                 left.Solve(position, hand, left.Upper.position + cameraRotation * leftElbowHint);
                 left.Curl(leftCurl, leftCurl, thumbCurl);
             }

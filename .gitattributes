@@ -14,3 +14,18 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
 Assets/_Project/Art/Textures/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Modele generate in Tripo (texturi si arhive descarcate odata cu ele)
+Tools/Tripo/**/*.png filter=lfs diff=lfs merge=lfs -text
+Tools/Tripo/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+Tools/Tripo/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
+Tools/Tripo/**/*.webp filter=lfs diff=lfs merge=lfs -text
+Tools/Tripo/**/*.zip filter=lfs diff=lfs merge=lfs -text
+
+# Texturile personajelor generate in Tripo
+Assets/_Project/Art/Characters/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+Assets/_Project/Art/Characters/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Texturile armelor generate in Tripo
+Assets/_Project/Art/Weapons/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+Assets/_Project/Art/Weapons/**/*.png filter=lfs diff=lfs merge=lfs -text

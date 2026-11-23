@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b3e0bfa13e87d4c955cb7b573d25a0, type: 3}
+  m_Name: WeaponCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponCatalog
+  weapons:
+  - {fileID: 11400000, guid: 22270d6419fbb5542bfe889cdb387678, type: 2}
+  - {fileID: 11400000, guid: f14e48baf9d801e4eb6b71f02deda178, type: 2}
+  - {fileID: 11400000, guid: da63750b56675c341bf7786c47bf69a6, type: 2}
+  - {fileID: 11400000, guid: 94117ce481a66054dbef35846c7109ea, type: 2}
+  - {fileID: 11400000, guid: db8b029c9e1e7bf4eba73637f7596b21, type: 2}
+  - {fileID: 11400000, guid: f8176d84cbdb46d4f8573027d7008ecf, type: 2}
+  - {fileID: 11400000, guid: f3a61f8247c7e3844a931f95db832f14, type: 2}
+  - {fileID: 11400000, guid: 8a80f07b5d205ab4bba762b3c293f76f, type: 2}
+  - {fileID: 11400000, guid: 424b0a4c506033440840e8b7270c19b8, type: 2}
+  - {fileID: 11400000, guid: 1b18a1a2ea9f80e48ab108d8b484a983, type: 2}
+  - {fileID: 11400000, guid: b88ded99e4a6e574cb711b3aee6cdf4e, type: 2}
+  - {fileID: 11400000, guid: 961211fe66857a94f9262a744743fae8, type: 2}
+  - {fileID: 11400000, guid: 1fb0ba8c51e40b74ba0bbd4346b00222, type: 2}
+  attackerKnife: {fileID: 11400000, guid: 22270d6419fbb5542bfe889cdb387678, type: 2}
+  attackerPistol: {fileID: 11400000, guid: da63750b56675c341bf7786c47bf69a6, type: 2}
+  defenderKnife: {fileID: 11400000, guid: f14e48baf9d801e4eb6b71f02deda178, type: 2}
+  defenderPistol: {fileID: 11400000, guid: 94117ce481a66054dbef35846c7109ea, type: 2}

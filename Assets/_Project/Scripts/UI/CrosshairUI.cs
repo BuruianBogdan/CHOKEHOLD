@@ -36,6 +36,18 @@ namespace ChokeHold.UI
             UpdateLinePositions();
         }
 
+        /// <summary>Arata / ascunde liniile crucii (lunetistele n-au cruce, ca in CS).</summary>
+        public void SetVisible(bool visible)
+        {
+            foreach (RectTransform line in new[] { top, bottom, left, right })
+            {
+                if (line != null && line.gameObject.activeSelf != visible)
+                {
+                    line.gameObject.SetActive(visible);
+                }
+            }
+        }
+
         public void SetSpread(float spread)
         {
             targetGap = Mathf.Clamp(

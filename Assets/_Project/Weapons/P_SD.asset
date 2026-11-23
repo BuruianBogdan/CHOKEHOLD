@@ -14,23 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
   displayName: P-SD
   kind: 1
+  category: 1
   team: 1
+  anyTeam: 0
+  buyable: 1
+  price: 200
+  killReward: 300
   firstPersonPrefab: {fileID: 8753634706026429842, guid: 8dabce7ed8d3f1c4e9359b2f6fb0362f, type: 3}
   thirdPersonPrefab: {fileID: 6892904113122464171, guid: 6505dc9be62b5484a99e7345459fc3eb, type: 3}
-  firstPersonOffset: {x: 0.1, y: -0.13, z: 0.33}
-  adsEyeRelief: 0.26
-  damage: 36
-  fireRate: 6
+  firstPersonOffset: {x: 0.09, y: -0.12, z: 0.42}
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.38
+  leftGrip: 2
+  reverseGrip: 0
+  sight: 1
+  zoomFieldOfView: []
+  damage: 35
+  fireRate: 5.5
   automatic: 0
   magazineSize: 12
-  reloadTime: 1.8
-  reloadEmptyTime: 2.1
-  range: 150
-  recoilVertical: 1
-  recoilHorizontal: 0.22
-  recoilKick: 0.05
-  hipSpread: 0.025
+  reserveAmmo: 24
+  reloadTime: 2.2
+  reloadEmptyTime: 2.2
+  range: 120
+  drawTime: 0.5
+  moveSpeed: 1
+  suppressed: 1
+  kickBase: {x: 2.2, y: 0.3}
+  kickPerShot: {x: 0, y: 0}
+  kickMax: {x: 6, y: 1.5}
+  kickFlip: 3
+  recoilKick: 0.0175
+  hipSpread: 0.016
   aimSpread: 0.006
   aimFieldOfView: 55
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}

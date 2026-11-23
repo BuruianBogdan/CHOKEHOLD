@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d661d60597b58e444a562451a364b1da, type: 3}
+  m_Name: M4A4
+  m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
+  displayName: M4A4
+  kind: 0
+  category: 2
+  team: 1
+  anyTeam: 0
+  buyable: 1
+  price: 3100
+  killReward: 300
+  firstPersonPrefab: {fileID: 507683842326630233, guid: c3b7d49156aa55547b91a2bfe7f874a8, type: 3}
+  thirdPersonPrefab: {fileID: 7114275042638190466, guid: 9adc88e33d370904c816401f7b846904, type: 3}
+  firstPersonOffset: {x: 0.12, y: -0.15, z: 0.3}
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.1
+  leftGrip: 1
+  reverseGrip: 0
+  sight: 4
+  zoomFieldOfView:
+  - 40
+  damage: 33
+  fireRate: 11
+  automatic: 1
+  magazineSize: 30
+  reserveAmmo: 90
+  reloadTime: 3.1
+  reloadEmptyTime: 3.1
+  range: 200
+  drawTime: 1
+  moveSpeed: 0.92
+  suppressed: 0
+  kickBase: {x: 0.8, y: 0.32}
+  kickPerShot: {x: 0.12, y: 0.03}
+  kickMax: {x: 4.75, y: 1.5}
+  kickFlip: 8
+  recoilKick: 0.0245
+  hipSpread: 0.022
+  aimSpread: 0.004
+  aimFieldOfView: 40
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}

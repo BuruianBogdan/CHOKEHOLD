@@ -52,6 +52,64 @@ namespace ChokeHold.EditorTools
             }
 
             AssetDatabase.SaveAssets();
+            RefreshSceneCharacters();
+        }
+
+        /// <summary>
+        /// Personajele din scena deschisa (jucatorul, tintele) primesc prefab-urile curente: CT pentru aparatori,
+        /// teroristii care exista pentru atacatori. Doar referintele se schimba; scena se salveaza daca s-a schimbat ceva.
+        /// </summary>
+        private static void RefreshSceneCharacters()
+        {
+            GameObject defender = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabFolder}/Character_CT_Operator.prefab");
+            List<GameObject> attackers = new List<GameObject>();
+            foreach (string name in new[] { "Character_T_Insurgent_A", "Character_T_Insurgent_B" })
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabFolder}/{name}.prefab");
+                if (prefab != null)
+                {
+                    attackers.Add(prefab);
+                }
+            }
+
+            int changed = 0;
+            foreach (CharacterVisuals visuals in Object.FindObjectsByType<CharacterVisuals>(FindObjectsInactive.Include))
+            {
+                SerializedObject serialized = new SerializedObject(visuals);
+                SerializedProperty defenderProperty = serialized.FindProperty("defenderPrefab");
+                SerializedProperty attackersProperty = serialized.FindProperty("attackerPrefabs");
+
+                bool same = defenderProperty.objectReferenceValue == defender && attackersProperty.arraySize == attackers.Count;
+                for (int i = 0; same && i < attackers.Count; i++)
+                {
+                    same = attackersProperty.GetArrayElementAtIndex(i).objectReferenceValue == attackers[i];
+                }
+
+                if (same)
+                {
+                    continue;
+                }
+
+                defenderProperty.objectReferenceValue = defender;
+                attackersProperty.ClearArray();
+                for (int i = 0; i < attackers.Count; i++)
+                {
+                    attackersProperty.InsertArrayElementAtIndex(i);
+                    attackersProperty.GetArrayElementAtIndex(i).objectReferenceValue = attackers[i];
+                }
+
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                changed++;
+            }
+
+            if (changed > 0)
+            {
+                UnityEngine.SceneManagement.Scene scene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+                UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+            }
+
+            Debug.Log($"Personaje in scena: {changed} actualizate (atacatori: {attackers.Count}).");
         }
 
         private static void Build(string modelPath, string name)
@@ -71,7 +129,7 @@ namespace ChokeHold.EditorTools
                 for (int i = 0; i < shared.Length; i++)
                 {
                     string slot = shared[i] != null ? shared[i].name.Replace(" (Instance)", "") : "Plastic";
-                    shared[i] = BlacksiteK17MapBuilder.KitMaterial(slot);
+                    shared[i] = CharacterImporter.CharacterMaterial(slot);
                     materials++;
                 }
                 renderer.sharedMaterials = shared;

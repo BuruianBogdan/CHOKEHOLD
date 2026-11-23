@@ -14,23 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
   displayName: M15-T Breacher
   kind: 1
+  category: 1
   team: 0
+  anyTeam: 0
+  buyable: 1
+  price: 700
+  killReward: 300
   firstPersonPrefab: {fileID: 1983837828436036376, guid: 5fe3630afa7b684408c34b9b5a817526, type: 3}
   thirdPersonPrefab: {fileID: 2730184439615514361, guid: 84d60cfb15deac64586ed98a57b33945, type: 3}
-  firstPersonOffset: {x: 0.1, y: -0.13, z: 0.33}
-  adsEyeRelief: 0.26
-  damage: 45
-  fireRate: 5
+  firstPersonOffset: {x: 0.09, y: -0.12, z: 0.42}
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.38
+  leftGrip: 2
+  reverseGrip: 0
+  sight: 1
+  zoomFieldOfView: []
+  damage: 48
+  fireRate: 4
   automatic: 0
-  magazineSize: 15
-  reloadTime: 1.8
-  reloadEmptyTime: 2.1
-  range: 150
-  recoilVertical: 1.4
-  recoilHorizontal: 0.3
-  recoilKick: 0.06
-  hipSpread: 0.03
+  magazineSize: 7
+  reserveAmmo: 35
+  reloadTime: 2.2
+  reloadEmptyTime: 2.2
+  range: 120
+  drawTime: 0.6
+  moveSpeed: 1
+  suppressed: 0
+  kickBase: {x: 4.5, y: 0.6}
+  kickPerShot: {x: 0, y: 0}
+  kickMax: {x: 10, y: 2}
+  kickFlip: 2
+  recoilKick: 0.0245
+  hipSpread: 0.025
   aimSpread: 0.008
   aimFieldOfView: 55
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}

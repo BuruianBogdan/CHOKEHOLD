@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d661d60597b58e444a562451a364b1da, type: 3}
+  m_Name: AW_K17
+  m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
+  displayName: AW-K17
+  kind: 0
+  category: 3
+  team: 1
+  anyTeam: 1
+  buyable: 1
+  price: 4750
+  killReward: 100
+  firstPersonPrefab: {fileID: 337462904998889284, guid: 35592bdcedaec6e4680764d71d05bb29, type: 3}
+  thirdPersonPrefab: {fileID: 3844060445271683354, guid: a38d6f946ac268945ac042bda5de8732, type: 3}
+  firstPersonOffset: {x: 0.12, y: -0.16, z: 0.31}
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.08
+  leftGrip: 0
+  reverseGrip: 0
+  sight: 5
+  zoomFieldOfView:
+  - 40
+  - 15
+  damage: 115
+  fireRate: 0.68
+  automatic: 0
+  magazineSize: 5
+  reserveAmmo: 30
+  reloadTime: 3.7
+  reloadEmptyTime: 3.7
+  range: 400
+  drawTime: 1.25
+  moveSpeed: 0.85
+  suppressed: 0
+  kickBase: {x: 4, y: 0.6}
+  kickPerShot: {x: 0, y: 0}
+  kickMax: {x: 4, y: 0.6}
+  kickFlip: 1
+  recoilKick: 0.042
+  hipSpread: 0.09
+  aimSpread: 0.0006
+  aimFieldOfView: 40
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}

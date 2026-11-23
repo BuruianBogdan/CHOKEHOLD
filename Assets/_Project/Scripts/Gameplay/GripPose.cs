@@ -11,17 +11,48 @@ namespace ChokeHold.Gameplay
     {
         public static void Directions(bool right, WeaponKind kind, out Vector3 fingers, out Vector3 palm)
         {
-            if (right)
+            Directions(right, kind, kind == WeaponKind.Pistol ? LeftGrip.PistolSupport : LeftGrip.Handguard, out fingers, out palm);
+        }
+
+        public static void Directions(bool right, WeaponKind kind, LeftGrip leftGrip, out Vector3 fingers, out Vector3 palm)
+        {
+            Directions(right, kind, leftGrip, false, out fingers, out palm);
+        }
+
+        /// <summary>
+        /// reverse = cutit tinut invers (karambit): manerul trece prin pumn, inelul (capatul din spate, -z) sta la
+        /// aratator, lama iese pe sub degetul mic. Incheieturile degetelor spre partea concava a lamei (-y), palma spre +x.
+        /// </summary>
+        public static void Directions(bool right, WeaponKind kind, LeftGrip leftGrip, bool reverse, out Vector3 fingers, out Vector3 palm)
+        {
+            if (right && kind == WeaponKind.Knife && reverse)
+            {
+                fingers = new Vector3(0f, -0.97f, -0.25f);
+                palm = new Vector3(1f, 0f, 0f);
+            }
+            else if (right && kind == WeaponKind.Knife)
+            {
+                // pumnul pe maner (orizontal, lama inainte): palma spre stanga, degetele in jos, in jurul manerului
+                fingers = new Vector3(-0.35f, -0.93f, 0.10f);
+                palm = new Vector3(-0.95f, 0.25f, 0.0f);
+            }
+            else if (right)
             {
                 // mana dreapta pe manerul pistol: palma spre stanga, degetele inainte-jos in jurul manerului
                 fingers = new Vector3(-0.25f, -0.30f, 0.92f);
                 palm = new Vector3(-0.95f, 0.05f, -0.25f);
             }
-            else if (kind == WeaponKind.Pistol)
+            else if (leftGrip == LeftGrip.VerticalGrip)
             {
-                // mana stanga peste degetele drepte: palma spre dreapta
-                fingers = new Vector3(0.15f, -0.45f, 0.88f);
-                palm = new Vector3(0.95f, 0.10f, -0.10f);
+                // mana stanga pe manerul vertical, oglinda mainii drepte: palma spre dreapta, degetele inainte-jos
+                fingers = new Vector3(0.25f, -0.30f, 0.92f);
+                palm = new Vector3(0.95f, 0.05f, -0.25f);
+            }
+            else if (kind == WeaponKind.Pistol || leftGrip == LeftGrip.PistolSupport)
+            {
+                // mana stanga peste degetele drepte: palma spre dreapta, degetele in jos in jurul lor, degetul mare inainte
+                fingers = new Vector3(0.25f, -0.50f, 0.83f);
+                palm = new Vector3(0.92f, 0.30f, -0.10f);
             }
             else
             {
@@ -36,6 +67,27 @@ namespace ChokeHold.Gameplay
         {
             Directions(right, kind, out Vector3 fingers, out Vector3 palm);
             return Quaternion.LookRotation(weapon * fingers, weapon * palm) * restFrameInverse;
+        }
+
+        public static Quaternion HandRotation(Quaternion weapon, bool right, WeaponKind kind, LeftGrip leftGrip, Quaternion restFrameInverse)
+        {
+            return HandRotation(weapon, right, kind, leftGrip, false, restFrameInverse);
+        }
+
+        public static Quaternion HandRotation(Quaternion weapon, bool right, WeaponKind kind, LeftGrip leftGrip, bool reverse, Quaternion restFrameInverse)
+        {
+            Directions(right, kind, leftGrip, reverse, out Vector3 fingers, out Vector3 palm);
+            return Quaternion.LookRotation(weapon * fingers, weapon * palm) * restFrameInverse;
+        }
+
+        /// <summary>
+        /// Rotatia unui cutit tinut invers fata de montura armei TP din mana: lama iese in jos, pe sub palma, iar inelul
+        /// sta sus. (Pozitia e aleasa pe capturi: mana TP sta deschisa, in poza de pistol, iar cutitul tinut drept
+        /// intra aproape tot in palma.)
+        /// </summary>
+        public static Quaternion ReverseGripInMount()
+        {
+            return Quaternion.Euler(90f, 0f, 0f);
         }
 
         /// <summary>

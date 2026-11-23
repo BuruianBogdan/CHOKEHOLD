@@ -92,7 +92,8 @@ namespace ChokeHold.Gameplay
 
             if (Driver != null)
             {
-                Driver.WeaponKind = (int)data.kind;
+                // animatiile au doar pusca si pistol; cutitul se tine cu poza de pistol (o mana)
+                Driver.WeaponKind = data.kind == WeaponKind.Rifle ? 0 : 1;
             }
 
             Transform mount = FindDeep(instance.transform, "WeaponMount");
@@ -103,13 +104,13 @@ namespace ChokeHold.Gameplay
 
             thirdPersonWeapon = Instantiate(data.thirdPersonPrefab, mount);
             thirdPersonWeapon.transform.localPosition = Vector3.zero;
-            thirdPersonWeapon.transform.localRotation = Quaternion.identity;
+            thirdPersonWeapon.transform.localRotation = data.reverseGrip ? GripPose.ReverseGripInMount() : Quaternion.identity;
 
             // mana stanga pe garda / peste mana dreapta (IK)
             ThirdPersonWeaponIK ik = instance.GetComponent<ThirdPersonWeaponIK>();
             if (ik != null)
             {
-                ik.Bind(thirdPersonWeapon.GetComponent<WeaponSockets>(), data.kind);
+                ik.Bind(thirdPersonWeapon.GetComponent<WeaponSockets>(), data.kind, data.leftGrip);
             }
 
             if (member != null && member.IsLocalPlayer)

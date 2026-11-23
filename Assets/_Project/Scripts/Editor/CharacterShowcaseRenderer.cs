@@ -133,7 +133,7 @@ namespace ChokeHold.EditorTools
                 int index = c;
                 string name = names[c];
                 bool attacker = name.StartsWith("T_");
-                string rifle = attacker ? "AK_K17" : "M4A4M_Vandal";
+                string rifle = attacker ? "AK_K17" : "M4A1_S";
                 string folder = Path.Combine(docs, name);
 
                 steps.Add((s => { s.SelectCharacter(index, s.WeaponIndexOf(rifle)); s.SetFirstPerson(false, false); s.ShowWeaponStand(false); s.PlayClip("Rifle_Loco_Idle", 0.2f); s.SetView(180f, 6f, 3.6f, body); }, Path.Combine(folder, $"{name}_Unity_Front.png")));
@@ -153,7 +153,7 @@ namespace ChokeHold.EditorTools
                     steps.Add((s => { s.PlayClip(p.clip, p.t); s.SetView(p.yaw, 8f, 3.4f, body); }, Path.Combine(folder, $"{name}_Pose_{p.clip.Replace("Rifle_", "")}.png")));
                 }
 
-                string pistol = attacker ? "M15T_Breacher" : "P_SD";
+                string pistol = attacker ? "P17_K" : "P_SD";
                 steps.Add((s => { s.SelectCharacter(index, s.WeaponIndexOf(pistol)); s.PlayClip("Pistol_Aim_C_C", 0f); s.SetView(215f, 8f, 3.4f, body); }, Path.Combine(folder, $"{name}_Pose_Pistol_Aim.png")));
 
                 for (int lod = 0; lod < 3; lod++)
@@ -163,19 +163,22 @@ namespace ChokeHold.EditorTools
                 }
 
                 // Mainile FP cu armele echipei
-                string[] fpWeapons = attacker ? new[] { "AK_K17", "M15T_Breacher" } : new[] { "M4A4M_Vandal", "M4_SD", "P_SD" };
+                string[] fpWeapons = attacker ? new[] { "AK_K17", "Galil_K", "P17_K", "Knife_Karambit" } : new[] { "M4A1_S", "M4A4", "P_SD", "Knife_Combat" };
                 foreach (string weapon in fpWeapons)
                 {
                     string w = weapon;
                     steps.Add((s => { s.ForceLod(-1); s.SelectCharacter(index, s.WeaponIndexOf(w)); s.SetFirstPerson(true, false); }, Path.Combine(folder, $"FP_{w}_Hip.png")));
-                    steps.Add((s => s.SetFirstPerson(true, true), Path.Combine(folder, $"FP_{w}_ADS.png")));
+                    if (!w.StartsWith("Knife_") && w != "M4A4")     // cutitele nu ochesc; ACOG-ul foloseste ecranul de luneta
+                    {
+                        steps.Add((s => s.SetFirstPerson(true, true), Path.Combine(folder, $"FP_{w}_ADS.png")));
+                    }
                 }
 
                 steps.Add((s => s.SetFirstPerson(false, false), null));
             }
 
             // Standul de arme
-            steps.Add((s => { s.ShowWeaponStand(true); s.SetView(180f, 4f, 2.6f, new Vector3(2.75f, 1.2f, 0f)); }, Path.Combine(docs, "Weapons_Unity.png")));
+            steps.Add((s => { s.ShowWeaponStand(true); s.SetView(180f, 3f, 3.6f, new Vector3(2.7f, 1.1f, 0f)); }, Path.Combine(docs, "Weapons_Unity.png")));
             steps.Add((s => { }, null));
             return steps;
         }

@@ -54,7 +54,7 @@ namespace ChokeHold.EditorTools
                 for (int i = 0; i < shared.Length; i++)
                 {
                     string slot = shared[i] != null ? shared[i].name.Replace(" (Instance)", "") : "Plastic";
-                    shared[i] = BlacksiteK17MapBuilder.KitMaterial(slot);
+                    shared[i] = CharacterImporter.CharacterMaterial(slot);
                 }
                 renderer.sharedMaterials = shared;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

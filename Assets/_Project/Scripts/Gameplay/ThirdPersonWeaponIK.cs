@@ -41,18 +41,23 @@ namespace ChokeHold.Gameplay
         /// <summary>Pune tinta mainii stangi pe arma TP (sau opreste IK-ul daca arma nu are Grip_L).</summary>
         public void Bind(WeaponSockets sockets, WeaponKind kind)
         {
+            Bind(sockets, kind, kind == WeaponKind.Pistol ? LeftGrip.PistolSupport : LeftGrip.Handguard);
+        }
+
+        public void Bind(WeaponSockets sockets, WeaponKind kind, LeftGrip grip)
+        {
             if (leftHand == null || leftHandTarget == null)
             {
                 return;
             }
 
-            if (sockets == null || sockets.GripLeft == null || !hasFrame)
+            if (sockets == null || sockets.GripLeft == null || grip == LeftGrip.None || !hasFrame)
             {
                 leftHand.weight = 0f;
                 return;
             }
 
-            Quaternion hand = GripPose.HandRotation(sockets.transform.rotation, false, kind, leftFrame.RestFrameInverse);
+            Quaternion hand = GripPose.HandRotation(sockets.transform.rotation, false, kind, grip, leftFrame.RestFrameInverse);
             leftHandTarget.SetPositionAndRotation(sockets.GripLeft.position - hand * leftFrame.PalmOffset, hand);
             leftHand.weight = 1f;
         }

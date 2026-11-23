@@ -156,3 +156,38 @@ După rulare, în Unity, din **CHOKEHOLD → Characters**:
 7. Render Showcase
 
 Detaliile sunt în `Docs/CharactersReport.md`.
+
+## Personaje din Tripo (`k17_tripo.py`)
+
+```
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_tripo.py [-- CT_Operator T_Insurgent_A]
+```
+
+Scriptul citește arhivele din `Tools/Tripo/Source/<Nume>.zip`. Pentru fiecare:
+- aduce modelul la 1,80 m, cu fața spre +Z;
+- îl măsoară (mâinile, umerii, genunchii, gleznele) și potrivește scheletul K17 pe el;
+- calculează greutățile pe o copie refăcută din voxeli și le transferă pe model;
+- scoate greutățile brațelor de pe trunchi;
+- face LOD0/1/2 (22k / 11k / 4,4k triunghiuri) și mâinile FP;
+- scrie texturile în `Assets/_Project/Art/Characters/<Nume>/Textures` (culoare, normale, metalic + luciu).
+
+Apoi, în Unity: **Build Prefabs** și **Build FP Arms**. Materialul `<Nume>_Body` se face din texturi, iar jucătorul și țintele primesc noile prefab-uri.
+
+CT-ul făcut din cod a rămas doar ca referință: `k17_characters.py -- CT_Operator_Code`.
+
+## Arme din Tripo (`k17_tripo_weapons.py`)
+
+```
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_tripo_weapons.py [-- AK_K17 M4A4 ...]
+```
+
+Scriptul citește arhivele din `Tools/Tripo/Source/Weapons/<Id>.zip`. Pentru fiecare armă din `WEAPONS`:
+- o întoarce cu țeava spre +Z (în Unity), o aduce la lungimea reală și pune originea în palma dreaptă;
+- FP: o reduce la 14 000 de triunghiuri (cuțitele la 8 000) și desprinde încărcătorul, iar la pistol și închizătorul;
+- la red dot și holo șterge sticla de-a lungul axei optice și pune un reticul luminos; ACOG-ul și lunetele rămân închise, pentru că ochirea cu ele se face pe ecranul de lunetă din joc;
+- TP: aceeași armă, la 4 500 de triunghiuri (cuțitele la 2 000), fără piese separate;
+- pune socket-urile Grip_R, Grip_L (nu la cuțite), Muzzle, Eject și Sight;
+- scrie texturile în `Assets/_Project/Art/Weapons/<Id>/Textures` (culoare, normale, metalic + luciu);
+- randează `Docs/Characters/Weapons/<Id>_Side.png` și `<Id>_Sight.png`, iar pe ultima se verifică ochirea.
+
+Apoi, în Unity: **Build Weapon Prefabs** și **Build Weapon Data**. Al doilea face și catalogul de arme pentru meniul de cumpărare și îl leagă de jucător.

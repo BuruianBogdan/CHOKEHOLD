@@ -61,6 +61,10 @@ namespace ChokeHold.Gameplay
         public int AttackerScore { get; private set; }
         public int DefenderScore { get; private set; }
         public int RoundsToWin => roundsToWin;
+        public float RoundTime => roundTime;
+
+        /// <summary>Secundele trecute din runda propriu-zisa (0 in pregatire); timpul de cumparare se masoara de aici.</summary>
+        public float LiveElapsed => Phase == RoundPhase.Live ? roundTime - PhaseTimeRemaining : 0f;
         public Team LastWinner { get; private set; }
         public RoundEndReason LastEndReason { get; private set; }
         public TeamMember LocalPlayer { get; private set; }

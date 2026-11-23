@@ -78,6 +78,8 @@ namespace ChokeHold.Gameplay
 
         public void Respawn(Vector3 position, Quaternion rotation)
         {
+            bool wasDead = health.IsDead;
+
             // CharacterController suprascrie pozitia daca e activ in timpul teleportarii.
             if (characterController != null)
             {
@@ -94,7 +96,13 @@ namespace ChokeHold.Gameplay
             health.ResetHealth();
             SetAliveState(true);
 
-            if (weapon != null)
+            // Jucatorul are inventar (arme pastrate intre runde, ca in CS); altfel doar incarcatorul se umple.
+            PlayerLoadout loadout = GetComponent<PlayerLoadout>();
+            if (loadout != null)
+            {
+                loadout.OnRespawn(wasDead);
+            }
+            else if (weapon != null)
             {
                 weapon.RefillAmmo();
             }

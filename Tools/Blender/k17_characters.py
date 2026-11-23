@@ -368,8 +368,10 @@ CHARACTER_TRIANGLES = (25000, 12500, 5000)
 COVERED = {"CT_Operator"}
 COVERED_BELOW = 1.50
 
+# Personajele de joc vin acum din Tripo (k17_tripo.py). Varianta facuta din cod a CT-ului ramane doar ca referinta
+# si se construieste numai la cerere (-- CT_Operator_Code), in alt folder, ca sa nu-l suprascrie pe cel din Tripo.
 CHARACTERS = {
-    "CT_Operator": build_ct_operator,
+    "CT_Operator_Code": build_ct_operator,
 }
 
 
@@ -660,7 +662,7 @@ def main():
     wanted = [a for a in args if a in CHARACTERS]
     if not args or "base" in args:
         build_base()
-    for name in (wanted or list(CHARACTERS)):
+    for name in wanted:
         build_character(name, CHARACTERS[name])
     print("CHARACTERS_DONE")
 

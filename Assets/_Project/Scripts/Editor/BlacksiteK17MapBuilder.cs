@@ -686,7 +686,7 @@ namespace ChokeHold.EditorTools
             serialized.FindProperty("respawnAtSpawnPoint").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            AttachCharacterVisuals(dummy, "P_SD");
+            AttachCharacterVisuals(dummy, WeaponDataBuilder.DummyWeapon(name, Team.Defenders));
         }
 
         internal static void AssignPlayerWeapon(FpsController player, string weaponId)
@@ -703,6 +703,7 @@ namespace ChokeHold.EditorTools
             serialized.FindProperty("data").objectReferenceValue = data;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             FirstPersonBuilder.WirePlayer(player);
+            WeaponDataBuilder.WirePlayer(player);     // inventar (catalogul de arme), bani, meniu de cumparare
         }
 
         /// <summary>CharacterVisuals cu prefab-urile personajelor si arma TP data (dupa numele asset-ului WeaponData).</summary>

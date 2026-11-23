@@ -14,23 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
   displayName: M4-SD
   kind: 0
+  category: 2
   team: 1
+  anyTeam: 0
+  buyable: 0
+  price: 2900
+  killReward: 300
   firstPersonPrefab: {fileID: 6459879318491281303, guid: a390120f1fce2db49acd1ef616a863df, type: 3}
   thirdPersonPrefab: {fileID: 7134417949603004370, guid: 53d323635067d084ca3d7dd7515e3ab8, type: 3}
   firstPersonOffset: {x: 0.12, y: -0.15, z: 0.3}
-  adsEyeRelief: 0.13
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.14
+  leftGrip: 0
+  reverseGrip: 0
+  sight: 3
+  zoomFieldOfView: []
   damage: 30
   fireRate: 11
   automatic: 1
   magazineSize: 30
+  reserveAmmo: 90
   reloadTime: 2.2
   reloadEmptyTime: 2.8
-  range: 150
-  recoilVertical: 0.6
-  recoilHorizontal: 0.14
-  recoilKick: 0.05
-  hipSpread: 0.02
-  aimSpread: 0.003
-  aimFieldOfView: 46
+  range: 200
+  drawTime: 1
+  moveSpeed: 1
+  suppressed: 1
+  kickBase: {x: 0.7, y: 0.3}
+  kickPerShot: {x: 0.1, y: 0.025}
+  kickMax: {x: 4.25, y: 1.25}
+  kickFlip: 8
+  recoilKick: 0.0245
+  hipSpread: 0.022
+  aimSpread: 0.004
+  aimFieldOfView: 50
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}

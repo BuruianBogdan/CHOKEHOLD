@@ -20,6 +20,17 @@ namespace ChokeHold.EditorTools
         {
             BlacksiteK17MapBuilder.EnsureFolder(PrefabFolder);
 
+            // Texturile din Tripo pot fi importate inainte de regulile din CharacterImporter (normal map ca
+            // imagine color, harta metalica sRGB): reimportul le aplica din nou.
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { WeaponsFolder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.Contains("/Textures/"))
+                {
+                    AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                }
+            }
+
             foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { WeaponsFolder }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -45,7 +56,7 @@ namespace ChokeHold.EditorTools
                 for (int i = 0; i < shared.Length; i++)
                 {
                     string slot = shared[i] != null ? shared[i].name.Replace(" (Instance)", "") : "GunMetal";
-                    shared[i] = BlacksiteK17MapBuilder.KitMaterial(slot);
+                    shared[i] = CharacterImporter.CharacterMaterial(slot);
                     slots++;
                 }
                 renderer.sharedMaterials = shared;

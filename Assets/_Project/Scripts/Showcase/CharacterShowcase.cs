@@ -116,17 +116,17 @@ namespace ChokeHold.Showcase
 
             thirdPersonWeapon = Instantiate(data.thirdPersonPrefab, mount);
             thirdPersonWeapon.transform.localPosition = Vector3.zero;
-            thirdPersonWeapon.transform.localRotation = Quaternion.identity;
+            thirdPersonWeapon.transform.localRotation = data.reverseGrip ? GripPose.ReverseGripInMount() : Quaternion.identity;
 
             if (animator != null)
             {
-                animator.SetFloat("WeaponKind", (int)data.kind);
+                animator.SetFloat("WeaponKind", data.kind == WeaponKind.Rifle ? 0 : 1);
             }
 
             ThirdPersonWeaponIK ik = character.GetComponent<ThirdPersonWeaponIK>();
             if (ik != null)
             {
-                ik.Bind(thirdPersonWeapon.GetComponent<WeaponSockets>(), data.kind);
+                ik.Bind(thirdPersonWeapon.GetComponent<WeaponSockets>(), data.kind, data.leftGrip);
             }
         }
 
@@ -151,7 +151,7 @@ namespace ChokeHold.Showcase
 
             fpWeapon = Instantiate(data.firstPersonPrefab, firstPersonHolder);
             fpWeapon.transform.localPosition = Vector3.zero;
-            fpWeapon.transform.localRotation = Quaternion.identity;
+            fpWeapon.transform.localRotation = Quaternion.Euler(data.firstPersonRotation);
             WeaponSockets sockets = fpWeapon.GetComponent<WeaponSockets>();
 
             bool attacker = character != null && character.name.Contains("T_Insurgent");
@@ -164,7 +164,7 @@ namespace ChokeHold.Showcase
                 fpArms = arms.GetComponent<FirstPersonArms>();
                 if (fpArms != null)
                 {
-                    fpArms.Bind(sockets, data.kind);
+                    fpArms.Bind(sockets, data.kind, data.leftGrip, data.reverseGrip);
                 }
             }
 

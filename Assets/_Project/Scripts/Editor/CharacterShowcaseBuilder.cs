@@ -47,24 +47,28 @@ namespace ChokeHold.EditorTools
             // Standul de arme: panou si armele FP (mai detaliate) una sub alta, cu teava spre dreapta
             GameObject stand = new GameObject("WeaponStand");
             stand.transform.position = new Vector3(2.9f, 0f, 0f);
-            GameObject board = Primitive(PrimitiveType.Cube, "Board", new Vector3(2.9f, 1.15f, -0.12f), new Vector3(1.5f, 1.6f, 0.04f), "WoodDark");
+            GameObject board = Primitive(PrimitiveType.Cube, "Board", new Vector3(2.7f, 1.05f, -0.14f), new Vector3(2.7f, 2.1f, 0.04f), "WoodDark");
             board.transform.SetParent(stand.transform, true);
             WeaponData[] weapons = AssetDatabase.FindAssets("t:WeaponData", new[] { "Assets/_Project/Weapons" })
                 .Select(g => AssetDatabase.LoadAssetAtPath<WeaponData>(AssetDatabase.GUIDToAssetPath(g)))
                 .Where(w => w != null)
                 .OrderBy(w => w.kind).ThenBy(w => w.team).ThenBy(w => w.name)
                 .ToArray();
-            for (int i = 0; i < weapons.Length; i++)
-            {
-                if (weapons[i].firstPersonPrefab == null)
-                {
-                    continue;
-                }
 
-                GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(weapons[i].firstPersonPrefab);
-                model.name = weapons[i].name;
+            // Pe stand: armele din joc (de cumparat + cutitele), pustile intr-o coloana, pistoalele si cutitele in alta
+            WeaponData[] displayed = weapons.Where(w => w.firstPersonPrefab != null && (w.buyable || w.IsKnife))
+                .OrderBy(w => w.category).ThenBy(w => w.price).ThenBy(w => w.name).ToArray();
+            int rifleRow = 0;
+            int sideRow = 0;
+            foreach (WeaponData data in displayed)
+            {
+                bool longGun = data.kind == WeaponKind.Rifle;
+                int row = longGun ? rifleRow++ : sideRow++;
+                GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(data.firstPersonPrefab);
+                model.name = data.name;
                 model.transform.SetParent(stand.transform, false);
-                model.transform.position = new Vector3(2.6f, 1.75f - i * 0.36f, 0f);
+                // teava spre -X (dreapta in vederea din fata): pustile cu manerul la 2,6 m, restul la 3,6 m
+                model.transform.position = new Vector3(longGun ? 2.6f : 3.6f, 1.88f - row * 0.32f, 0f);
                 model.transform.rotation = Quaternion.Euler(0f, -90f, 0f);    // teava spre dreapta in vederea din fata
                 foreach (Renderer renderer in model.GetComponentsInChildren<Renderer>())
                 {

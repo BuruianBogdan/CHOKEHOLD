@@ -45,8 +45,10 @@ namespace ChokeHold.EditorTools
                 }
             }
 
-            StaticOcclusionCulling.smallestOccluder = 2f;
-            StaticOcclusionCulling.smallestHole = 0.2f;
+            // Celule mai fine: cu 2 m, pe scarile care coboara sub nivelul curtii camera ajungea in aceeasi celula cu
+            // placa podelei si cladirile de dincolo de balustrada disparea gresit.
+            StaticOcclusionCulling.smallestOccluder = 1f;
+            StaticOcclusionCulling.smallestHole = 0.1f;
             StaticOcclusionCulling.backfaceThreshold = 100f;
 
             bool ok = StaticOcclusionCulling.Compute();

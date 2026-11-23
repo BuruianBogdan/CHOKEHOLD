@@ -14,23 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChokeHold.Gameplay.WeaponData
   displayName: M4A4-M Vandal
   kind: 0
+  category: 2
   team: 1
+  anyTeam: 0
+  buyable: 0
+  price: 3100
+  killReward: 300
   firstPersonPrefab: {fileID: 6557214762442107449, guid: 2968ce71312ad8d449c33896992aee56, type: 3}
   thirdPersonPrefab: {fileID: 1865474297088756205, guid: 5594cf771f91da840b2d82e6570b82d3, type: 3}
   firstPersonOffset: {x: 0.12, y: -0.15, z: 0.3}
-  adsEyeRelief: 0.13
+  firstPersonRotation: {x: 0, y: 0, z: 0}
+  adsEyeRelief: 0.14
+  leftGrip: 0
+  reverseGrip: 0
+  sight: 3
+  zoomFieldOfView: []
   damage: 33
   fireRate: 11
   automatic: 1
   magazineSize: 30
+  reserveAmmo: 90
   reloadTime: 2.2
   reloadEmptyTime: 2.8
-  range: 150
-  recoilVertical: 0.8
-  recoilHorizontal: 0.18
-  recoilKick: 0.07
+  range: 200
+  drawTime: 1
+  moveSpeed: 1
+  suppressed: 0
+  kickBase: {x: 0.8, y: 0.32}
+  kickPerShot: {x: 0.12, y: 0.03}
+  kickMax: {x: 4.75, y: 1.5}
+  kickFlip: 8
+  recoilKick: 0.0245
   hipSpread: 0.022
   aimSpread: 0.004
-  aimFieldOfView: 46
+  aimFieldOfView: 50
+  slashDamage: 34
+  stabDamage: 65
+  slashRate: 2.5
+  stabRate: 1
+  meleeRange: 1.7
+  backstabMultiplier: 3
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
