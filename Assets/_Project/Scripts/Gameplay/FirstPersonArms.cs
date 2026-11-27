@@ -15,12 +15,20 @@ namespace ChokeHold.Gameplay
         [SerializeField] private float bodyYaw = 32f;                                           // pozitie de tragere: umarul stang inainte
         [SerializeField] private Vector3 rightElbowHint = new Vector3(0.7f, -1f, -0.3f);      // directia cotului, fata de camera
         [SerializeField] private Vector3 leftElbowHint = new Vector3(-0.5f, -1f, 0.1f);
+        [SerializeField] private Vector3 pistolLeftElbowHint = new Vector3(-0.55f, -1f, -0.25f); // pistol: cotul stang in afara, antebratele converg spre maner
 
         [Header("Degete (grade pe falanga)")]
         [SerializeField] private float rightCurl = 62f;
-        [SerializeField] private float triggerCurl = 28f;
+        [SerializeField] private float triggerCurl = 10f;
         [SerializeField] private float leftCurl = 48f;
+        [SerializeField] private float handguardCurl = 28f;
+        [SerializeField] private float leftThumbCurl = 6f;
+        [Tooltip("Pistol: centrul palmei stangi fata de palma dreapta, in spatiul armei (x dreapta, y sus, z teava).")]
+        [SerializeField] private Vector3 pistolSupportOffset = new Vector3(-0.03f, -0.016f, 0.008f);
+        [SerializeField] private float pistolSupportCurl = 66f;
         [SerializeField] private float thumbCurl = 22f;
+        [Tooltip("Pistol: degetul mare drept, inainte pe partea stanga a cadrului (nu peste spatele manerului).")]
+        [SerializeField] private float pistolThumbCurl = 2f;
 
         private Transform viewCamera;
         private Arm right;
@@ -111,13 +119,20 @@ namespace ChokeHold.Gameplay
             {
                 Quaternion hand = GripPose.HandRotation(weaponRoot.rotation, true, kind, leftGrip, reverseGrip, right.RestFrameInverse);
                 right.Solve(rightTarget.position, hand, right.Upper.position + cameraRotation * rightElbowHint);
-                right.Curl(rightCurl, kind == WeaponKind.Knife ? rightCurl : triggerCurl, thumbCurl);
+                // la arme aratatorul sta intins pe tragaci; la cutit toate degetele strang manerul
+                right.Curl(rightCurl, kind == WeaponKind.Knife ? rightCurl : triggerCurl, kind == WeaponKind.Pistol ? pistolThumbCurl : thumbCurl);
             }
 
             if (leftTarget != null)
             {
                 Quaternion weapon = weaponRoot.rotation;
                 Vector3 position = leftTarget.position;
+
+                // pistol: mana stanga se lipeste de mana dreapta (palma pe degetele ei, din stanga), nu de un punct de pe maner
+                if (kind == WeaponKind.Pistol && rightTarget != null)
+                {
+                    position = rightTarget.position + weapon * pistolSupportOffset;
+                }
 
                 if (leftOverrideWeight > 0f)
                 {
@@ -126,8 +141,11 @@ namespace ChokeHold.Gameplay
                 }
 
                 Quaternion hand = GripPose.HandRotation(weapon, false, kind, leftGrip, left.RestFrameInverse);
-                left.Solve(position, hand, left.Upper.position + cameraRotation * leftElbowHint);
-                left.Curl(leftCurl, leftCurl, thumbCurl);
+                left.Solve(position, hand, left.Upper.position + cameraRotation * (kind == WeaponKind.Pistol ? pistolLeftElbowHint : leftElbowHint));
+                // sub garda degetele doar se ridica pe laterale (palma deschisa); pe manerul vertical si peste mana dreapta strang
+                bool cup = leftGrip == LeftGrip.Handguard && kind != WeaponKind.Pistol;
+                float curl = cup ? handguardCurl : kind == WeaponKind.Pistol ? pistolSupportCurl : leftCurl;
+                left.Curl(curl, curl, cup ? 4f : leftThumbCurl);
             }
         }
 

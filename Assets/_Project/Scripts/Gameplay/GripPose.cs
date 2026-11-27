@@ -51,14 +51,14 @@ namespace ChokeHold.Gameplay
             else if (kind == WeaponKind.Pistol || leftGrip == LeftGrip.PistolSupport)
             {
                 // mana stanga peste degetele drepte: palma spre dreapta, degetele in jos in jurul lor, degetul mare inainte
-                fingers = new Vector3(0.25f, -0.50f, 0.83f);
-                palm = new Vector3(0.92f, 0.30f, -0.10f);
+                fingers = new Vector3(0.25f, -0.15f, 0.95f);
+                palm = new Vector3(0.95f, 0.20f, -0.25f);
             }
             else
             {
-                // mana stanga sub garda: palma in sus, degetele spre dreapta in jurul ei
-                fingers = new Vector3(0.70f, 0.30f, 0.65f);
-                palm = new Vector3(0.20f, 0.97f, -0.10f);
+                // mana stanga sub garda: palma in sus (garda sta in palma), degetele aproape drepte inainte, usor spre dreapta
+                fingers = new Vector3(0.30f, 0.05f, 0.95f);
+                palm = new Vector3(-0.05f, 1.0f, -0.06f);
             }
         }
 

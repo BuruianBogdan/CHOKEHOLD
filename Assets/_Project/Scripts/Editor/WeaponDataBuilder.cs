@@ -19,7 +19,7 @@ namespace ChokeHold.EditorTools
 
         private static readonly Vector3 RifleOffset = new Vector3(0.12f, -0.15f, 0.30f);
         private static readonly Vector3 SniperOffset = new Vector3(0.12f, -0.16f, 0.31f);
-        private static readonly Vector3 PistolOffset = new Vector3(0.09f, -0.12f, 0.42f);
+        private static readonly Vector3 PistolOffset = new Vector3(0.09f, -0.12f, 0.48f);
         private static readonly Vector3 KnifeOffset = new Vector3(0.13f, -0.15f, 0.31f);
 
         private sealed class Spec
@@ -260,7 +260,7 @@ namespace ChokeHold.EditorTools
                     break;
                 case WeaponCategory.Pistol:
                     data.firstPersonOffset = PistolOffset;
-                    data.adsEyeRelief = 0.38f;
+                    data.adsEyeRelief = 0.46f;
                     data.range = 120f;
                     break;
                 case WeaponCategory.Sniper:

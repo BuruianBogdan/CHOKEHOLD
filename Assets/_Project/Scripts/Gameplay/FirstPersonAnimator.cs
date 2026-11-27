@@ -22,7 +22,7 @@ namespace ChokeHold.Gameplay
         [SerializeField] private GameObject attackerArms;
         [SerializeField] private float drawTime = 0.5f;
         [SerializeField] private float inspectTime = 2.6f;
-        [SerializeField] private float viewModelFieldOfView = 58f;
+        [SerializeField] private float viewModelFieldOfView = 66f;
 
         private HitscanWeapon weapon;
         private FpsController fps;
@@ -308,19 +308,27 @@ namespace ChokeHold.Gameplay
             {
                 meleeT += dt / (meleeHeavy ? 0.55f : 0.36f);
                 float m = meleeT;
+                // cutitul drept sta cu lama in sus: varful se culca inainte (+x); karambitul tinut invers are lama
+                // in jos, asa ca il aducem inainte cu -x (carligul taie spre tinta)
+                bool reverse = data != null && data.reverseGrip;
                 if (meleeHeavy)
                 {
-                    float wind = Window(m, 0f, 0.3f, 0.35f, 0.45f);
-                    float thrust = Window(m, 0.3f, 0.45f, 0.6f, 1f);
-                    position += new Vector3(0.02f, 0.02f, -0.06f) * wind + new Vector3(-0.06f, 0.05f, 0.22f) * thrust;
-                    rotation += new Vector3(15f, 0f, 0f) * wind + new Vector3(-12f, -8f, 0f) * thrust;
+                    // injunghiere: mana se trage putin inapoi, apoi impinge drept spre cruce, cu varful inainte
+                    if (reverse)
+                    {
+                        // karambit: lovitura de sus in jos (ciocan), carligul trece prin fata inainte-jos
+                        Keyframes(m, StabTimes, HookPositions, HookRotations, 40f, ref position, ref rotation);
+                    }
+                    else
+                    {
+                        Keyframes(m, StabTimes, StabPositions, StabRotations, 60f, ref position, ref rotation);
+                    }
                 }
                 else
                 {
-                    float arc = Mathf.Sin(Mathf.Clamp01(m) * Mathf.PI);
-                    float sweep = Mathf.Lerp(-1f, 1f, Ease(Ramp(m, 0.05f, 0.7f)));
-                    position += new Vector3(-0.16f * sweep - 0.04f, 0.05f, 0.08f) * arc;
-                    rotation += new Vector3(-10f, -55f * sweep, -40f) * arc;
+                    // taietura: armat in dreapta-sus, apoi o trecere pe diagonala spre stanga-jos, lama inainte
+                    float p = reverse ? -35f : 45f;
+                    Keyframes(m, SlashTimes, SlashPositions, SlashRotations, p, ref position, ref rotation);
                 }
                 if (meleeT >= 1f)
                 {
@@ -465,6 +473,52 @@ namespace ChokeHold.Gameplay
         private Vector3 WeaponToParent(Transform part, Vector3 offset)
         {
             return part.parent != null ? part.parent.InverseTransformVector(model.TransformVector(offset)) : offset;
+        }
+
+        // chei pentru cutit: x-ul rotatiei e o fractiune din inclinarea lamei (p), y si z sunt in grade
+        private static readonly float[] SlashTimes = { 0f, 0.2f, 0.55f, 1f };
+        private static readonly Vector3[] SlashPositions =
+        {
+            Vector3.zero, new Vector3(0.06f, 0.05f, -0.02f), new Vector3(-0.2f, -0.03f, 0.1f), Vector3.zero,
+        };
+        private static readonly Vector3[] SlashRotations =
+        {
+            Vector3.zero, new Vector3(0.3f, 30f, 25f), new Vector3(1f, -55f, -35f), Vector3.zero,
+        };
+        private static readonly float[] StabTimes = { 0f, 0.3f, 0.5f, 0.65f, 1f };
+        private static readonly Vector3[] StabPositions =
+        {
+            Vector3.zero, new Vector3(0.02f, 0f, -0.07f), new Vector3(-0.06f, 0.05f, 0.12f), new Vector3(-0.06f, 0.05f, 0.12f), Vector3.zero,
+        };
+        private static readonly Vector3[] StabRotations =
+        {
+            Vector3.zero, new Vector3(0.3f, 0f, 0f), new Vector3(1f, -6f, 0f), new Vector3(1f, -6f, 0f), Vector3.zero,
+        };
+
+        private static readonly Vector3[] HookPositions =
+        {
+            Vector3.zero, new Vector3(0.03f, 0.09f, -0.04f), new Vector3(-0.07f, -0.06f, 0.1f), new Vector3(-0.07f, -0.07f, 0.1f), Vector3.zero,
+        };
+        private static readonly Vector3[] HookRotations =
+        {
+            Vector3.zero, new Vector3(0.6f, 0f, 10f), new Vector3(-1f, -10f, -15f), new Vector3(-1f, -10f, -15f), Vector3.zero,
+        };
+
+        private static void Keyframes(float t, float[] times, Vector3[] positions, Vector3[] rotations, float pitch, ref Vector3 position, ref Vector3 rotation)
+        {
+            t = Mathf.Clamp01(t);
+            for (int k = 1; k < times.Length; k++)
+            {
+                if (t <= times[k])
+                {
+                    float u = Ease(Mathf.InverseLerp(times[k - 1], times[k], t));
+                    Vector3 a = rotations[k - 1];
+                    Vector3 b = rotations[k];
+                    position += Vector3.Lerp(positions[k - 1], positions[k], u);
+                    rotation += new Vector3(Mathf.Lerp(a.x, b.x, u) * pitch, Mathf.Lerp(a.y, b.y, u), Mathf.Lerp(a.z, b.z, u));
+                    return;
+                }
+            }
         }
 
         private static float Ease(float t)

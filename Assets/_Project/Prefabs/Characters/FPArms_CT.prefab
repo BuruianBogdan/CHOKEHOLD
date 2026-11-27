@@ -372,7 +372,7 @@ MonoBehaviour:
   rightElbowHint: {x: 0.7, y: -1, z: -0.3}
   leftElbowHint: {x: -0.5, y: -1, z: 0.1}
   rightCurl: 62
-  triggerCurl: 28
+  triggerCurl: 10
   leftCurl: 48
   thumbCurl: 22
 --- !u!1 &2699892939920590178

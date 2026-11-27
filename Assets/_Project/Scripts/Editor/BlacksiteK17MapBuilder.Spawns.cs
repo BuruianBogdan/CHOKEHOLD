@@ -116,7 +116,7 @@ namespace ChokeHold.EditorTools
             Partition("Part_T2Spawn_West", 56f, 42f, 56f, 56f, full, DoubleGap(3.5f));
             Partition("Part_T2Spawn_South", 56f, 38f, 78f, 38f, full, DoorGap(2.5f), DoubleGap(15.5f));
             HighCover(60f, 43f, 60f, 48f);             // paravan in spatele usii spre North Overlook
-            HighCover(56.5f, 41f, 61.5f, 41f);           // paravan in spatele usii simple spre East Yard
+            HighCover(56.01f, 41.6f, 61.01f, 41.6f);     // paravan in spatele usii simple spre East Yard, lipit de Part_T2Spawn_West
 
             // East Yard: cladirea de generator in mijloc face din curte un inel
             Block(gStructures, "Yard_Generator", 58f, 20f, 68f, 28f, 4f);

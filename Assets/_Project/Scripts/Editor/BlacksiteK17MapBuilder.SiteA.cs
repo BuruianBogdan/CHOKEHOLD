@@ -144,7 +144,7 @@ namespace ChokeHold.EditorTools
             Pipe(gStructures, "Pumps_Pipe_High", new Vector3(-75.3f, 2f, 12f), new Vector3(-75.3f, 2f, 32f), 0.7f);
             Pipe(gStructures, "Pumps_Pipe_Cross", new Vector3(-76f, 3.6f, 22f), new Vector3(-62f, 3.6f, 22f), 0.6f);
             Tank(gStructures, "Pumps_Tank_South", -66f, 15f, 3f, 3.2f);
-            Tank(gStructures, "Pumps_Tank_North", -72.8f, 27f, 3f, 3.2f);
+            Tank(gStructures, "Pumps_Tank_North", -72.35f, 27f, 3f, 3.2f);   // 1 m pana la tevile de pe perete
             Block(gStructures, "Pumps_Machine", -71f, 19f, -67f, 23f, 2.2f);
 
             Lamp("Light_APipes_South", -69f, 3.8f, 15f, WarmLight, 14f, 2.5f);

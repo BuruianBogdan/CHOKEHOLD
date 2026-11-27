@@ -52,6 +52,8 @@ namespace ChokeHold.Gameplay
 
         [Header("Crouch")]
         [SerializeField] private float standingHeight = 2f;
+        [Tooltip("Raza corpului (ca hull-ul din CS: 32 de unitati, ~0,8 m latime). 0,5 era prea gros pentru culoarele dintre obiecte.")]
+        [SerializeField] private float hullRadius = 0.4f;
         [SerializeField] private float crouchingHeight = 1.2f;
         [SerializeField] private float standingCameraHeight = 1.65f;
         [SerializeField] private float crouchingCameraHeight = 1.05f;
@@ -173,6 +175,8 @@ namespace ChokeHold.Gameplay
                 return;
             }
 
+            controller.radius = hullRadius;
+            controller.skinWidth = hullRadius * 0.1f;   // recomandarea Unity; 0,08 adauga 16 cm la latimea prin care trece
             controller.height = standingHeight;
             controller.center = new Vector3(controller.center.x, standingHeight / 2f, controller.center.z);
 

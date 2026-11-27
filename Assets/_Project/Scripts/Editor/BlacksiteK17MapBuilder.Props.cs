@@ -132,13 +132,16 @@ namespace ChokeHold.EditorTools
                     }
 
                     Vector3? anchor = null;
+                    GameObject previous = null;
                     for (int i = 0; i < order.Count; i++)
                     {
                         IEnumerable<PropWallSpot> candidates = spots;
                         if (order.Cluster && anchor.HasValue)
                         {
+                            // grupurile stau lipite una de alta (fara goluri de 20-60 cm in care te blochezi)
                             Vector3 a = anchor.Value;
-                            candidates = spots.Where(s => (s.Point - a).sqrMagnitude < 4.5f * 4.5f).OrderBy(s => (s.Point - a).sqrMagnitude);
+                            candidates = FlushNeighbours(previous, prefab)
+                                .Concat(spots.Where(s => (s.Point - a).sqrMagnitude < 4.5f * 4.5f).OrderBy(s => (s.Point - a).sqrMagnitude));
                         }
 
                         GameObject instance = TryPlace(prefab, candidates, zone, zoneGroup);
@@ -150,13 +153,47 @@ namespace ChokeHold.EditorTools
                         }
 
                         anchor ??= instance.transform.position;
+                        previous = instance;
                         placed++;
                     }
                 }
             }
 
+            // verificarea finala, pe toate partile fiecarei piese (si fata de ce s-a pus dupa ea): o piesa care tot
+            // lasa un gol in care nu incape un om e scoasa
+            Physics.SyncTransforms();
+            foreach (BoxCollider prop in group.GetComponentsInChildren<BoxCollider>().ToList())
+            {
+                if (LeavesTrapGap(prop))
+                {
+                    report.Add($"scos (gol ingust): {prop.transform.parent.name}/{prop.name}");
+                    Object.DestroyImmediate(prop.gameObject);
+                    Physics.SyncTransforms();
+                    placed--;
+                    missed++;
+                }
+            }
+
             Debug.Log($"Tripo props: {placed} piese puse, {swapped} cutii cu aspect nou, {missed} fara loc" +
                       (report.Count > 0 ? " (" + string.Join("; ", report) + ")" : ""));
+        }
+
+        /// <summary>Locurile lipite de piesa anterioara din grup, la stanga si la dreapta ei, pe acelasi perete.</summary>
+        private static IEnumerable<PropWallSpot> FlushNeighbours(GameObject previous, GameObject prefab)
+        {
+            if (previous == null)
+            {
+                yield break;
+            }
+
+            Vector3 n = previous.transform.forward;
+            Vector3 right = Vector3.Cross(Vector3.up, n);
+            Vector3 prevSize = previous.GetComponent<BoxCollider>().size;
+            Vector3 size = prefab.GetComponent<BoxCollider>().size;
+            Vector3 wall = previous.transform.position - n * (prevSize.z / 2f + 0.04f);
+            float step = prevSize.x / 2f + size.x / 2f + 0.03f;
+            yield return new PropWallSpot { Point = wall + right * step, Normal = n };
+            yield return new PropWallSpot { Point = wall - right * step, Normal = n };
         }
 
         private static void ClearTripoProps(GameObject root)
@@ -515,14 +552,24 @@ namespace ChokeHold.EditorTools
                 }
             }
 
-            // culoar liber in fata
-            foreach (float y in new[] { 0.5f, 1.5f })
+            // culoar liber in fata, pe toata latimea piesei
+            foreach (float x in new[] { -hw + 0.05f, 0f, hw - 0.05f })
             {
-                Vector3 origin = new Vector3(pos.x, floorY + y, pos.z) + n * (hd + 0.02f);
-                if (Physics.Raycast(origin, n, MinAisle, ~0, QueryTriggerInteraction.Ignore))
+                foreach (float y in new[] { 0.3f, 1f, 1.7f })
                 {
-                    return false;
+                    Vector3 origin = new Vector3(pos.x, floorY + y, pos.z) + n * (hd + 0.02f) + right * x;
+                    if (Physics.Raycast(origin, n, MinAisle, ~0, QueryTriggerInteraction.Ignore))
+                    {
+                        return false;
+                    }
                 }
+            }
+
+            // pe laterale: ori lipita de ceva, ori loc de trecut pentru un om. Un gol mai mic e o capcana in care
+            // jucatorul intra si se blocheaza (sau pare ca poate trece si nu poate).
+            if (!SidesPassable(new Vector3(pos.x, floorY, pos.z), n, right, hw, hd))
+            {
+                return false;
             }
 
             // departe de usi, scari, spawn-uri, pereti care se sparg, baricade si zonele de plantat
@@ -537,6 +584,74 @@ namespace ChokeHold.EditorTools
                 }
             }
 
+            return true;
+        }
+
+        /// <summary>Latimea minima a unui gol prin care trece jucatorul (hull 0,8 m + marja).</summary>
+        public const float PassWidth = 1.0f;
+        /// <summary>Sub atat, doua obiecte sunt considerate lipite (nu ramane gol).</summary>
+        public const float FlushGap = 0.06f;
+
+        /// <summary>
+        /// Gol intre FlushGap si PassWidth pe oricare parte a piesei (raze din fetele ei, la 3 inaltimi, cu podea in gol).
+        /// </summary>
+        public static bool LeavesTrapGap(BoxCollider box)
+        {
+            Transform t = box.transform;
+            Vector3 size = Vector3.Scale(box.size, t.lossyScale);
+            Vector3 floor = t.TransformPoint(new Vector3(box.center.x, box.center.y - box.size.y / 2f, box.center.z));
+            Vector3[] axes = { t.right, -t.right, t.forward, -t.forward };
+            float[] reach = { size.x / 2f, size.x / 2f, size.z / 2f, size.z / 2f };
+            float[] across = { size.z / 2f, size.z / 2f, size.x / 2f, size.x / 2f };
+
+            for (int a = 0; a < 4; a++)
+            {
+                Vector3 dir = axes[a];
+                Vector3 side = Vector3.Cross(Vector3.up, dir);
+                foreach (float u in new[] { -0.97f, -0.5f, 0f, 0.5f, 0.97f })
+                {
+                    foreach (float y in new[] { 0.3f, 1f, 1.7f })
+                    {
+                        if (y > size.y - 0.05f)
+                        {
+                            continue;
+                        }
+
+                        Vector3 origin = floor + Vector3.up * y + side * (across[a] * u) + dir * (reach[a] + 0.01f);
+                        if (!Physics.Raycast(origin, dir, out RaycastHit hit, PassWidth, ~0, QueryTriggerInteraction.Ignore) ||
+                            hit.collider == box || hit.distance <= FlushGap)
+                        {
+                            continue;
+                        }
+
+                        Vector3 mid = origin + dir * (hit.distance / 2f);
+                        if (Physics.Raycast(mid + Vector3.up * 0.2f, Vector3.down, y + 0.6f, ~0, QueryTriggerInteraction.Ignore))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static bool SidesPassable(Vector3 floor, Vector3 n, Vector3 right, float hw, float hd)
+        {
+            foreach (float s in new[] { 1f, -1f })
+            {
+                Vector3 dir = right * s;
+                foreach (float z in new[] { -hd + 0.08f, 0f, hd - 0.08f })
+                {
+                    foreach (float y in new[] { 0.25f, 1f, 1.7f })
+                    {
+                        Vector3 origin = floor + Vector3.up * y + n * z + dir * (hw + 0.01f);
+                        if (Physics.Raycast(origin, dir, out RaycastHit hit, PassWidth, ~0, QueryTriggerInteraction.Ignore) && hit.distance > FlushGap)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
             return true;
         }
 

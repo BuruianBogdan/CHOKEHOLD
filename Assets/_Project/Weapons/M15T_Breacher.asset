@@ -22,9 +22,9 @@ MonoBehaviour:
   killReward: 300
   firstPersonPrefab: {fileID: 1983837828436036376, guid: 5fe3630afa7b684408c34b9b5a817526, type: 3}
   thirdPersonPrefab: {fileID: 2730184439615514361, guid: 84d60cfb15deac64586ed98a57b33945, type: 3}
-  firstPersonOffset: {x: 0.09, y: -0.12, z: 0.42}
+  firstPersonOffset: {x: 0.09, y: -0.12, z: 0.48}
   firstPersonRotation: {x: 0, y: 0, z: 0}
-  adsEyeRelief: 0.38
+  adsEyeRelief: 0.46
   leftGrip: 2
   reverseGrip: 0
   sight: 1

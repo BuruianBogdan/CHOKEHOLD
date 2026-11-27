@@ -43,7 +43,7 @@ namespace ChokeHold.EditorTools
 
             // Rack de servere in axa usilor: taie linia sud-nord prin laborator.
             Block(gStructures, "Lab_ServerRack", -2f, 20f, 4f, 23f, 2.2f);
-            Block(gStructures, "Lab_Pillar", 5f, 23f, 7f, 25f, wall);
+            Block(gStructures, "Lab_Pillar", 4.875f, 23f, 6.875f, 25f, wall);   // 1 m pana la Lab_SoftWall_X8: trece un om
 
             // Mese de laborator (cover de crouch)
             Crate(gCover, -3f, 15f, 4f, 1f, 1.2f);
@@ -118,7 +118,7 @@ namespace ChokeHold.EditorTools
             // ---------------- Lab Annex ----------------
             Stairs(gStairs, "Stairs_Annex", 32f, 22f, 40f, 26f, Vector3.right, 0f, up);
 
-            Crate(gCover, 32f, 35f, 6f, 1f, 1.2f);
+            Crate(gCover, 32f, 34.58f, 6f, 1f, 1.2f);   // lipita de capatul Annex_SoftWall (fara gol de 0,4 m)
             HighCover(22.5f, 35.5f, 22.5f, 38f);          // paravan pe axa usii spre laborator
             Crate(gCover, 24f, 28f, 1.2f, 1f, 3f);
             SoftWall(gStructures, "Annex_SoftWall", 30f, 28f, 30f, 34f, 0f, wall);
@@ -178,7 +178,8 @@ namespace ChokeHold.EditorTools
 
             // ---------------- Mid East (intre Choke Point, hangar si East Yard) ----------------
             Partition("Part_MidEast_Yard", 46f, 6f, 46f, 16f, full, DoubleGap(7.5f));
-            Partition("Part_MidEast_Bend", 20f, 6f, 24f, 6f, full, DoorGap(2f).Screened(1));
+            Partition("Part_MidEast_Bend", 20f, 6f, 24f, 6f, full, DoorGap(2f));
+            HighCover(20.01f, 8.4f, 22.91f, 8.4f);      // paravanul usii, lipit de Part_MidEast_Bend_Corner (fara fanta de 0,6 m)
             Partition("Part_MidEast_Bend_Corner", 20f, 6f, 20f, 8f, full);
 
             BigCrate(16f, 2f);
