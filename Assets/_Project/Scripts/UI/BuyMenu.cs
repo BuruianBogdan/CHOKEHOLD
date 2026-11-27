@@ -30,6 +30,7 @@ namespace ChokeHold.UI
         private static readonly Color MoneyColor = new Color(0.45f, 0.95f, 0.55f);
 
         private PlayerLoadout loadout;
+        private Gameplay.Grenades.GrenadeInventory grenades;
         private PlayerEconomy economy;
         private TeamMember member;
 
@@ -47,6 +48,7 @@ namespace ChokeHold.UI
         private sealed class Item
         {
             public WeaponData Data;
+            public Gameplay.Grenades.GrenadeType? Grenade;
             public Image Background;
             public TMP_Text Price;
             public TMP_Text State;
@@ -183,6 +185,19 @@ namespace ChokeHold.UI
             titleText.text = $"CUMPARARE  <size=60%><color=#BBBBBB>{team}  ·  {Mathf.CeilToInt(Mathf.Max(0f, BuyTimeLeft))} s</color></size>";
         }
 
+        private void PurchaseGrenade(Gameplay.Grenades.GrenadeType type)
+        {
+            if (!open || grenades == null || !CanBuyNow || !grenades.CanTake(type))
+            {
+                return;
+            }
+
+            if (economy.Spend(Gameplay.Grenades.GrenadeSpec.Of(type).Price))
+            {
+                grenades.Give(type);
+            }
+        }
+
         private void Purchase(WeaponData data)
         {
             if (!open || data == null || loadout.Owns(data) || !CanBuyNow)
@@ -220,6 +235,20 @@ namespace ChokeHold.UI
         {
             foreach (Item item in items)
             {
+                if (item.Grenade.HasValue)
+                {
+                    Gameplay.Grenades.GrenadeSpec spec = Gameplay.Grenades.GrenadeSpec.Of(item.Grenade.Value);
+                    int have = grenades != null ? grenades.Count(spec.Type) : 0;
+                    bool full = grenades == null || !grenades.CanTake(spec.Type);
+                    bool canPay = economy.CanAfford(spec.Price);
+                    item.Price.text = $"${spec.Price}";
+                    item.Price.color = full ? Owned : canPay ? Color.white : TooExpensive;
+                    item.State.text = have > 0 && full ? $"AI {have}" : full ? "MAXIM 4" : canPay ? (have > 0 ? $"AI {have}" : string.Empty) : "BANI INSUFICIENTI";
+                    item.State.color = full || have > 0 ? Owned : TooExpensive;
+                    item.Background.color = have > 0 ? new Color(0.12f, 0.22f, 0.15f, 0.95f) : ItemColor;
+                    continue;
+                }
+
                 bool owned = loadout.Owns(item.Data);
                 bool affordable = economy.CanAfford(item.Data.price);
                 item.Price.text = $"${item.Data.price}";
@@ -273,20 +302,20 @@ namespace ChokeHold.UI
             panel.transform.SetParent(root, false);
             RectTransform panelRect = panel.GetComponent<RectTransform>();
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(1260f, 700f);
+            panelRect.sizeDelta = new Vector2(1680f, 700f);
             Image background = panel.AddComponent<Image>();
             background.color = Panel;
 
             titleText = Text(panelRect, "Title", new Vector2(0.5f, 1f), new Vector2(0f, -45f), new Vector2(1200f, 60f), 44f, TextAlignmentOptions.Center);
             TMP_Text footer = Text(panelRect, "Footer", new Vector2(0.5f, 0f), new Vector2(0f, 32f), new Vector2(1200f, 40f), 22f, TextAlignmentOptions.Center);
             footer.color = new Color(0.75f, 0.75f, 0.75f);
-            footer.text = "Click pe o arma ca s-o cumperi  ·  [1] principala  [2] pistol  [3] cutit  ·  [B] / [Esc] inchide";
+            footer.text = "Click ca sa cumperi  ·  [1] principala  [2] pistol  [3] cutit  [4] grenada, [G] arunca  ·  [B] / [Esc] inchide";
 
-            string[] headers = { "PISTOALE", "PUSTI", "LUNETISTE" };
+            string[] headers = { "PISTOALE", "PUSTI", "LUNETISTE", "GRENADE" };
             columns = new RectTransform[headers.Length];
             for (int c = 0; c < headers.Length; c++)
             {
-                float x = (c - 1) * 410f;
+                float x = (c - 1.5f) * 410f;
                 TMP_Text header = Text(panelRect, headers[c], new Vector2(0.5f, 1f), new Vector2(x, -115f), new Vector2(390f, 40f), 28f, TextAlignmentOptions.Center);
                 header.text = headers[c];
                 header.color = new Color(1f, 0.84f, 0.35f);
@@ -332,6 +361,17 @@ namespace ChokeHold.UI
                 }
             }
 
+            grenades ??= GetComponent<Gameplay.Grenades.GrenadeInventory>();
+            if (grenades != null)
+            {
+                grenades.Changed -= Refresh;
+                grenades.Changed += Refresh;
+                foreach (Gameplay.Grenades.GrenadeSpec spec in Gameplay.Grenades.GrenadeSpec.All)
+                {
+                    items.Add(CreateGrenadeItem(columns[3], spec));
+                }
+            }
+
             builtFor = member.Team;
         }
 
@@ -363,6 +403,37 @@ namespace ChokeHold.UI
             stats.text = Describe(data);
             TMP_Text state = Text(rect, "State", new Vector2(1f, 0f), new Vector2(-62f, 24f), new Vector2(110f, 30f), 14f, TextAlignmentOptions.Right);
             return new Item { Data = data, Background = image, Price = price, State = state };
+        }
+
+        private Item CreateGrenadeItem(RectTransform column, Gameplay.Grenades.GrenadeSpec spec)
+        {
+            GameObject go = new GameObject(spec.Prefab, typeof(RectTransform));
+            go.transform.SetParent(column, false);
+            go.GetComponent<RectTransform>().sizeDelta = new Vector2(390f, 82f);
+            Image image = go.AddComponent<Image>();
+            image.color = ItemColor;
+            Button button = go.AddComponent<Button>();
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.35f, 1.35f, 1.35f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f);
+            button.colors = colors;
+            button.targetGraphic = image;
+            Gameplay.Grenades.GrenadeType type = spec.Type;
+            button.onClick.AddListener(() => PurchaseGrenade(type));
+
+            RectTransform rect = go.GetComponent<RectTransform>();
+            TMP_Text name = Text(rect, "Name", new Vector2(0f, 1f), new Vector2(150f, -24f), new Vector2(270f, 34f), 24f, TextAlignmentOptions.Left);
+            name.text = spec.Name;
+            TMP_Text price = Text(rect, "Price", new Vector2(1f, 1f), new Vector2(-70f, -24f), new Vector2(120f, 34f), 24f, TextAlignmentOptions.Right);
+            TMP_Text stats = Text(rect, "Stats", new Vector2(0f, 0f), new Vector2(145f, 20f), new Vector2(260f, 28f), 16f, TextAlignmentOptions.Left);
+            stats.color = new Color(0.72f, 0.75f, 0.78f);
+            stats.enableAutoSizing = true;
+            stats.fontSizeMin = 11f;
+            stats.fontSizeMax = 16f;
+            stats.text = spec.Description;
+            TMP_Text state = Text(rect, "State", new Vector2(1f, 0f), new Vector2(-62f, 20f), new Vector2(110f, 28f), 14f, TextAlignmentOptions.Right);
+            return new Item { Grenade = spec.Type, Background = image, Price = price, State = state };
         }
 
         private static string Describe(WeaponData data)

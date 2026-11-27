@@ -58,6 +58,18 @@ namespace ChokeHold.Gameplay
 
         public FirstPersonArms Arms => arms;
 
+        /// <summary>Arma coborata din cadru (grenada in mana).</summary>
+        public bool Lowered { get; set; }
+
+        /// <summary>Ascunde doar arma (mainile raman: grenada).</summary>
+        public void SetWeaponHidden(bool value)
+        {
+            foreach (Renderer r in modelRenderers)
+            {
+                if (r != null) r.enabled = !value && !hidden;
+            }
+        }
+
         private void Start()
         {
             weapon = GetComponent<HitscanWeapon>();
@@ -277,7 +289,7 @@ namespace ChokeHold.Gameplay
             rotation += (knife ? new Vector3(20f, 0f, 10f) : new Vector3(14f, -38f, 24f)) * Ease(sprintWeight);
 
             // plantare / dezamorsare: arma coborata din cadru
-            bool lowered = fps != null && fps.InputLocked && bomb != null && (bomb.IsPlanting || bomb.IsDefusing);
+            bool lowered = Lowered || (fps != null && fps.InputLocked && bomb != null && (bomb.IsPlanting || bomb.IsDefusing));
             loweredWeight = Mathf.MoveTowards(loweredWeight, lowered ? 1f : 0f, dt * 4f);
             position += new Vector3(0f, -0.32f, -0.05f) * Ease(loweredWeight);
             rotation += new Vector3(45f, 0f, 0f) * Ease(loweredWeight);

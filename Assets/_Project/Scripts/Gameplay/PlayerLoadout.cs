@@ -34,6 +34,7 @@ namespace ChokeHold.Gameplay
         private int current = -1;
         private int previous = SecondarySlot;
         private Team equippedTeam;
+        private Grenades.GrenadeInventory grenades;
 
         public WeaponCatalog Catalog => catalog;
         public HitscanWeapon Weapon => weapon;
@@ -89,13 +90,19 @@ namespace ChokeHold.Gameplay
                 gameObject.AddComponent<UI.SettingsMenu>();
             }
 
+            grenades = GetComponent<Grenades.GrenadeInventory>();
+            if (grenades == null)
+            {
+                grenades = gameObject.AddComponent<Grenades.GrenadeInventory>();
+            }
+
             GiveDefaults(true);
             EquipBest();
         }
 
         private void Update()
         {
-            if (!initialized || member == null || !member.IsAlive || PlayerInputGate.Blocked || Keyboard.current == null)
+            if (!initialized || member == null || !member.IsAlive || PlayerInputGate.Blocked || Keyboard.current == null || (grenades != null && grenades.IsThrowing))
             {
                 return;
             }
@@ -238,6 +245,10 @@ namespace ChokeHold.Gameplay
         {
             Initialize();
             GiveDefaults(wasDead);
+            if (grenades != null)
+            {
+                grenades.OnRespawn(wasDead);
+            }
 
             foreach (Slot slot in slots)
             {

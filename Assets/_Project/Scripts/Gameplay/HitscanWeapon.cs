@@ -32,6 +32,11 @@ namespace ChokeHold.Gameplay
         public bool IsReloading => isReloading;
         public bool IsAiming => isAiming;
         public bool IsScoped => scopeLevel > 0;
+
+        /// <summary>Arma lasata jos (aruncarea unei grenade): nu trage, nu ocheste.</summary>
+        public bool Holstered { get; set; }
+
+        public Camera ViewCamera => playerCamera;
         public int ScopeLevel => scopeLevel;
 
         [Header("References")]
@@ -267,7 +272,7 @@ namespace ChokeHold.Gameplay
                 return;
             }
 
-            bool blocked = PlayerInputGate.Blocked || (fpsController != null && fpsController.InputLocked);
+            bool blocked = Holstered || PlayerInputGate.Blocked || (fpsController != null && fpsController.InputLocked);
 
             UpdateAim(blocked);
 

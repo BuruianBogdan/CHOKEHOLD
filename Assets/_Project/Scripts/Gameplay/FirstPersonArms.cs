@@ -42,6 +42,11 @@ namespace ChokeHold.Gameplay
         private bool reverseGrip;               // cutit tinut invers (karambit)
         private Renderer[] renderers;
 
+        [SerializeField] private float grenadeCurl = 70f;
+        private Vector3 rightOverridePosition;
+        private Quaternion rightOverrideRotation = Quaternion.identity;
+        private float rightOverrideWeight;
+
         private Vector3 leftOverridePosition;
         private Quaternion leftOverrideRotation;
         private float leftOverrideWeight;
@@ -84,6 +89,17 @@ namespace ChokeHold.Gameplay
             leftOverrideWeight = Mathf.Clamp01(weight);
         }
 
+        /// <summary>
+        /// Mana dreapta tine altceva decat arma (grenada): palma la position, cadrul "armei" imaginare = rotation
+        /// (z inainte, y sus). weight 0 = inapoi pe arma.
+        /// </summary>
+        public void SetRightOverride(Vector3 position, Quaternion rotation, float weight)
+        {
+            rightOverridePosition = position;
+            rightOverrideRotation = rotation;
+            rightOverrideWeight = Mathf.Clamp01(weight);
+        }
+
         private void Awake()
         {
             viewCamera = transform.parent;
@@ -115,7 +131,15 @@ namespace ChokeHold.Gameplay
 
             Quaternion cameraRotation = viewCamera.rotation;
 
-            if (rightTarget != null)
+            if (rightOverrideWeight > 0.5f)
+            {
+                // grenada in mana dreapta: pumn strans in jurul ei (toate degetele, si aratatorul)
+                Vector3 position = rightTarget != null ? Vector3.Lerp(rightTarget.position, rightOverridePosition, rightOverrideWeight) : rightOverridePosition;
+                Quaternion hand = GripPose.HandRotation(rightOverrideRotation, true, WeaponKind.Rifle, LeftGrip.Handguard, false, right.RestFrameInverse);
+                right.Solve(position, hand, right.Upper.position + cameraRotation * rightElbowHint);
+                right.Curl(grenadeCurl, grenadeCurl, thumbCurl);
+            }
+            else if (rightTarget != null)
             {
                 Quaternion hand = GripPose.HandRotation(weaponRoot.rotation, true, kind, leftGrip, reverseGrip, right.RestFrameInverse);
                 right.Solve(rightTarget.position, hand, right.Upper.position + cameraRotation * rightElbowHint);
