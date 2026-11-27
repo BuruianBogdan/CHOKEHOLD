@@ -105,7 +105,9 @@ namespace ChokeHold.EditorTools
 
             // Cover: pozitii de plant (generator, lada), de aparare (platforma, sub Heaven) si de intrare.
             HighCover(-46f, 27.6f, -46f, 32.4f);         // taie banda de sud dinspre usa A Pipes (capatul de sud scurtat cu 0,6 m)
-            HighCover(-44f, 27f, -37f, 27f);           // paravan in spatele usii duble din A Control
+            // paravan in "L" in spatele usii duble din A Control (editat de mana: capatul de vest intors spre nord)
+            HighCover(-42.25f, 27f, -37f, 27f);
+            HighCover(-41.77f, 27.375f, -41.77f, 29.125f, 0f, 1.75f);
             LowCover(-54f, 36f, -54f, 38f);            // culoarul A Pipes
             BigCrate(-41f, 53f);                       // coltul de nord, sub luminator
             LowCover(-51f, 49f, -49f, 49f, 1.2f);      // pe platforma A

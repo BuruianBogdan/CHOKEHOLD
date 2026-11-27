@@ -361,16 +361,16 @@ namespace ChokeHold.EditorTools
         }
 
         /// <summary>Cover in picioare (2 m), de la (x0, z0) la (x1, z1), paralel cu o axa.</summary>
-        private static void HighCover(float x0, float z0, float x1, float z1, float baseY = 0f)
+        private static void HighCover(float x0, float z0, float x1, float z1, float baseY = 0f, float minLength = MinCoverWidth)
         {
-            CoverWall("HighCover", x0, z0, x1, z1, baseY, StandingCoverHeight, 0.8f);
+            CoverWall("HighCover", x0, z0, x1, z1, baseY, StandingCoverHeight, 0.8f, minLength);
         }
 
         private static void CoverWall(string prefix, float x0, float z0, float x1, float z1,
-            float baseY, float height, float thickness)
+            float baseY, float height, float thickness, float minLength = MinCoverWidth)
         {
             bool alongX = Mathf.Abs(x1 - x0) > Mathf.Abs(z1 - z0);
-            float length = Mathf.Max(MinCoverWidth, alongX ? Mathf.Abs(x1 - x0) : Mathf.Abs(z1 - z0));
+            float length = Mathf.Max(minLength, alongX ? Mathf.Abs(x1 - x0) : Mathf.Abs(z1 - z0));
 
             Vector3 size = alongX
                 ? new Vector3(length, height, thickness)

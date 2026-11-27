@@ -15,11 +15,12 @@ namespace ChokeHold.EditorTools
         private const string BaseBodyPath = "Assets/_Project/Art/Characters/Base/K17_BaseBody.fbx";
 
         private const string WeaponsFolder = "Assets/_Project/Art/Weapons/";
+        private const string PropsFolder = "Assets/_Project/Art/Props/";
 
         /// <summary>Texturile personajelor (din Tripo): culoare sRGB, normale ca normal map, metalic + luciu liniar.</summary>
         private void OnPreprocessTexture()
         {
-            if (!(assetPath.StartsWith(CharactersFolder) || assetPath.StartsWith(WeaponsFolder)) || !assetPath.Contains("/Textures/"))
+            if (!(assetPath.StartsWith(CharactersFolder) || assetPath.StartsWith(WeaponsFolder) || assetPath.StartsWith(PropsFolder)) || !assetPath.Contains("/Textures/"))
             {
                 return;
             }
@@ -60,7 +61,9 @@ namespace ChokeHold.EditorTools
 
             string name = slot.Substring(0, slot.Length - "_Body".Length);
             // personajele si armele din Tripo: Art/Characters/<Nume> sau Art/Weapons/<Nume>
-            string folder = AssetDatabase.IsValidFolder($"{WeaponsFolder}{name}/Textures") ? $"{WeaponsFolder}{name}" : $"{CharactersFolder}{name}";
+            string folder = AssetDatabase.IsValidFolder($"{WeaponsFolder}{name}/Textures") ? $"{WeaponsFolder}{name}"
+                : AssetDatabase.IsValidFolder($"{PropsFolder}{name}/Textures") ? $"{PropsFolder}{name}"
+                : $"{CharactersFolder}{name}";
             string textures = $"{folder}/Textures/{name}";
             Texture2D baseColor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{textures}_BaseColor.jpg");
             if (baseColor == null)
@@ -88,7 +91,7 @@ namespace ChokeHold.EditorTools
             material.SetTexture("_MetallicGlossMap", mask);
             material.SetFloat("_SmoothnessTextureChannel", 0f);    // luciul din alfa hartii metalice
             // Hartile de rugozitate din Tripo sunt prea lucioase pe metalul armelor (par cromate in lumina de afara)
-            material.SetFloat("_Smoothness", folder.StartsWith(WeaponsFolder) ? 0.7f : 1f);
+            material.SetFloat("_Smoothness", folder.StartsWith(WeaponsFolder) || folder.StartsWith(PropsFolder) ? 0.7f : 1f);
             material.SetFloat("_Metallic", 1f);
             if (mask != null) material.EnableKeyword("_METALLICSPECGLOSSMAP"); else material.DisableKeyword("_METALLICSPECGLOSSMAP");
 
@@ -100,7 +103,8 @@ namespace ChokeHold.EditorTools
         {
             bool character = assetPath.StartsWith(CharactersFolder);
             bool animation = assetPath.StartsWith(AnimationsFolder);
-            bool weapon = assetPath.StartsWith(WeaponsFolder);
+            // recuzita din Tripo se importa ca armele: fara rig, materialele dupa numele slotului
+            bool weapon = assetPath.StartsWith(WeaponsFolder) || assetPath.StartsWith(PropsFolder);
 
             if (!character && !animation && !weapon)
             {

@@ -191,3 +191,26 @@ Scriptul citește arhivele din `Tools/Tripo/Source/Weapons/<Id>.zip`. Pentru fie
 - randează `Docs/Characters/Weapons/<Id>_Side.png` și `<Id>_Sight.png`, iar pe ultima se verifică ochirea.
 
 Apoi, în Unity: **Build Weapon Prefabs** și **Build Weapon Data**. Al doilea face și catalogul de arme pentru meniul de cumpărare și îl leagă de jucător.
+
+## Recuzita din Tripo (`k17_tripo_props.py`)
+
+```
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_tripo_props.py -- cache [Nume ...]
+D:/Blender/blender.exe -b --factory-startup --python Tools/Blender/k17_tripo_props.py -- build [Nume ...]
+```
+
+Arhivele sunt în `Tools/Tripo/Source/Props/<Nume>.zip`. Modelele HD din Tripo au milioane de triunghiuri, așa că lucrul se face în doi pași:
+
+1. **`cache`**, o singură dată pe piesă (~1 minut fiecare):
+   - reduce modelul la o copie de lucru de 60 000 de triunghiuri și o salvează în `Temp/PropCache`;
+   - păstrează texturile;
+   - randează piesa din patru părți în `Docs/Props/Survey/<Nume>.png`, ca să se vadă fața ei.
+2. **`build`**, rapid, se poate repeta oricând:
+   - întoarce piesa cu fața spre cameră, după `front` din tabelul `PROPS`;
+   - o aduce la dimensiunile reale și pune originea jos, la mijloc;
+   - face LOD0, LOD1 și LOD2;
+   - scrie FBX-ul și texturile în `Assets/_Project/Art/Props/<Nume>` și o randare în `Docs/Props/<Nume>.png`.
+
+Apoi, în Unity:
+1. **CHOKEHOLD → Map → Build Prop Prefabs** face prefab-urile cu LOD și collider.
+2. **CHOKEHOLD → Map → Dress Tripo Props** le pune pe hartă. Lucrează pe scena existentă, deci nu regenerează harta.

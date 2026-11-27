@@ -40,6 +40,9 @@ După integrare, fișierul original se mută în `Source` cu numele personajului
 - **Obiect:** unul singur, fără podea, perete sau alte obiecte în jur.
 - **Stil:** realist, industrial, uzat, fără logo-uri sau mărci reale.
 - **Dimensiuni:** cele din tabel sunt aproximative. Le folosesc la scalare, nu trebuie să le respecți în Tripo.
+- **Prompt-uri gata scrise:** în `Props_Prompts.md`, câte unul pentru fiecare piesă.
+- **Ce se întâmplă după:** arhiva se mută în `Source/Props/<Nume>.zip`. `Tools/Blender/k17_tripo_props.py` reduce modelul, face LOD-urile și îl aduce la scară reală. În Unity, **Dress Tripo Props** pune piesele pe hartă, pe tema fiecărei zone, lipite de pereți și departe de uși și spawn-uri. Unele cutii de gameplay (rafturi, ventilații, pupitre, cover jos din exterior) primesc aspectul pieselor noi, cu aceeași coliziune.
+- **De evitat:** țevi cu capete libere, pentru că ar rămâne în aer pe hartă. Din acest motiv `Valve_Manifold_A` e importată, dar nu e pusă pe hartă.
 
 | Fișier | Ce este | Dimensiuni (L × l × Î, m) | Unde pe hartă |
 |---|---|---|---|

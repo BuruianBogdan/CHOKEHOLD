@@ -29,3 +29,7 @@ Assets/_Project/Art/Characters/**/*.png filter=lfs diff=lfs merge=lfs -text
 # Texturile armelor generate in Tripo
 Assets/_Project/Art/Weapons/**/*.jpg filter=lfs diff=lfs merge=lfs -text
 Assets/_Project/Art/Weapons/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Texturile recuzitei generate in Tripo
+Assets/_Project/Art/Props/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+Assets/_Project/Art/Props/**/*.png filter=lfs diff=lfs merge=lfs -text

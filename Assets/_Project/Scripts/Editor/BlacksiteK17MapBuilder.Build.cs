@@ -110,6 +110,9 @@ namespace ChokeHold.EditorTools
             // Instalatia nucleara: sala reactorului, semne, girofare, lampi de urgenta, conducte, decontaminare
             BuildNuclearDressing(root);
 
+            // Recuzita din Tripo: aspect nou pentru unele cutii si decor lipit de pereti, pe tema zonelor
+            DressTripoProps(root);
+
             // UV la scara reala pe toate cutiile (pregatire pentru texturi)
             BakeBoxUVs(root);
 

@@ -76,6 +76,7 @@ namespace ChokeHold.EditorTools
 
             // West Outpost
             Partition("Part_Outpost_Rocks", -56f, -4f, -56f, 6f, full, DoubleGap(5f));
+            Partition("Part_Outpost_Rocks_East", -56.22f, -4.29f, -52.72f, -4.29f, full);   // bratul spre est, adaugat de mana
 
             Block(gStructures, "Outpost_Tower", -70f, -14f, -64f, -8f, 4f);
             SolidBlock(gStructures, "Outpost_Shed", -76f, -6.5f, -72f, -1.5f, 0f, 3f, containerBlueMat);
